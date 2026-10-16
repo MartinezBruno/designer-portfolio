@@ -1,6 +1,10 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { applyMotionGate, motionGateInline, onMotionPreferenceChange } from '../../src/lib/motion/gate';
+import {
+  applyMotionGate,
+  motionGateInline,
+  onMotionPreferenceChange,
+} from '../../src/lib/motion/gate';
 
 // Typed stand-in for the browser MediaQueryList so tests can flip `matches` and fire 'change'.
 class FakeMediaQueryList extends EventTarget implements MediaQueryList {

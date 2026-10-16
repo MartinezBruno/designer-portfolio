@@ -64,7 +64,7 @@ describe('createLifecycle', () => {
       throw new Error('boom');
     });
     lifecycle.register(() => {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error -- verifies non-Error throws are wrapped
+      // Non-Error throw: must be wrapped into an Error before reaching onError.
       throw 'plain string';
     });
     lifecycle.register(good.init);
@@ -76,6 +76,23 @@ describe('createLifecycle', () => {
     expect(onError.mock.calls[1]?.[0]).toEqual(new Error('plain string'));
     expect(good.init).toHaveBeenCalledTimes(1);
     expect(lifecycle.activeCleanups).toBe(1);
+  });
+
+  it('isolates a throwing cleanup so the remaining cleanups still run', () => {
+    const onError = vi.fn();
+    const lifecycle = createLifecycle(document, onError);
+    const good = trackedInit();
+    lifecycle.register(() => () => {
+      throw new Error('cleanup failed');
+    });
+    lifecycle.register(good.init);
+    lifecycle.mount();
+
+    lifecycle.unmount();
+
+    expect(onError).toHaveBeenCalledWith(new Error('cleanup failed'));
+    expect(good.cleanup).toHaveBeenCalledTimes(1);
+    expect(lifecycle.activeCleanups).toBe(0);
   });
 
   it('adds no cleanup for an init returning undefined', () => {
