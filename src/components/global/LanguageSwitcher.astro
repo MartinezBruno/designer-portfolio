@@ -1,0 +1,54 @@
+---
+import { locales, type Locale } from '../../i18n/config';
+import { alternatePath } from '../../i18n/routes';
+import { useTranslations } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+  pathname: string;
+}
+
+const { locale, pathname } = Astro.props;
+const t = useTranslations(locale);
+const names = { en: t('lang.en'), es: t('lang.es') } as const satisfies Record<Locale, string>;
+
+// Build-time hrefs from the fixed locale tuple and this page's own path. Never reads browser language.
+// The accessible name starts with the visible code (WCAG 2.5.3 Label in Name) and adds the language name.
+const links = locales.map((target) => ({
+  target,
+  code: target.toUpperCase(),
+  href: alternatePath(pathname, target),
+  current: target === locale,
+}));
+---
+
+<nav aria-label={t('lang.label')}>
+  <ul class="flex items-center gap-1">
+    {links.map(({ target, code, href, current }, index) => (
+      <>
+        {index > 0 && (
+          <li aria-hidden="true" class="text-ink-muted text-sm">
+            /
+          </li>
+        )}
+        <li>
+          <a
+            href={href}
+            hreflang={target}
+            lang={target}
+            aria-label={`${code} ${names[target]}`}
+            aria-current={current ? 'true' : undefined}
+            class:list={[
+              'inline-flex min-h-11 min-w-11 items-center justify-center text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+              current
+                ? 'text-ink underline decoration-2 underline-offset-4'
+                : 'text-ink-muted hover:text-ink motion-safe:transition-colors motion-safe:duration-150',
+            ]}
+          >
+            {code}
+          </a>
+        </li>
+      </>
+    ))}
+  </ul>
+</nav>

@@ -21,7 +21,7 @@ describe('LanguageSwitcher', () => {
     const enLink = linkTag(html, 'en');
     expect(enLink).toContain('href="/"');
     expect(enLink).toContain('lang="en"');
-    expect(enLink).toContain('aria-label="English"');
+    expect(enLink).toContain('aria-label="EN English"');
     expect(enLink).not.toContain('aria-current');
   });
 
@@ -30,7 +30,7 @@ describe('LanguageSwitcher', () => {
     expect(html).toContain('aria-label="Language"');
     const esLink = linkTag(html, 'es');
     expect(esLink).toContain('href="/es/"');
-    expect(esLink).toContain('aria-label="Español"');
+    expect(esLink).toContain('aria-label="ES Español"');
     expect(linkTag(html, 'en')).toContain('aria-current="true"');
   });
 

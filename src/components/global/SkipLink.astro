@@ -1,0 +1,17 @@
+---
+import type { Locale } from '../../i18n/config';
+import { useTranslations } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const t = useTranslations(Astro.props.locale);
+---
+
+<a
+  href="#main"
+  class="sr-only bg-surface-alt text-ink inline-flex min-h-11 items-center px-4 text-sm font-semibold focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+>
+  {t('a11y.skipToContent')}
+</a>

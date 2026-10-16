@@ -1,6 +1,8 @@
 ---
 import '../styles/global.css';
 import type { Locale } from '../i18n/config';
+import SkipLink from '../components/global/SkipLink.astro';
+import SiteHeader from '../components/global/SiteHeader.astro';
 
 interface Props {
   locale: Locale;
@@ -8,6 +10,7 @@ interface Props {
 }
 
 const { locale, title } = Astro.props;
+const pathname = Astro.url.pathname;
 ---
 
 <!doctype html>
@@ -19,6 +22,8 @@ const { locale, title } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body class="bg-surface text-ink antialiased">
+    <SkipLink locale={locale} />
+    <SiteHeader locale={locale} pathname={pathname} />
     <main id="main" tabindex="-1">
       <slot />
     </main>

@@ -1,0 +1,28 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { site } from '../../data/site';
+import type { Locale } from '../../i18n/config';
+import { stripLocale } from '../../i18n/routes';
+import LanguageSwitcher from './LanguageSwitcher.astro';
+
+interface Props {
+  locale: Locale;
+  pathname: string;
+}
+
+const { locale, pathname } = Astro.props;
+const isHome = stripLocale(pathname) === '/';
+---
+
+<header class="bg-surface border-ink/10 sticky top-0 z-40 h-16 border-b">
+  <div class="mx-auto flex h-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <a
+      href={getRelativeLocaleUrl(locale, '/')}
+      aria-current={isHome ? 'page' : undefined}
+      class="inline-flex min-h-11 items-center text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+    >
+      {site.name}
+    </a>
+    <LanguageSwitcher locale={locale} pathname={pathname} />
+  </div>
+</header>
