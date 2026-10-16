@@ -81,8 +81,8 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Content layer: localized roles/services/tools/profile JSON collections, astro/zod schemas, pure query layer with count guards
-- [ ] 02-02-PLAN.md — Tokens and copy: accent swap to #0F70B7, motion-on variant, marquee keyframes, success token, five new EN/ES dictionary keys
+- [x] 02-01-PLAN.md — Content layer: localized roles/services/tools/profile JSON collections, astro/zod schemas, pure query layer with count guards
+- [x] 02-02-PLAN.md — Tokens and copy: accent swap to #0F70B7, motion-on variant, marquee keyframes, success token, five new EN/ES dictionary keys
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -209,7 +209,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Bilingual Walking Skeleton | 5/5 | Complete   | 2026-10-16 |
-| 2. Homepage Story | 0/8 | Planned | - |
+| 2. Homepage Story | 2/8 | In Progress|  |
 | 3. Real Behance Work | 0/TBD | Not started | - |
 | 4. Project Detail & Discovery | 0/TBD | Not started | - |
 | 5. Contact | 0/TBD | Not started | - |
