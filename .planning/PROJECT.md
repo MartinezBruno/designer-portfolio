@@ -1,0 +1,96 @@
+# Designer Portfolio — Martina Fernandez
+
+## What This Is
+
+A highly visual, motion-rich portfolio website for Martina Fernandez, a graphic designer (web design, social media management, and related services). Built with Astro, bilingual (English default, Spanish via toggle), it presents who she is, what she offers, the tools she uses, and her work — with projects sourced from her Behance profile.
+
+## Core Value
+
+Visitors (potential clients) immediately feel her design sensibility through a striking, animated experience and can browse her real Behance work and contact her — in English or Spanish.
+
+## Requirements
+
+### Validated
+
+(None yet — ship to validate)
+
+### Active
+
+**Homepage**
+- [ ] Hero with greeting, professional title, description and an image
+- [ ] Marquee listing all the jobs/roles she does (web design, social media manager, etc.)
+- [ ] Section with her 4 most featured services
+- [ ] Section showing the apps/tools she uses
+- [ ] Jobs/Projects section with her top 3 latest projects (sourced from Behance)
+- [ ] Contact section with a working form that emails her
+
+**Jobs/Projects page**
+- [ ] Lists all projects from her Behance profile
+- [ ] Search + filtering ("a plus") — filter dimensions depend on what data Behance actually exposes (to be determined in research)
+
+**Job/Project detail page**
+- [ ] Mirrors the Behance project content (images + text) styled within the site
+
+**Cross-cutting**
+- [ ] Language toggle EN/ES with URL-prefix routing (`/` = English default, `/es/...` = Spanish)
+- [ ] Motion: scroll reveals, bold/playful interactions (cursor effects, magnetic buttons, image hover effects), page transitions, smooth/inertial scroll with parallax
+- [ ] Respects `prefers-reduced-motion` and remains accessible (semantic HTML, ARIA where needed, focus management)
+
+### Out of Scope
+
+- Deployment to production / custom domain for v1 — v1 "done" = working local build (hosting target is Cloudflare, deployment comes later)
+- CMS / admin panel — content is provided upfront; projects come from Behance
+- Pixel-perfect Figma implementation — Figma is a reference only; final design is ours
+
+## Context
+
+- **Client:** Martina Fernandez, graphic designer. Behance: https://www.behance.net/martifernand7
+- **Design reference:** Figma (reference only, final design fully up to us): https://www.figma.com/design/rj2KJq1kc8GTEWPs9lg9KR/my-own-webpage?node-id=9-95&t=bhsgizZcN52K5r6j-1
+- **Content:** Her copy and assets (bio, services, app list, photo) are ready. English is the source; Spanish translations will be drafted by us for her review.
+- **Behance data source is the key unknown.** [Unverified] Behance stopped issuing new public API keys around 2019–2020. The user chose "research first" — research must determine a feasible way to get (a) project list, (b) latest 3, and (c) full project content (images + text, for mirrored detail pages), plus what metadata exists for filtering (categories/fields, tools, tags). Options to evaluate: official API, RSS feed, build-time scraping, hybrid with local content.
+- **Search/filter scope** is deferred until the available Behance metadata is known.
+
+## Constraints
+
+- **Tech stack**: Astro + TypeScript (strict) + Tailwind CSS (official Astro integration) — user's global conventions (AGENTS.md)
+- **Package manager**: pnpm for everything
+- **Icons**: Tabler icons, explicit imports, never barrels
+- **Hosting target**: Cloudflare (Pages/Workers) — affects contact form backend and any server-side/build-time Behance fetching
+- **i18n**: URL-prefix routing via Astro i18n, English default
+- **Accessibility**: Non-negotiable — heavy motion must degrade gracefully with reduced-motion
+- **Performance**: Measure, don't guess (bundle size, load times) — important given heavy motion + image-heavy content
+- **Dependencies**: Don't add until needed
+- **Quality gates**: No type errors, lint errors, or failing tests; add tests when behavior changes
+
+## Key Decisions
+
+| Decision | Rationale | Outcome |
+|----------|-----------|---------|
+| Astro as framework | User request + global convention | — Pending |
+| Behance data approach decided after research | API availability uncertain | — Pending |
+| Detail page mirrors Behance content | User preference — single source of truth on Behance | — Pending |
+| Working contact form (emails her) | User preference | — Pending |
+| URL-prefix i18n (`/`, `/es/`) | SEO-friendly, shareable | — Pending |
+| We draft Spanish translations | User preference; she reviews | — Pending |
+| Figma as reference only | Final design fully up to us | — Pending |
+| v1 done = local build | User definition; Cloudflare deploy later | — Pending |
+
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
+---
+*Last updated: 2026-10-15 after initialization*
