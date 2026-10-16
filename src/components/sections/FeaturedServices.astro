@@ -1,0 +1,31 @@
+---
+/**
+ * Featured services (HOME-04). Prop-driven: HomeView reads and sorts the collection, this section
+ * renders the cards in the order received. Grid stretch + the card's h-full give equal heights per row.
+ */
+import ServiceCard from '../ui/ServiceCard.astro';
+import { useTranslations, type Locale } from '../../i18n/t';
+import type { ServiceView } from '../../lib/content/home';
+
+interface Props {
+  services: readonly ServiceView[];
+  locale: Locale;
+}
+
+const { services, locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<section
+  aria-labelledby="services-title"
+  class="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 sm:px-6 lg:px-8"
+>
+  <h2 id="services-title" class="font-display text-2xl font-semibold tracking-tight">
+    {t('services.heading')}
+  </h2>
+  <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    {services.map((service) => (
+      <ServiceCard title={service.title} items={service.items} icon={service.icon} />
+    ))}
+  </ul>
+</section>
