@@ -1,0 +1,7 @@
+[
+  { "id": "illustrator", "order": 1, "name": "Adobe Illustrator", "icon": "illustrator" },
+  { "id": "indesign", "order": 2, "name": "Adobe InDesign", "icon": "indesign" },
+  { "id": "photoshop", "order": 3, "name": "Adobe Photoshop", "icon": "photoshop" },
+  { "id": "figma", "order": 4, "name": "Figma", "icon": "figma" },
+  { "id": "lightroom", "order": 5, "name": "Adobe Lightroom", "icon": "lightroom" }
+]

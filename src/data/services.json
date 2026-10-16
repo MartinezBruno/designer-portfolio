@@ -1,0 +1,78 @@
+[
+  {
+    "id": "graphic-design",
+    "order": 1,
+    "icon": "vector",
+    "title": { "en": "Graphic design", "es": "Diseño gráfico" },
+    "items": {
+      "en": [
+        "Merchandise and packaging design",
+        "Watermarks",
+        "Thumbnails and covers",
+        "Multimedia pieces"
+      ],
+      "es": [
+        "Diseño de merchandising y packaging",
+        "Marcas de agua",
+        "Miniaturas y portadas",
+        "Piezas multimedia"
+      ]
+    }
+  },
+  {
+    "id": "web-design",
+    "order": 2,
+    "icon": "layout",
+    "title": { "en": "Web design", "es": "Diseño web" },
+    "items": {
+      "en": [
+        "Wireframes and assets",
+        "Responsive design",
+        "Prototyping",
+        "Design reviews and feedback",
+        "UX/UI design"
+      ],
+      "es": [
+        "Wireframes y assets",
+        "Diseño responsive",
+        "Prototipado",
+        "Revisión y comentarios",
+        "Diseño UX/UI"
+      ]
+    }
+  },
+  {
+    "id": "branding",
+    "order": 3,
+    "icon": "palette",
+    "title": { "en": "Branding", "es": "Branding" },
+    "items": {
+      "en": [
+        "Visual identity",
+        "Logo",
+        "Typography",
+        "Color palette",
+        "Mockups",
+        "Brand applications for web and print"
+      ],
+      "es": [
+        "Identidad visual",
+        "Logo",
+        "Tipografía",
+        "Paleta de colores",
+        "Mockups",
+        "Aplicación de la marca en web y gráfica"
+      ]
+    }
+  },
+  {
+    "id": "social-media",
+    "order": 4,
+    "icon": "speakerphone",
+    "title": { "en": "Social media", "es": "Social media" },
+    "items": {
+      "en": ["Social media management", "Story and post design", "Feed design"],
+      "es": ["Gestión de redes sociales", "Diseño de historias y publicaciones", "Diseño del feed"]
+    }
+  }
+]
