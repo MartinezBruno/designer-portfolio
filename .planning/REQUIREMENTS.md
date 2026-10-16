@@ -9,14 +9,14 @@ v1 "done" = working local build (deploy is post-v1).
 
 ### Foundation (FND)
 
-- [ ] **FND-01**: Developer can run `pnpm dev`, `pnpm build`, `pnpm lint` (incl. `astro check`) and `pnpm test` on an Astro 7.x + strict TypeScript (~6.0.x) + Tailwind v4 project with zero errors
-- [ ] **FND-02**: Developer can run Playwright end-to-end tests with axe accessibility checks
+- [x] **FND-01**: Developer can run `pnpm dev`, `pnpm build`, `pnpm lint` (incl. `astro check`) and `pnpm test` on an Astro 7.x + strict TypeScript (~6.0.x) + Tailwind v4 project with zero errors
+- [x] **FND-02**: Developer can run Playwright end-to-end tests with axe accessibility checks
 - [ ] **FND-03**: Icons render from Tabler as explicit per-icon SVG imports (no barrel imports, no client JS)
-- [ ] **FND-04**: Secrets (`.env`, `.dev.vars`) are git-ignored and never appear in the built output
+- [x] **FND-04**: Secrets (`.env`, `.dev.vars`) are git-ignored and never appear in the built output
 
 ### Internationalization & Layout (I18N)
 
-- [ ] **I18N-01**: Visitor sees English at `/…` and Spanish at `/es/…` for every page
+- [x] **I18N-01**: Visitor sees English at `/…` and Spanish at `/es/…` for every page
 - [ ] **I18N-02**: Visitor can switch language via an "EN / ES" text toggle in the header and land on the equivalent page in the other language
 - [ ] **I18N-03**: Visitor is never auto-redirected based on browser language or location
 - [ ] **I18N-04**: Every page outputs correct `html lang`, canonical, and hreflang (en, es, x-default) tags plus localized title/description/OG metadata
@@ -115,11 +115,11 @@ Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FND-01 | Phase 1 | Pending |
-| FND-02 | Phase 1 | Pending |
+| FND-01 | Phase 1 | Complete |
+| FND-02 | Phase 1 | Complete |
 | FND-03 | Phase 1 | Pending |
-| FND-04 | Phase 1 | Pending |
-| I18N-01 | Phase 1 | Pending |
+| FND-04 | Phase 1 | Complete |
+| I18N-01 | Phase 1 | Complete |
 | I18N-02 | Phase 1 | Pending |
 | I18N-03 | Phase 1 | Pending |
 | I18N-04 | Phase 1 | Pending |
