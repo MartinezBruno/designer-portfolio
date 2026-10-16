@@ -12,12 +12,12 @@ Visitors (potential clients) immediately feel her design sensibility through a s
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Hero with greeting, professional title, description and an image — Validated in Phase 1: Bilingual Walking Skeleton
+- [x] Language toggle EN/ES with URL-prefix routing (`/` = English default, `/es/...` = Spanish) — Validated in Phase 1: Bilingual Walking Skeleton
 
 ### Active
 
 **Homepage**
-- [ ] Hero with greeting, professional title, description and an image
 - [ ] Marquee listing all the jobs/roles she does (web design, social media manager, etc.)
 - [ ] Section with her 4 most featured services
 - [ ] Section showing the apps/tools she uses
@@ -32,7 +32,6 @@ Visitors (potential clients) immediately feel her design sensibility through a s
 - [ ] Mirrors the Behance project content (images + text) styled within the site
 
 **Cross-cutting**
-- [ ] Language toggle EN/ES with URL-prefix routing (`/` = English default, `/es/...` = Spanish)
 - [ ] Motion: scroll reveals, bold/playful interactions (cursor effects, magnetic buttons, image hover effects), page transitions, smooth/inertial scroll with parallax
 - [ ] Respects `prefers-reduced-motion` and remains accessible (semantic HTML, ARIA where needed, focus management)
 
@@ -66,11 +65,11 @@ Visitors (potential clients) immediately feel her design sensibility through a s
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Astro as framework | User request + global convention | — Pending |
+| Astro as framework | User request + global convention | ✓ Good — Astro 7.4 skeleton shipped in Phase 1 |
 | Behance data approach decided after research | API availability uncertain | — Pending |
 | Detail page mirrors Behance content | User preference — single source of truth on Behance | — Pending |
 | Working contact form (emails her) | User preference | — Pending |
-| URL-prefix i18n (`/`, `/es/`) | SEO-friendly, shareable | — Pending |
+| URL-prefix i18n (`/`, `/es/`) | SEO-friendly, shareable | ✓ Good — live in Phase 1 with hreflang/canonical |
 | We draft Spanish translations | User preference; she reviews | — Pending |
 | Figma as reference only | Final design fully up to us | — Pending |
 | v1 done = local build | User definition; Cloudflare deploy later | — Pending |
@@ -93,4 +92,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-15 after initialization*
+*Last updated: 2026-10-16 after Phase 1 (Bilingual Walking Skeleton) — Astro site live at / and /es/ with all quality gates green*
