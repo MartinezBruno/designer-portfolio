@@ -1,0 +1,23 @@
+---
+import { absoluteFor } from '../../i18n/routes';
+import { buildSeo, type SeoInput } from '../../lib/seo';
+
+type Props = SeoInput;
+
+// URLs come only from astro.config `site` and the build-time pathname (never request input).
+const seo = buildSeo(Astro.props, absoluteFor);
+---
+
+<title>{seo.title}</title>
+<meta name="description" content={seo.description} />
+{seo.robots && <meta name="robots" content={seo.robots} />}
+{seo.canonical && <link rel="canonical" href={seo.canonical} />}
+{seo.alternates.map(({ hreflang, href }) => (
+  <link rel="alternate" hreflang={hreflang} href={href} />
+))}
+<meta property="og:title" content={seo.og.title} />
+<meta property="og:description" content={seo.og.description} />
+<meta property="og:locale" content={seo.og.locale} />
+<meta property="og:locale:alternate" content={seo.og.localeAlternate} />
+<meta property="og:type" content={seo.og.type} />
+{seo.og.url && <meta property="og:url" content={seo.og.url} />}
