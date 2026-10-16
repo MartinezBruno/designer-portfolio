@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { Font } from 'astro:assets';
 import type { Locale } from '../i18n/config';
 import SkipLink from '../components/global/SkipLink.astro';
 import SiteHeader from '../components/global/SiteHeader.astro';
@@ -20,8 +21,10 @@ const pathname = Astro.url.pathname;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <Font cssVariable="--font-inter" preload />
+    <Font cssVariable="--font-bricolage" preload />
   </head>
-  <body class="bg-surface text-ink antialiased">
+  <body class="bg-surface text-ink font-sans antialiased">
     <SkipLink locale={locale} />
     <SiteHeader locale={locale} pathname={pathname} />
     <main id="main" tabindex="-1">

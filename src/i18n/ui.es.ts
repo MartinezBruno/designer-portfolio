@@ -13,7 +13,8 @@ export const es = {
   'hero.title': 'Diseñadora gráfica para web y redes sociales',
   'hero.description':
     'Diseño webs, piezas de marca y contenido para redes que ayudan a pequeños negocios a verse tan bien como son.',
-  'hero.imageAlt': 'Retrato de Martina Fernandez',
+  // TODO(martina): restore the UI-SPEC alt ("Retrato de Martina Fernandez") when the real portrait replaces portrait.jpg
+  'hero.imageAlt': 'Imagen provisional del retrato de Martina Fernandez',
   'hero.cta': 'Trabajemos juntos',
   'footer.heading': 'Hablemos',
   'footer.behance': 'Martina en Behance',
