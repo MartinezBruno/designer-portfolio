@@ -4,14 +4,16 @@ import { site } from '../../data/site';
 import type { Locale } from '../../i18n/config';
 import { stripLocale } from '../../i18n/routes';
 import { useTranslations } from '../../i18n/t';
+import type { PageKind } from '../../lib/seo';
 import LanguageSwitcher from './LanguageSwitcher.astro';
 
 interface Props {
   locale: Locale;
   pathname: string;
+  kind?: PageKind;
 }
 
-const { locale, pathname } = Astro.props;
+const { locale, pathname, kind = 'page' } = Astro.props;
 const isHome = stripLocale(pathname) === '/';
 const t = useTranslations(locale);
 ---
@@ -34,7 +36,7 @@ const t = useTranslations(locale);
           {t('nav.contact')}
         </a>
       </nav>
-      <LanguageSwitcher locale={locale} pathname={pathname} />
+      <LanguageSwitcher locale={locale} pathname={pathname} kind={kind} />
     </div>
   </div>
 </header>

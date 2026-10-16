@@ -1,0 +1,50 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import IconArrowRight from '@tabler/icons/outline/arrow-right.svg';
+import ButtonLink from '../ui/ButtonLink.astro';
+import { useTranslations, type Locale } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+  // The root 404.html answers every miss (including /es/*), so it carries a Spanish way home.
+  showAltLocale: boolean;
+}
+
+const { locale, showAltLocale } = Astro.props;
+const t = useTranslations(locale);
+const tEs = useTranslations('es');
+// Fixed homes only: the 404 never reads or echoes the requested URL.
+const home = getRelativeLocaleUrl(locale, '/');
+const esHome = getRelativeLocaleUrl('es', '/');
+---
+
+<section
+  aria-labelledby="not-found-title"
+  class="mx-auto flex max-w-6xl flex-col items-center gap-12 px-4 py-16 text-center sm:px-6 lg:px-8"
+>
+  <p aria-hidden="true" class="font-display text-ink-muted text-5xl font-semibold">
+    404
+  </p>
+  <h1 id="not-found-title" class="font-display text-5xl font-semibold tracking-tight">
+    {t('notFound.heading')}
+  </h1>
+  <p class="text-ink-muted text-base">{t('notFound.body')}</p>
+  <ButtonLink href={home}>
+    {t('notFound.cta')}
+    <Fragment slot="icon">
+      <IconArrowRight aria-hidden="true" focusable="false" class="size-5" />
+    </Fragment>
+  </ButtonLink>
+  {showAltLocale && (
+    <p lang="es" class="text-base">
+      {tEs('notFound.altLocalePrompt')}{' '}
+      <a
+        href={esHome}
+        hreflang="es"
+        class="focus-visible:outline-accent font-semibold underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2"
+      >
+        {tEs('notFound.altLocaleLink')}
+      </a>
+    </p>
+  )}
+</section>

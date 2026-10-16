@@ -37,7 +37,7 @@ const pathname = Astro.url.pathname;
   </head>
   <body class="bg-surface text-ink font-sans antialiased">
     <SkipLink locale={locale} />
-    <SiteHeader locale={locale} pathname={pathname} />
+    <SiteHeader locale={locale} pathname={pathname} kind={kind} />
     <main id="main" tabindex="-1">
       <slot />
     </main>

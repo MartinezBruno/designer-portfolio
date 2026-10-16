@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import NotFoundView from '../../components/views/NotFoundView.astro';
+import { useTranslations } from '../../i18n/t';
+
+const t = useTranslations('es');
+---
+
+<BaseLayout
+  locale="es"
+  kind="notFound"
+  title={t('meta.404.title')}
+  description={t('meta.404.description')}
+>
+  <NotFoundView locale="es" showAltLocale={false} />
+</BaseLayout>
