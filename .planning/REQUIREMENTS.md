@@ -19,10 +19,10 @@ v1 "done" = working local build (deploy is post-v1).
 - [x] **I18N-01**: Visitor sees English at `/…` and Spanish at `/es/…` for every page
 - [x] **I18N-02**: Visitor can switch language via an "EN / ES" text toggle in the header and land on the equivalent page in the other language
 - [x] **I18N-03**: Visitor is never auto-redirected based on browser language or location
-- [ ] **I18N-04**: Every page outputs correct `html lang`, canonical, and hreflang (en, es, x-default) tags plus localized title/description/OG metadata
+- [x] **I18N-04**: Every page outputs correct `html lang`, canonical, and hreflang (en, es, x-default) tags plus localized title/description/OG metadata
 - [x] **I18N-05**: All UI strings exist in both languages (a missing Spanish key fails type-check/tests)
 - [x] **I18N-06**: Visitor sees a shared header/nav and footer (email + socials) on every page, with a skip-to-content link
-- [ ] **I18N-07**: Visitor sees a localized 404 page with a way back home
+- [x] **I18N-07**: Visitor sees a localized 404 page with a way back home
 
 ### Homepage (HOME)
 
@@ -122,10 +122,10 @@ Updated during roadmap creation.
 | I18N-01 | Phase 1 | Complete |
 | I18N-02 | Phase 1 | Complete |
 | I18N-03 | Phase 1 | Complete |
-| I18N-04 | Phase 1 | Pending |
+| I18N-04 | Phase 1 | Complete |
 | I18N-05 | Phase 1 | Complete |
 | I18N-06 | Phase 1 | Complete |
-| I18N-07 | Phase 1 | Pending |
+| I18N-07 | Phase 1 | Complete |
 | HOME-01 | Phase 1 | Complete |
 | HOME-02 | Phase 2 | Pending |
 | HOME-03 | Phase 2 | Pending |

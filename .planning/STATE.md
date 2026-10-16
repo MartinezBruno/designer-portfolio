@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-10-16T14:27:47.993Z"
+last_updated: "2026-10-16T14:32:13.085Z"
 last_activity: 2026-10-16
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-10-15)
 ## Current Position
 
 Phase: 01 (bilingual-walking-skeleton) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-10-16
 
-Progress: [██████░░░░] 60%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Progress: [██████░░░░] 60%
 | Phase 01 P01 | 5min | 3 tasks | 22 files |
 | Phase 01 P02 | 4 min | 3 tasks | 13 files |
 | Phase 01 P03 | 4 min | 3 tasks | 19 files |
+| Phase 01 P04 | 6min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-02: 404 cross-locale copy split into notFound.altLocalePrompt + notFound.altLocaleLink
 - [Phase 01]: 01-03: hero.imageAlt temporarily says 'placeholder' while the stand-in portrait ships (TODO(martina) restores the UI-SPEC alt)
 - [Phase 01]: 01-03: IconLink aria-label includes the new-tab hint; fonts self-hosted via fontProviders.local() for offline builds
+- [Phase 01]: 01-04: buildSeo is pure with an injected absolute-URL resolver; x-default points at the English URL
+- [Phase 01]: 01-04: 404s use BaseLayout kind=notFound (noindex, no canonical/hreflang/og:url, toggle to other home)
+- [Phase 01]: 01-04: root 404.html is English with a lang=es Spanish cross-link; dist/es/404.html deferred to deploy time (no build.format preserve)
 
 ### Pending Todos
 
@@ -96,6 +100,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-16T14:27:40.556Z
+Last session: 2026-10-16T14:32:08.248Z
 Stopped at: Completed 01-03-PLAN.md
 Resume file: None
