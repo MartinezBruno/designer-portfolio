@@ -15,6 +15,12 @@ export const en = {
   // TODO(martina): restore the UI-SPEC alt ("Portrait of Martina Fernandez") when the real portrait replaces portrait.jpg
   'hero.imageAlt': "Placeholder image for Martina Fernandez's portrait",
   'hero.cta': "Let's work together",
+  // TODO(martina): confirm Phase 2 copy (badge, section headings, pause label).
+  'availability.open': 'Open to new projects',
+  'roles.heading': 'What I do',
+  'roles.pause': 'Pause roles animation',
+  'services.heading': 'What I can do for you',
+  'tools.heading': 'Tools I work with',
   'footer.heading': "Let's talk",
   'footer.behance': 'Martina on Behance',
   'footer.instagram': 'Martina on Instagram',
