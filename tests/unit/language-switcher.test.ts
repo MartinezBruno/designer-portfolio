@@ -1,10 +1,15 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vitest';
 import LanguageSwitcher from '../../src/components/global/LanguageSwitcher.astro';
+import type { PageKind } from '../../src/lib/seo';
 
-async function render(locale: 'en' | 'es', pathname: string): Promise<string> {
+async function render(
+  locale: 'en' | 'es',
+  pathname: string,
+  kind: PageKind = 'page',
+): Promise<string> {
   const container = await AstroContainer.create();
-  return container.renderToString(LanguageSwitcher, { props: { locale, pathname } });
+  return container.renderToString(LanguageSwitcher, { props: { locale, pathname, kind } });
 }
 
 function linkTag(html: string, hreflang: string): string {
@@ -39,5 +44,17 @@ describe('LanguageSwitcher', () => {
     expect(html).not.toContain('<script');
     expect(html).not.toContain('<button');
     expect(html).not.toContain('<select');
+  });
+
+  it('on the English 404 links ES to the Spanish home, not /es/404/', async () => {
+    const html = await render('en', '/404/', 'notFound');
+    expect(linkTag(html, 'es')).toContain('href="/es/"');
+    expect(html).not.toContain('href="/es/404/"');
+  });
+
+  it('on the Spanish 404 links EN to the English home', async () => {
+    const html = await render('es', '/es/404/', 'notFound');
+    expect(linkTag(html, 'en')).toContain('href="/"');
+    expect(html).not.toContain('href="/404/"');
   });
 });
