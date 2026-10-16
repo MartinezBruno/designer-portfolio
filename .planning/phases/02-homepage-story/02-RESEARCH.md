@@ -474,18 +474,22 @@ Pair it with a unit render test of `AvailabilityBadge` for **both** `available: 
 | A7 | Using a Tabler `brand-*` mark next to a visible tool name is acceptable nominative trademark use | Pattern 6 | If not, use text-only tool chips |
 | A8 | JSON (not YAML) is acceptable to the user for content files | Alternatives | If YAML is required, add a `yaml` devDependency (legitimacy gate) or drop the direct-import tests |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Real content from Martina (roles, 4 services with descriptions, tools, current availability)**
    - Known: PROJECT.md says her copy is "ready", but it isn't in the repo. The Figma reference may contain it (not accessible here, so unverified).
    - Unclear: the exact lists and wording.
    - Recommendation: ship `TODO(martina)` drafts in the JSON files and track them in the SUMMARY "Known Stubs". JSON has no comments, so put the TODO note in `content.config.ts` and the README.
+   - RESOLVED: real content supplied via `02-client-mockup.png` and locked in 02-CONTEXT D-01–D-07 (roles, services) and D-12 (tools). Polished strings still marked `TODO(martina)` per D-02. Implemented in 02-01.
 2. **Off-state badge: show "not available" text, or hide the badge?**
    - Recommendation: render both states (SC3 says "flips its state"). The UI-SPEC decides the copy.
+   - RESOLVED (superseded): 02-CONTEXT D-08 hides the badge when `available: false`. There is no closed state and no `availability.closed` key. ROADMAP SC3 is amended to show/hide. Implemented in 02-03.
 3. **Marquee speed and visual scale**
    - Recommendation: the UI-SPEC sets the duration (suggest 30–60s per loop, `[ASSUMED]`) and the role text size (one of the 4 allowed sizes).
+   - RESOLVED: 40s per copy, linear, infinite (02-UI-SPEC line 236; 02-CONTEXT "40s stays"). Track fill at wide viewports is checked in 02-08.
 4. **Add `--force` to `test:e2e`'s build?**
    - Recommendation: yes for e2e determinism, unless the planner prefers relying on count guards plus JSON-import unit tests alone.
+   - RESOLVED (not adopted): `test:e2e` stays `astro build && playwright test`. Direct JSON-import unit tests and the count guards catch stale-cache parse errors before e2e runs in `pnpm verify`. To revisit if stale content shows up in e2e.
 
 ## Environment Availability
 

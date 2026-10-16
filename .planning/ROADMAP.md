@@ -74,10 +74,31 @@ Plans:
 
   1. Visitor sees a marquee of all her roles that pauses on hover/focus or via a control. Under reduced motion it is static, and a screen reader announces each role once (clones are `aria-hidden`).
   2. Visitor sees exactly 4 featured services and a grid of the apps/tools she uses, in English at `/` and Spanish at `/es/`, sourced from localized content files.
-  3. Visitor sees an "available for projects" badge. Changing one content value flips its state after rebuild, with no code change.
+  3. Visitor sees an "available for projects" badge. Changing one content value shows or hides the badge after a rebuild, with no code change (amended by 02-CONTEXT D-08).
   4. The homepage still passes axe checks and keyboard navigation with the new sections in both languages.
 
-**Plans**: TBD
+**Plans**: 8 plans
+Plans:
+**Wave 1**
+
+- [ ] 02-01-PLAN.md — Content layer: localized roles/services/tools/profile JSON collections, astro/zod schemas, pure query layer with count guards
+- [ ] 02-02-PLAN.md — Tokens and copy: accent swap to #0F70B7, motion-on variant, marquee keyframes, success token, five new EN/ES dictionary keys
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 02-03-PLAN.md — Availability badge in the hero, driven by profile.json (HOME-07)
+- [ ] 02-04-PLAN.md — Roles marquee on the blue band with aria-pressed pause toggle (HOME-02, HOME-03)
+- [ ] 02-05-PLAN.md — Featured services: 4 non-interactive cards with bullet lists (HOME-04)
+- [ ] 02-06-PLAN.md — Tools row: icon-only focusable tiles with WCAG 1.4.13 tooltips (HOME-05)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 02-07-PLAN.md — Compose HomeView, homepage-story e2e in EN/ES, generalized keyboard-order test
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 02-08-PLAN.md — Reduced-motion/tooltip axe, 320px and track-fill layout checks, pnpm verify, human visual check
+
 **UI hint**: yes
 
 ### Phase 3: Real Behance Work
@@ -188,7 +209,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Bilingual Walking Skeleton | 5/5 | Complete   | 2026-10-16 |
-| 2. Homepage Story | 0/TBD | Not started | - |
+| 2. Homepage Story | 0/8 | Planned | - |
 | 3. Real Behance Work | 0/TBD | Not started | - |
 | 4. Project Detail & Discovery | 0/TBD | Not started | - |
 | 5. Contact | 0/TBD | Not started | - |
