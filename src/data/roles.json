@@ -1,0 +1,14 @@
+[
+  { "id": "web-design", "order": 1, "label": { "en": "Web design", "es": "Diseño web" } },
+  { "id": "branding", "order": 2, "label": { "en": "Branding", "es": "Branding" } },
+  {
+    "id": "social-media-manager",
+    "order": 3,
+    "label": { "en": "Social media manager", "es": "Social media manager" }
+  },
+  {
+    "id": "graphic-design",
+    "order": 4,
+    "label": { "en": "Graphic design", "es": "Diseño gráfico" }
+  }
+]
