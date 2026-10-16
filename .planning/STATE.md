@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
+status: verifying
 stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-10-16T14:32:13.085Z"
+last_updated: "2026-10-16T14:36:39.289Z"
 last_activity: 2026-10-16
 progress:
   total_phases: 8
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
-  completed_plans: 4
-  percent: 0
+  completed_plans: 5
+  percent: 13
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-10-15)
 
 Phase: 01 (bilingual-walking-skeleton) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-16
 
-Progress: [████████░░] 80%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [████████░░] 80%
 | Phase 01 P02 | 4 min | 3 tasks | 13 files |
 | Phase 01 P03 | 4 min | 3 tasks | 19 files |
 | Phase 01 P04 | 6min | 3 tasks | 14 files |
+| Phase 01 P05 | 6min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-04: buildSeo is pure with an injected absolute-URL resolver; x-default points at the English URL
 - [Phase 01]: 01-04: 404s use BaseLayout kind=notFound (noindex, no canonical/hreflang/og:url, toggle to other home)
 - [Phase 01]: 01-04: root 404.html is English with a lang=es Spanish cross-link; dist/es/404.html deferred to deploy time (no build.format preserve)
+- [Phase 01]: 01-05: motion gate defaults to 'off' when matchMedia is unavailable; only set:html in src/ is motionGateInline
+- [Phase 01]: 01-05: lifecycle registry isolates init and cleanup errors; bindToAstro mounts immediately and listens to raw astro:page-load/before-swap
 
 ### Pending Todos
 
@@ -100,6 +103,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-16T14:32:08.248Z
+Last session: 2026-10-16T14:36:35.463Z
 Stopped at: Completed 01-03-PLAN.md
 Resume file: None

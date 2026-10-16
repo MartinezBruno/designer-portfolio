@@ -15,7 +15,7 @@ This roadmap uses vertical MVP slices. Phase 1 ships a working bilingual walking
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Bilingual Walking Skeleton** - Astro site with quality gates, EN/ES routing, shared layout, hero, 404, plus motion gate and lifecycle registry
+- [x] **Phase 1: Bilingual Walking Skeleton** - Astro site with quality gates, EN/ES routing, shared layout, hero, 404, plus motion gate and lifecycle registry (completed 2026-10-16)
 - [ ] **Phase 2: Homepage Story** - Roles marquee, 4 featured services, tools, and availability badge, in both languages
 - [ ] **Phase 3: Real Behance Work** - Consent, a typed project model, a fail-loud snapshot sync, latest 3 on Home, and the Projects list page
 - [ ] **Phase 4: Project Detail & Discovery** - Mirrored detail pages with metadata and navigation, plus conditional filter/search
@@ -60,7 +60,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 01-05-PLAN.md — Motion gate + lifecycle registry wired into the layout, full axe/keyboard sweep
+- [x] 01-05-PLAN.md — Motion gate + lifecycle registry wired into the layout, full axe/keyboard sweep
 
 **UI hint**: yes
 
@@ -187,7 +187,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Bilingual Walking Skeleton | 4/5 | In Progress|  |
+| 1. Bilingual Walking Skeleton | 5/5 | Complete   | 2026-10-16 |
 | 2. Homepage Story | 0/TBD | Not started | - |
 | 3. Real Behance Work | 0/TBD | Not started | - |
 | 4. Project Detail & Discovery | 0/TBD | Not started | - |
