@@ -3,6 +3,7 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import { site } from '../../data/site';
 import type { Locale } from '../../i18n/config';
 import { stripLocale } from '../../i18n/routes';
+import { useTranslations } from '../../i18n/t';
 import LanguageSwitcher from './LanguageSwitcher.astro';
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
 
 const { locale, pathname } = Astro.props;
 const isHome = stripLocale(pathname) === '/';
+const t = useTranslations(locale);
 ---
 
 <header class="bg-surface border-ink/10 sticky top-0 z-40 h-16 border-b">
@@ -23,6 +25,16 @@ const isHome = stripLocale(pathname) === '/';
     >
       {site.name}
     </a>
-    <LanguageSwitcher locale={locale} pathname={pathname} />
+    <div class="flex items-center gap-2 sm:gap-4">
+      <nav aria-label={t('nav.label')}>
+        <a
+          href="#contact"
+          class="text-ink focus-visible:outline-accent inline-flex min-h-11 items-center text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          {t('nav.contact')}
+        </a>
+      </nav>
+      <LanguageSwitcher locale={locale} pathname={pathname} />
+    </div>
   </div>
 </header>

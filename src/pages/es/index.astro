@@ -1,8 +1,11 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { site } from '../../data/site';
+import HomeView from '../../components/views/HomeView.astro';
+import { useTranslations } from '../../i18n/t';
+
+const t = useTranslations('es');
 ---
 
-<BaseLayout locale="es" title={site.name}>
-  <h1 class="text-5xl font-semibold tracking-tight">{site.name}</h1>
+<BaseLayout locale="es" title={t('meta.home.title')}>
+  <HomeView locale="es" />
 </BaseLayout>

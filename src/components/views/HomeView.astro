@@ -1,0 +1,12 @@
+---
+import Hero from '../sections/Hero.astro';
+import type { Locale } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+---
+
+<Hero locale={locale} />

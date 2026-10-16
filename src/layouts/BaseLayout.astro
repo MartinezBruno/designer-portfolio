@@ -4,6 +4,7 @@ import { Font } from 'astro:assets';
 import type { Locale } from '../i18n/config';
 import SkipLink from '../components/global/SkipLink.astro';
 import SiteHeader from '../components/global/SiteHeader.astro';
+import SiteFooter from '../components/global/SiteFooter.astro';
 
 interface Props {
   locale: Locale;
@@ -30,5 +31,6 @@ const pathname = Astro.url.pathname;
     <main id="main" tabindex="-1">
       <slot />
     </main>
+    <SiteFooter locale={locale} />
   </body>
 </html>
