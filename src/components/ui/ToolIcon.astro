@@ -1,0 +1,26 @@
+---
+import IconBrandAdobeIllustrator from '@tabler/icons/outline/brand-adobe-illustrator.svg';
+import IconBrandAdobeIndesign from '@tabler/icons/outline/brand-adobe-indesign.svg';
+import IconBrandAdobePhotoshop from '@tabler/icons/outline/brand-adobe-photoshop.svg';
+import IconBrandFigma from '@tabler/icons/outline/brand-figma.svg';
+// Lightroom has no Tabler icon; the generic Adobe mark stands in (D-13).
+import IconBrandAdobe from '@tabler/icons/outline/brand-adobe.svg';
+import type { ToolIconKey } from '../../lib/content/icons';
+
+interface Props {
+  name: ToolIconKey;
+}
+
+const icons = {
+  illustrator: IconBrandAdobeIllustrator,
+  indesign: IconBrandAdobeIndesign,
+  photoshop: IconBrandAdobePhotoshop,
+  figma: IconBrandFigma,
+  lightroom: IconBrandAdobe,
+} as const satisfies Record<ToolIconKey, typeof IconBrandFigma>;
+
+const Icon = icons[Astro.props.name];
+---
+
+<!-- currentColor only: never brand colors or accent (D-13). -->
+<Icon aria-hidden="true" focusable="false" class="size-8" />
