@@ -1,1 +1,21 @@
 @import 'tailwindcss';
+
+@theme {
+  --color-surface: #faf7f2;
+  --color-surface-alt: #efe9e0;
+  --color-ink: #1a1714;
+  --color-ink-muted: #5e5750;
+  --color-accent: #4b2ee8;
+  --color-accent-ink: #ffffff;
+  --color-danger: #b42318;
+
+  --text-*: initial;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.4;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 1.3;
+  --text-5xl: 3rem;
+  --text-5xl--line-height: 1.1;
+}
