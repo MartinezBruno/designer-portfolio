@@ -48,7 +48,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02-PLAN.md — Language switching: typed EN/ES dictionaries, EN / ES toggle, header, skip link, no auto-redirect
+- [x] 01-02-PLAN.md — Language switching: typed EN/ES dictionaries, EN / ES toggle, header, skip link, no auto-redirect
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -187,7 +187,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Bilingual Walking Skeleton | 1/5 | In Progress|  |
+| 1. Bilingual Walking Skeleton | 2/5 | In Progress|  |
 | 2. Homepage Story | 0/TBD | Not started | - |
 | 3. Real Behance Work | 0/TBD | Not started | - |
 | 4. Project Detail & Discovery | 0/TBD | Not started | - |

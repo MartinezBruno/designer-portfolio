@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-10-16T14:17:38.677Z"
+last_updated: "2026-10-16T14:22:42.364Z"
 last_activity: 2026-10-16
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 5
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-10-15)
 ## Current Position
 
 Phase: 01 (bilingual-walking-skeleton) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-10-16
 
-Progress: [██░░░░░░░░] 20%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Progress: [██░░░░░░░░] 20%
 
 *Updated after each plan completion*
 | Phase 01 P01 | 5min | 3 tasks | 22 files |
+| Phase 01 P02 | 4 min | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,8 @@ Recent decisions affecting current work:
 - [Roadmap]: Contact (Phase 5) depends only on Phase 2 and can run in parallel with Phases 3–4.
 - [Phase 01]: 01-01: Package list approved as listed (no removals, incl. eslint-plugin-jsx-a11y-x); Node stays 24.15.0
 - [Phase 01]: 01-01: Tailwind --text-*: initial reset verified; only text-sm/base/2xl/5xl compile
+- [Phase 01]: 01-02: language toggle aria-label is 'EN English'/'ES Español' so the visible code is in the accessible name (WCAG 2.5.3)
+- [Phase 01]: 01-02: 404 cross-locale copy split into notFound.altLocalePrompt + notFound.altLocaleLink
 
 ### Pending Todos
 
@@ -90,6 +93,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-16T14:17:38.673Z
+Last session: 2026-10-16T14:22:35.921Z
 Stopped at: Completed 01-01-PLAN.md
 Resume file: None
