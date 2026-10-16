@@ -15,7 +15,7 @@ export function applyMotionGate(doc: Document, win: Window): MotionState {
   return state;
 }
 
-/** Build-time constant injected with `set:html`; never contains user data. */
+/** Build-time constant injected into the inline head script; never contains user data. */
 export const motionGateInline = `(${applyMotionGate.toString()})(document, window);`;
 
 export function onMotionPreferenceChange(

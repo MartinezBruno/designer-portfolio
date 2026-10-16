@@ -7,6 +7,7 @@ import SiteHeader from '../components/global/SiteHeader.astro';
 import SiteFooter from '../components/global/SiteFooter.astro';
 import SeoHead from '../components/global/SeoHead.astro';
 import type { PageKind } from '../lib/seo';
+import { motionGateInline } from '../lib/motion/gate';
 
 interface Props {
   locale: Locale;
@@ -24,6 +25,8 @@ const pathname = Astro.url.pathname;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Blocking motion gate before any stylesheet: build-time constant, never user data. -->
+    <script is:inline set:html={motionGateInline} />
     <SeoHead
       locale={locale}
       pathname={pathname}
@@ -42,5 +45,8 @@ const pathname = Astro.url.pathname;
       <slot />
     </main>
     <SiteFooter locale={locale} />
+    <script>
+      import '../lib/motion';
+    </script>
   </body>
 </html>
