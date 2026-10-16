@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-10-16T14:22:42.364Z"
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-10-16T14:27:47.993Z"
 last_activity: 2026-10-16
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 5
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-10-15)
 ## Current Position
 
 Phase: 01 (bilingual-walking-skeleton) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-10-16
 
-Progress: [████░░░░░░] 40%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Progress: [████░░░░░░] 40%
 *Updated after each plan completion*
 | Phase 01 P01 | 5min | 3 tasks | 22 files |
 | Phase 01 P02 | 4 min | 3 tasks | 13 files |
+| Phase 01 P03 | 4 min | 3 tasks | 19 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-01: Tailwind --text-*: initial reset verified; only text-sm/base/2xl/5xl compile
 - [Phase 01]: 01-02: language toggle aria-label is 'EN English'/'ES Español' so the visible code is in the accessible name (WCAG 2.5.3)
 - [Phase 01]: 01-02: 404 cross-locale copy split into notFound.altLocalePrompt + notFound.altLocaleLink
+- [Phase 01]: 01-03: hero.imageAlt temporarily says 'placeholder' while the stand-in portrait ships (TODO(martina) restores the UI-SPEC alt)
+- [Phase 01]: 01-03: IconLink aria-label includes the new-tab hint; fonts self-hosted via fontProviders.local() for offline builds
 
 ### Pending Todos
 
@@ -93,6 +96,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-16T14:22:35.921Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-10-16T14:27:40.556Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None

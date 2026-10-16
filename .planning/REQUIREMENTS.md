@@ -11,7 +11,7 @@ v1 "done" = working local build (deploy is post-v1).
 
 - [x] **FND-01**: Developer can run `pnpm dev`, `pnpm build`, `pnpm lint` (incl. `astro check`) and `pnpm test` on an Astro 7.x + strict TypeScript (~6.0.x) + Tailwind v4 project with zero errors
 - [x] **FND-02**: Developer can run Playwright end-to-end tests with axe accessibility checks
-- [ ] **FND-03**: Icons render from Tabler as explicit per-icon SVG imports (no barrel imports, no client JS)
+- [x] **FND-03**: Icons render from Tabler as explicit per-icon SVG imports (no barrel imports, no client JS)
 - [x] **FND-04**: Secrets (`.env`, `.dev.vars`) are git-ignored and never appear in the built output
 
 ### Internationalization & Layout (I18N)
@@ -26,7 +26,7 @@ v1 "done" = working local build (deploy is post-v1).
 
 ### Homepage (HOME)
 
-- [ ] **HOME-01**: Visitor sees a hero with greeting, professional title, description and her image, visible immediately without waiting on JavaScript
+- [x] **HOME-01**: Visitor sees a hero with greeting, professional title, description and her image, visible immediately without waiting on JavaScript
 - [ ] **HOME-02**: Visitor sees a marquee of all the roles/jobs she does (web design, social media manager, etc.)
 - [ ] **HOME-03**: Visitor can pause the marquee (pause on hover/focus or control); it is static under reduced motion and screen readers hear each role once
 - [ ] **HOME-04**: Visitor sees her 4 most featured services
@@ -117,7 +117,7 @@ Updated during roadmap creation.
 |-------------|-------|--------|
 | FND-01 | Phase 1 | Complete |
 | FND-02 | Phase 1 | Complete |
-| FND-03 | Phase 1 | Pending |
+| FND-03 | Phase 1 | Complete |
 | FND-04 | Phase 1 | Complete |
 | I18N-01 | Phase 1 | Complete |
 | I18N-02 | Phase 1 | Complete |
@@ -126,7 +126,7 @@ Updated during roadmap creation.
 | I18N-05 | Phase 1 | Complete |
 | I18N-06 | Phase 1 | Complete |
 | I18N-07 | Phase 1 | Pending |
-| HOME-01 | Phase 1 | Pending |
+| HOME-01 | Phase 1 | Complete |
 | HOME-02 | Phase 2 | Pending |
 | HOME-03 | Phase 2 | Pending |
 | HOME-04 | Phase 2 | Pending |

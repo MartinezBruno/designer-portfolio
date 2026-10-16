@@ -52,7 +52,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-03-PLAN.md — Hero + footer: no-JS hero with portrait, footer with email/socials, Tabler inline icons, self-hosted fonts
+- [x] 01-03-PLAN.md — Hero + footer: no-JS hero with portrait, footer with email/socials, Tabler inline icons, self-hosted fonts
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -187,7 +187,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Bilingual Walking Skeleton | 2/5 | In Progress|  |
+| 1. Bilingual Walking Skeleton | 3/5 | In Progress|  |
 | 2. Homepage Story | 0/TBD | Not started | - |
 | 3. Real Behance Work | 0/TBD | Not started | - |
 | 4. Project Detail & Discovery | 0/TBD | Not started | - |
