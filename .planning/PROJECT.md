@@ -55,7 +55,7 @@ Visitors (potential clients) immediately feel her design sensibility through a s
 - **Tech stack**: Astro + TypeScript (strict) + Tailwind CSS (official Astro integration) — user's global conventions (AGENTS.md)
 - **Package manager**: pnpm for everything
 - **Icons**: Tabler icons, explicit imports, never barrels
-- **Hosting target**: Cloudflare (Pages/Workers) — affects contact form backend and any server-side/build-time Behance fetching
+- **Hosting target**: Cloudflare Workers (adapter dropped Pages support) — affects contact form backend and any server-side/build-time Behance fetching
 - **i18n**: URL-prefix routing via Astro i18n, English default
 - **Accessibility**: Non-negotiable — heavy motion must degrade gracefully with reduced-motion
 - **Performance**: Measure, don't guess (bundle size, load times) — important given heavy motion + image-heavy content
