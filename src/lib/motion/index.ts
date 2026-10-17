@@ -1,6 +1,7 @@
 import { bindToAstro, createLifecycle } from './lifecycle';
 
-// Page-scoped singleton. Motion effects (Phases 6-7) register through it; none in Phase 1.
+// Page-scoped singleton. Phase 2 registers the marquee toggle and the tool tooltips through it;
+// Phases 6-7 add motion effects.
 export const lifecycle = createLifecycle(document, (err) => {
   console.error(err);
 });
