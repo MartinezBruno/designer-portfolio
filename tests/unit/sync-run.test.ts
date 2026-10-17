@@ -59,6 +59,8 @@ function profileWith(ids: readonly string[], edit?: (store: ProfileStoreShape) =
   store.profile.activeSection.work.profileProjects = ids.map((id, index) => ({
     ...(JSON.parse(template.replaceAll('1001', id)) as FixtureProject),
     id: Number(id),
+    slug: `project-${id}`,
+    url: `https://www.behance.net/gallery/${id}/project-${id}`,
     publishedOn: 1690000000 + index * 1000,
   }));
   edit?.(store);
@@ -437,11 +439,21 @@ describe('runSync', () => {
         store.profile.activeSection.work.profileProjects = projects.map(
           (project) =>
             JSON.parse(
-              JSON.stringify(project).replaceAll('mir-s3-cdn-cf.behance.net', 'mir-cdn.behance.net'),
+              JSON.stringify(project).replaceAll(
+                'mir-s3-cdn-cf.behance.net',
+                'mir-cdn.behance.net',
+              ),
             ) as FixtureProject,
         );
       });
       await expectRefused({ profile }, 'G4', /host not allowed/);
+    });
+
+    it('fails on an unreadable previous snapshot without --allow-fewer (G1b)', async () => {
+      await expectRefused({}, 'G1b', /previous snapshot .* is unreadable/, async () => {
+        await seed(3);
+        await writeFile(join(root, PATHS.snapshot), '{"version":1}\n');
+      });
     });
 
     it('fails on overrides with an unknown id (G8)', async () => {

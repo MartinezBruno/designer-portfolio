@@ -237,6 +237,7 @@ describe('suggestCategory', () => {
   it('returns null when no field maps to a category', () => {
     expect(suggestCategory(['Illustration'])).toBeNull();
     expect(suggestCategory([])).toBeNull();
+    expect(suggestCategory(['constructor'])).toBeNull();
   });
 
   it('lets the first matching field win, in field order', () => {
