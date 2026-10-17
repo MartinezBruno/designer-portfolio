@@ -88,13 +88,13 @@ describe('commitSync', () => {
     await expect(stat(join(root, STAGING, 'snapshot.json'))).rejects.toThrow();
   });
 
-  it('never overwrites an existing same-named cover (bytes and mtime unchanged)', async () => {
+  it('never rewrites an existing same-named cover with the same bytes (mtime unchanged)', async () => {
     const past = new Date('2020-01-01T00:00:00Z');
     await utimes(join(root, COVERS, OLD_A), past, past);
     const before = await stat(join(root, COVERS, OLD_A));
 
     await createStaging(root, STAGING);
-    await writeStagedCover(root, STAGING, OLD_A, new Uint8Array([9, 9, 9]));
+    await writeStagedCover(root, STAGING, OLD_A, new TextEncoder().encode('old a'));
     await writeStagedSnapshot(root, STAGING, { next: true });
 
     const result = await commitSync({
@@ -109,6 +109,48 @@ describe('commitSync', () => {
     expect(result.added).toEqual([]);
     expect(await readFile(join(root, COVERS, OLD_A), 'utf8')).toBe('old a');
     expect(after.mtimeMs).toBe(before.mtimeMs);
+  });
+
+  it('replaces a truncated same-named cover with the staged bytes', async () => {
+    // A copy cut off partway by an earlier run: same name, fewer bytes.
+    await writeFile(join(root, COVERS, NEW_C), new Uint8Array([7]));
+    await createStaging(root, STAGING);
+    await writeStagedCover(root, STAGING, NEW_C, new Uint8Array([7, 7, 7, 7]));
+    await writeStagedSnapshot(root, STAGING, { next: true });
+
+    const result = await commitSync({
+      root,
+      stagingDir: STAGING,
+      snapshot: SNAPSHOT,
+      coversDir: COVERS,
+      referenced: new Set([NEW_C]),
+    });
+
+    expect(result.added).toEqual([NEW_C]);
+    expect([...(await readFile(join(root, COVERS, NEW_C)))]).toEqual([7, 7, 7, 7]);
+  });
+
+  it('copies through a partial file and removes partial leftovers of a killed run', async () => {
+    const leftover = `.${OLD_B}.partial`;
+    await writeFile(join(root, COVERS, leftover), 'cut off');
+    await writeFile(join(root, COVERS, `.${NEW_C}.partial`), 'cut off');
+    await createStaging(root, STAGING);
+    await writeStagedCover(root, STAGING, NEW_C, new Uint8Array([5, 5]));
+    await writeStagedSnapshot(root, STAGING, { next: true });
+
+    const result = await commitSync({
+      root,
+      stagingDir: STAGING,
+      snapshot: SNAPSHOT,
+      coversDir: COVERS,
+      referenced: new Set([NEW_C, OLD_A, OLD_B]),
+    });
+
+    expect(result).toEqual({ added: [NEW_C], removed: [] });
+    expect([...(await readFile(join(root, COVERS, NEW_C)))]).toEqual([5, 5]);
+    expect((await readdir(join(root, COVERS))).sort()).toEqual(
+      ['.gitkeep', NEW_C, OLD_A, OLD_B].sort(),
+    );
   });
 
   it('leaves non-cover files alone and never deletes a referenced cover', async () => {
