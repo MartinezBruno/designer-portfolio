@@ -2,6 +2,7 @@
 // Erasable TypeScript only (type imports and a const tuple), so Node type stripping loads it.
 import type { ImageMetadata } from 'astro';
 import type { Locale } from '../../i18n/config.ts';
+import type { ToolIconKey } from '../content/icons.ts';
 
 /** Curated categories. Same ids, same order as src/data/services.json. */
 export const categoryIds = ['graphic-design', 'web-design', 'branding', 'social-media'] as const;
@@ -49,4 +50,24 @@ export interface ProjectCardView {
   summary: string | null;
   cover: ImageMetadata;
   coverAlt: string;
+}
+
+/** A tool on the detail page. `icon` is null when the Behance title matches no tools.json name. */
+export interface DetailTool {
+  name: string;
+  icon: ToolIconKey | null;
+}
+
+/** Resolved, already-localized detail page data. No optional properties; no date (D-12). */
+export interface ProjectDetailView {
+  slug: string;
+  title: string;
+  titleLang: Locale | null;
+  summary: string | null;
+  category: string | null;
+  tools: readonly DetailTool[];
+  behanceUrl: string;
+  cover: ImageMetadata;
+  coverAlt: string;
+  seo: { title: string; description: string };
 }
