@@ -40,7 +40,7 @@ created: 2026-10-17
 
 **Visual hierarchy (detail page):**
 1. **Focal point: Martina's work.** The seamless image stack starts right under the intro band and runs up to 1400px wide, wider than any text on the site. `[CONTEXT D-01, D-06; Taste: one dominant image beats six small ones; large things run to the edges]`
-2. **Second: the project title** (36px on phones, 48px from `sm`), the largest type on the page.
+2. **Second: the project title** (36px at every width), the largest type on the page.
 3. **Third: the closing pair.** The contact band is the page's only accent button. The next-project teaser has a large cover and a large title.
 4. Metadata, summary and links stay small and quiet.
 
@@ -59,7 +59,7 @@ created: 2026-10-17
 | Images | `astro:assets` `<Picture>` from local `ImageMetadata`. Module images are committed, re-encoded at sync (D-05). No remote image URLs in `dist/` `[CONTEXT D-05; Upstream: 03-UI-SPEC]` |
 | Theme | Light only `[Codebase: global.css has no dark tokens]`. D-02 mentions dark mode. Text modules use theme tokens only (`text-ink`, `bg-surface`), so they will follow a future dark theme without any change. No dark styles are specified here |
 | New packages | `sanitize-html` + `@types/sanitize-html`, **script-only (sync), never shipped to the client** `[CONTEXT D-02; Upstream: STACK.md]`. No UI packages |
-| New tokens | **one:** `--text-4xl: 2.25rem` with `--text-4xl--line-height: 1.1`. This is the phone size of the detail title (see Typography for the measurement that justifies it) |
+| New tokens | **one:** `--text-4xl: 2.25rem` with `--text-4xl--line-height: 1.1`. This is the detail title size at every width (see Typography for the measurement and the 4-size reasoning) |
 
 ### Phase 4 icon inventory `[Verified: files exist in node_modules/@tabler/icons/icons/outline/, 2026-10-17]`
 
@@ -93,25 +93,40 @@ Exceptions:
 - **Zero gap inside the image stack and inside collection grids.** Images touch, edge to edge and top to bottom. `[CONTEXT D-01: "do not add card frames, gaps or rounded corners between images"]`
 - **The 1400px stack width** (`max-w-[1400px]`) is wider than the site's `max-w-6xl` (1152px) content column, on purpose. The stack has **no side padding** at any width. Below 1400px the images run the full viewport width. `[CONTEXT D-01, D-06; Taste: large things run to the edges]`
 - **Touch targets:** every link and button is at least 44px tall (`min-h-11`), or 48px for the facade button (`h-12`, the same as `ButtonLink`). Links inside sanitized text-module prose are inline links in a sentence. They fall under the WCAG 2.5.8 inline exception and are not padded. `[Upstream: 01-UI-SPEC]`
-- Text column: `mx-auto max-w-6xl px-4 sm:px-6 lg:px-8`, the same as every other section `[Codebase]`. Text modules narrow further to `max-w-[65ch]` (see Module stack). `[Taste: text 45–75 characters per line]`
+- Text column: `mx-auto max-w-6xl px-4 sm:px-6 lg:px-8`, the same as every other section `[Codebase]`.
+- **Text-module measure `max-w-[65ch]`:** a width cap in characters, not a spacing token. It keeps Behance prose inside 45–75 characters per line. `[Taste: text 45–75 characters per line]`
+- **Embed width `max-w-[800px]`:** a width cap matching the 800px `max-width` of Behance's own embed `[Verified: snapshot fluidEmbed]`. It is not a spacing token. The padding around it uses the scale (`px-4 py-12 sm:px-6`).
 - **Known, not changed here:** section gaps stay at 64px. Taste asks for 120–220px. Retuning that is site-wide polish, already recorded as Phase 3 Open Question 4.
 
 ---
 
 ## Typography
 
-Phase 4 adds **one** size token (`text-4xl`, 36px), used only by the detail h1 and the next-project title below their breakpoint. Weights stay **400 and 600**.
+Phase 4 declares **exactly 4 sizes: 14, 16, 24 and 36**. It adds one size token (`text-4xl`, 36px), used by the detail h1 and the next-project h3 **at every width**. `text-5xl` (48px) is **not used** on detail pages. Weights stay **400 and 600**.
 
 | Role | Size | Weight | Line Height | Font |
 |------|------|--------|-------------|------|
 | Label / meta | 14px (`text-sm`) | 400 | 1.4 | Inter |
 | Body | 16px (`text-base`) | 400 for summary, prose, notes and meta values; 600 for link actions ("View on Behance", "Previous", fallbacks) | 1.5 | Inter |
 | Heading | 24px (`text-2xl`) | 600 | 1.3 | Bricolage Grotesque |
-| Display | 36px (`text-4xl`) phones, 48px (`text-5xl`) from the breakpoint | 600 | 1.1 | Bricolage Grotesque |
+| Display | 36px (`text-4xl`), every width | 600 | 1.1 | Bricolage Grotesque |
 
-At any one viewport width, a detail page shows **4 sizes** (14, 16, 24 and either 36 or 48), which is under the taste ceiling of 5. `[Taste: five sizes on a page is the ceiling]`
+**Why 36 and not 48 (revision 1, after the checker's Dimension 4 block):**
+- The checker caps the declared scale at 4 sizes. The Phase 1–3 baseline is exactly 4: 14 / 16 / 24 / 48. `[Upstream: 03-UI-SPEC Typography; Codebase: global.css compiles only sm/base/2xl/5xl plus the hero-only lead/display]`
+- Every baseline step is already used on this page:
+  - 14 for the `<dt>` labels
+  - 16 for body and links
+  - 24 for the facade label and the h2s
+- So keeping 48 would mean dropping 14 or 24. Both carry roles the inherited specs fixed (meta labels, section h2s), so the baseline does not support that alternative.
+- Dropping 48 in favour of 36 keeps 4 sizes. It also removes the measured 3-line wrap that 48px causes on phones (table below).
+- The hierarchy still holds:
+  - 36 vs 24 is a 1.5× step, and 36 vs 16 body is a 2.25× ratio.
+  - The visual focal point is the 1400px image stack, not the type (see Visual hierarchy).
+- The Projects page h1 keeps its 48px (`text-5xl`). Phase 4 does not touch it, and its contract is Phase 3's.
 
-### Why 36px on phones `[Verified: Chromium via Playwright, Bricolage Grotesque variable woff2 from node_modules, weight 600, tracking -0.025em, line-height 1.1, 2026-10-17]`
+`[Taste: two or three sizes do the visible work; five is the ceiling]`
+
+### Measurement behind the size `[Verified: Chromium via Playwright, Bricolage Grotesque variable woff2 from node_modules, weight 600, tracking -0.025em, line-height 1.1, 2026-10-17]`
 
 | Width (content box) | 48px: titles over 2 lines | 36px: titles over 2 lines |
 |---------------------|---------------------------|---------------------------|
@@ -119,15 +134,15 @@ At any one viewport width, a detail page shows **4 sizes** (14, 16, 24 and eithe
 | 358px (390 viewport) | the same two titles (3 lines each) | none |
 | 446px | none | none |
 
-48px needs at least about 446px of content width for the longest real title, and `sm` (640px viewport, 592px content) clears that. The two-line rule `[Taste: headlines two lines or fewer at every width]` therefore holds with `text-4xl sm:text-5xl` and fails with `text-5xl` alone.
+48px needs at least about 446px of content width for the longest real title, so it fails the two-line rule at 320 and 390. 36px holds the two-line rule `[Taste: headlines two lines or fewer at every width]` for all real titles at every tested width, including the 410px 7-column teaser tile at `md`.
 
-Caveat `[Verified, same run]`: an artificial 32-character worst case ("Wwwwwwww Wwwwwww Wwwwww Wwwwwww") wraps to 4 lines even at 36px/288px, so the 32-character cap does not by itself guarantee two lines. The gate is the e2e line-count check on the **real** titles (see Accessibility Contract), plus inspect's `headline-lines` at 390.
+Caveat `[Verified, same run]`: an artificial 32-character worst case ("Wwwwwwww Wwwwwww Wwwwww Wwwwwww") wraps to 4 lines even at 36px/288px, so the 32-character cap does not by itself guarantee two lines. The e2e line-count check on the **real** titles (see Accessibility Contract) is therefore **mandatory, not optional**: it is the gate, together with inspect's `headline-lines` at 390. A new or edited title override that fails it must be shortened.
 
 ### Phase 4 usage map
 
 | Element | Tag | Classes (contract) |
 |---------|-----|--------------------|
-| Project title | `<h1 id="project-title">` | `font-display text-4xl sm:text-5xl font-semibold tracking-tight text-ink text-pretty` |
+| Project title | `<h1 id="project-title">` | `font-display text-4xl font-semibold tracking-tight text-ink text-pretty` (36px at every width) |
 | Summary | `<p>` | `text-base text-ink max-w-[60ch] text-pretty` |
 | Meta label ("Category", "Tools"), **visible** | `<dt>` | `text-sm text-ink-muted` |
 | Meta value (category name, tool names) | `<dd>` / `<li>` | `text-base text-ink` |
@@ -139,7 +154,7 @@ Caveat `[Verified, same run]`: an artificial 32-character worst case ("Wwwwwwww 
 | Contact band heading | `<h2 id="project-cta-title">` | `font-display text-2xl font-semibold tracking-tight text-ink text-pretty` |
 | Contact band body | `<p>` | `text-base text-ink max-w-[60ch]` |
 | Teaser heading "Next project" | `<h2 id="next-project-title">` | `font-display text-2xl font-semibold tracking-tight text-ink` |
-| Next project title | `<h3>` | `font-display text-4xl lg:text-5xl font-semibold tracking-tight text-ink text-pretty` (48px only from `lg`, where the 7-column tile is at least 550px; at `md` it is 410px, which would wrap the longest title to 3 lines at 48px) `[Verified: grid arithmetic plus the measurement above]` |
+| Next project title | `<h3>` | `font-display text-4xl font-semibold tracking-tight text-ink text-pretty` (36px at every width; the narrowest tile is 288px on phones and 410px at `md`, and both hold every real title in 2 lines at 36px) `[Verified: grid arithmetic plus the measurement above]` |
 | "Previous" link | `<a>` | `text-base font-semibold`, see Interaction states |
 
 Rules:
@@ -173,7 +188,6 @@ No colour token changes. Light theme only.
 5. Marquee band background (Home only)
 6. Text-link hover/focus underline (`decoration-accent decoration-2 underline-offset-4`), now also on "View on Behance", the fallback links, "Previous", the next-project title link, and prose links (on prose links accent replaces the at-rest ink underline on hover/focus)
 7. **Contact band button background**: `ButtonLink`, the same accent pill as the hero CTA. It is the detail page's one primary action. `[Taste: the accent appears on the action and perhaps one other thing]`
-8. *(none other)*
 
 **Not accent:** the facade button (ink fill, so the contact button stays the page's single accent action), tool icons, category text, `<dt>` labels, the image stack, the facade field, and at-rest prose link underlines (ink, 1px).
 
