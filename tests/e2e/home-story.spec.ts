@@ -18,6 +18,7 @@ const cases = [
 ] as const;
 
 const INK = 'rgb(26, 23, 20)';
+const SURFACE = 'rgb(250, 247, 242)';
 
 function collectErrors(page: Page): string[] {
   const errors: string[] = [];
@@ -74,13 +75,22 @@ for (const [path, dict, locale] of cases) {
       );
     });
 
-    test('marquee: animates and the pause button pauses it', async ({ page }) => {
+    test('marquee: animates and the invisible band toggle pauses it', async ({ page }) => {
       const band = marquee(page);
       await expect(copyB(page)).toBeVisible();
       expect(await style(copyA(page), 'animationName')).toBe('marquee');
       expect(await style(copyA(page), 'animationPlayState')).toBe('running');
 
       const button = page.getByRole('button', { name: dict['roles.pause'] });
+      // No visible play/pause icon: the toggle is an empty, transparent overlay on the band.
+      await expect(button.locator('svg')).toHaveCount(0);
+      expect(await button.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(
+        'rgba(0, 0, 0, 0)',
+      );
+      const [bandBox, buttonBox] = await Promise.all([band.boundingBox(), button.boundingBox()]);
+      expect(buttonBox?.width).toBe(bandBox?.width);
+      expect(buttonBox?.height).toBe(bandBox?.height);
+      expect(buttonBox?.height ?? 0).toBeGreaterThanOrEqual(44);
       await expect(button).toHaveAttribute('aria-pressed', 'false');
       await button.click();
       await expect(button).toHaveAttribute('aria-pressed', 'true');
@@ -112,15 +122,50 @@ for (const [path, dict, locale] of cases) {
       await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('running');
     });
 
-    test('marquee: pause button focus ring is white on the band', async ({ page }) => {
+    test('marquee: keyboard focus pauses the band and shows a white outline', async ({ page }) => {
+      await page.mouse.move(0, 0);
+      expect(await style(copyA(page), 'animationPlayState')).toBe('running');
       await tabUntil(page, '[data-marquee-toggle]');
       const button = page.locator('[data-marquee-toggle]');
       const outline = await button.evaluate((el) => {
         const computed = getComputedStyle(el);
-        return { style: computed.outlineStyle, color: computed.outlineColor };
+        return {
+          style: computed.outlineStyle,
+          color: computed.outlineColor,
+          offset: computed.outlineOffset,
+        };
       });
       expect(outline.style).not.toBe('none');
       expect(outline.color).toBe('rgb(255, 255, 255)');
+      // Inset so the outline sits inside the band and is never clipped.
+      expect(outline.offset).toBe('-4px');
+      await expect(button).toHaveAttribute('aria-pressed', 'false');
+      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('paused');
+
+      await page.keyboard.press('Tab');
+      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('running');
+    });
+
+    test('tools: tiles invert colors on hover and keyboard focus', async ({ page }) => {
+      const tiles = toolsSection(page).locator('[data-tool]');
+      const colors = (index: number) =>
+        tiles.nth(index).evaluate((el) => {
+          const computed = getComputedStyle(el);
+          return { bg: computed.backgroundColor, fg: computed.color };
+        });
+
+      await page.mouse.move(0, 0);
+      expect(await colors(2)).toEqual({ bg: SURFACE, fg: INK });
+      await tiles.nth(2).hover();
+      await expect.poll(() => colors(2)).toEqual({ bg: INK, fg: SURFACE });
+      await page.mouse.move(0, 0);
+      await expect.poll(() => colors(2)).toEqual({ bg: SURFACE, fg: INK });
+
+      await tabUntil(page, '[data-tool]');
+      await expect.poll(() => colors(0)).toEqual({ bg: INK, fg: SURFACE });
+      // Esc hides the tooltip, so the tile returns to its resting colors.
+      await page.keyboard.press('Escape');
+      await expect.poll(() => colors(0)).toEqual({ bg: SURFACE, fg: INK });
     });
 
     test('services: four cards in order with their bullets', async ({ page }) => {
@@ -223,6 +268,33 @@ test.describe('tools tap on touch', () => {
     await expect(tiles.nth(1)).toHaveAttribute('data-open', '');
     await expect(tiles.nth(0)).not.toHaveAttribute('data-open');
     await expect(tooltips.nth(1)).toBeVisible();
+    // The open (tapped) tile is inverted like on hover and focus.
+    await expect
+      .poll(() => tiles.nth(1).evaluate((el) => getComputedStyle(el).backgroundColor))
+      .toBe(INK);
+    expect(errors).toEqual([]);
+  });
+});
+
+test.describe('marquee tap on touch', () => {
+  test.use({ hasTouch: true });
+
+  test('marquee: tapping the band toggles the pause state', async ({ page }) => {
+    const errors = collectErrors(page);
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+    const band = marquee(page);
+    const toggle = page.locator('[data-marquee-toggle]');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+
+    await band.tap();
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await expect(band).toHaveAttribute('data-paused', '');
+    await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('paused');
+
+    await band.tap();
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await expect(band).not.toHaveAttribute('data-paused');
     expect(errors).toEqual([]);
   });
 });
