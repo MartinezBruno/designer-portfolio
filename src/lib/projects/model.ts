@@ -29,6 +29,8 @@ export interface SourceProject {
   publishedOn: number;
   tools: readonly string[];
   cover: ImageMetadata;
+  /** Content image ids in DOM order: the keys moduleAlt overrides may use (D-09). */
+  imageIds: readonly string[];
 }
 
 export interface Project extends SourceProject, OrderFields {

@@ -9,8 +9,9 @@ import type { Overrides } from './overrides-schema.ts';
 import { toSlug } from './slug.ts';
 
 const TITLE_MAX = 32;
+const MODULE_ALT_MAX = 125;
 
-type SourceRef = { id: string; sourceSlug: string };
+type SourceRef = { id: string; sourceSlug: string; imageIds: readonly string[] };
 
 function finalSlug(source: SourceRef, overrides: Overrides): string {
   return overrides[source.id]?.slug ?? toSlug(source.sourceSlug);
@@ -18,24 +19,44 @@ function finalSlug(source: SourceRef, overrides: Overrides): string {
 
 /**
  * Fails loudly on overrides the build cannot honour: unknown ids, titles over the two-line limit,
- * and duplicate final slugs across every source, hidden ones included (a hidden project keeps its
- * URL reserved).
+ * moduleAlt keys that match no image of that project, moduleAlt values over 125 characters, and
+ * duplicate final slugs across every source, hidden ones included (a hidden project keeps its URL
+ * reserved). Lengths are counted in code points.
  */
 export function validateOverrides(sources: readonly SourceRef[], overrides: Overrides): void {
-  const known = new Set(sources.map((source) => source.id));
+  const known = new Map(sources.map((source) => [source.id, source]));
   for (const [id, override] of Object.entries(overrides)) {
-    if (!known.has(id)) {
+    const source = known.get(id);
+    if (source === undefined) {
       throw new Error(
         `project-overrides: unknown Behance id ${id}. Remove it or fix the id in src/data/project-overrides.json`,
       );
     }
-    if (override.title === undefined) continue;
-    for (const locale of locales) {
-      const length = [...override.title[locale]].length;
-      if (length > TITLE_MAX) {
+    if (override.title !== undefined) {
+      for (const locale of locales) {
+        const length = [...override.title[locale]].length;
+        if (length > TITLE_MAX) {
+          throw new Error(
+            `project-overrides: title.${locale} for ${id} is ${length} characters (max ${TITLE_MAX}). Shorten it in src/data/project-overrides.json`,
+          );
+        }
+      }
+    }
+    if (override.moduleAlt === undefined) continue;
+    const images = new Set(source.imageIds);
+    for (const [key, value] of Object.entries(override.moduleAlt)) {
+      if (!images.has(key)) {
         throw new Error(
-          `project-overrides: title.${locale} for ${id} is ${length} characters (max ${TITLE_MAX}). Shorten it in src/data/project-overrides.json`,
+          `project-overrides: moduleAlt key ${key} for ${id} matches no image in the snapshot. Fix or remove it in src/data/project-overrides.json`,
         );
+      }
+      for (const locale of locales) {
+        const length = [...value[locale]].length;
+        if (length > MODULE_ALT_MAX) {
+          throw new Error(
+            `project-overrides: moduleAlt.${locale} for ${id}/${key} is ${length} characters (max 125). Shorten it in src/data/project-overrides.json`,
+          );
+        }
       }
     }
   }
@@ -64,6 +85,7 @@ export function applyOverrides(sources: readonly SourceProject[], overrides: Ove
       publishedOn: source.publishedOn,
       tools: [...source.tools],
       cover: source.cover,
+      imageIds: [...source.imageIds],
       slug: finalSlug(source, overrides),
       title: copyLocalized(override?.title),
       summary: copyLocalized(override?.summary),
@@ -93,6 +115,26 @@ export function missingOverrides(
       id: source.id,
       slug: finalSlug(source, overrides),
       missing: CURATED_FIELDS.filter((field) => override?.[field] === undefined),
+    };
+  });
+}
+
+/**
+ * Per source project, how many content images have no moduleAlt entry yet (sync checklist, D-09).
+ * `total` counts every image id, `missing` the ones without a moduleAlt key.
+ */
+export function missingModuleAlts(
+  sources: readonly SourceRef[],
+  overrides: Overrides,
+): { id: string; slug: string; missing: number; total: number }[] {
+  return sources.map((source) => {
+    const moduleAlt = overrides[source.id]?.moduleAlt;
+    const missing = source.imageIds.filter((imageId) => moduleAlt?.[imageId] === undefined);
+    return {
+      id: source.id,
+      slug: finalSlug(source, overrides),
+      missing: missing.length,
+      total: source.imageIds.length,
     };
   });
 }

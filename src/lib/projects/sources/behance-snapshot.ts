@@ -4,7 +4,7 @@
 import type { ImageMetadata } from 'astro';
 import raw from '../../../data/behance/snapshot.json';
 import type { SourceProject } from '../model';
-import { parseSnapshot, type Snapshot } from '../snapshot-schema';
+import { contentImageIds, parseSnapshot, type Snapshot } from '../snapshot-schema';
 
 const snapshot = parseSnapshot(raw);
 
@@ -31,6 +31,8 @@ const sourceProjects: readonly SourceProject[] = snapshot.projects.map((project)
   publishedOn: project.publishedOn,
   tools: project.tools.map((tool) => tool.title),
   cover: coverFor(project.cover.file),
+  // `?? []` only until 04-08 makes content required.
+  imageIds: contentImageIds(project.content ?? []),
 }));
 
 export function getSourceProjects(): readonly SourceProject[] {

@@ -1,6 +1,6 @@
 // Named sync failure. Erasable TypeScript only (Node type stripping runs it).
-// `gate` names the failed check (G1 profile, G2 challenge, G3 project, G4 cover, G6 body sanity,
-// G7 commit). `committed` is true when the failure happened after the new snapshot replaced the
+// `gate` names the failed check (G1 profile, G2 challenge, G3 project, G4 cover, G4m module
+// images, G6 body sanity, G7 commit). `committed` is true when the failure happened after the new snapshot replaced the
 // previous one, so the CLI must not claim the previous snapshot was left untouched.
 
 export class SyncError extends Error {
@@ -26,7 +26,7 @@ export function postCommitError(error: Error | string): SyncError {
 
 export const UNTOUCHED = 'The previous snapshot was left untouched.';
 export const COMMITTED =
-  'The new snapshot was already written: review the diff (src/data/behance, src/assets/projects) before committing it, or restore it from git.';
+  'The new snapshot was already written: review the diff (src/data/behance, src/assets/projects, src/assets/projects/modules) before committing it, or restore it from git.';
 
 /** The CLI's failure message, true to whether the previous snapshot was replaced. */
 export function failureMessage(error: Error | string): string {

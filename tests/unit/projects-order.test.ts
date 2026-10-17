@@ -12,6 +12,7 @@ function source(id: string, sourceSlug: string, publishedOn: number): SourceProj
     publishedOn,
     tools: ['Figma'],
     cover: portrait,
+    imageIds: [],
   };
 }
 

@@ -1,5 +1,5 @@
-// `pnpm sync:behance`: refresh src/data/behance/snapshot.json and src/assets/projects/ from the
-// public Behance profile. Erasable TypeScript only (Node type stripping runs it).
+// `pnpm sync:behance`: refresh src/data/behance/snapshot.json, src/assets/projects/ (covers) and
+// src/assets/projects/modules/ (module images) from the public Behance profile. Erasable TypeScript only (Node type stripping runs it).
 //
 // - Manual runs only (D-04): never in CI, never in the Worker, no prebuild hook. Refuses when CI
 //   is set. The developer reviews and commits the resulting diff.
@@ -47,12 +47,13 @@ try {
       root: process.cwd(),
       snapshot: 'src/data/behance/snapshot.json',
       coversDir: 'src/assets/projects',
+      modulesDir: 'src/assets/projects/modules',
       overrides: 'src/data/project-overrides.json',
       stagingDir: `tmp/behance-sync/${startedAt.toISOString().replaceAll(':', '-')}`,
     },
   });
   console.log(
-    'sync:behance: done. Review the diff (src/data/behance, src/assets/projects) and commit it.',
+    'sync:behance: done. Review the diff (src/data/behance, src/assets/projects, src/assets/projects/modules) and commit it.',
   );
 } catch (error) {
   console.error(failureMessage(error instanceof Error ? error : String(error)));

@@ -23,6 +23,9 @@ export const OverrideSchema = z.strictObject({
   order: z.number().int().optional(),
   hidden: z.boolean().optional(),
   contentLang: z.enum(locales).optional(),
+  // Per-image alt text keyed by image id (D-09). Unknown keys and the 125-character limit are
+  // checked in validateOverrides, against the snapshot's image ids.
+  moduleAlt: z.record(z.string().regex(/^\d+$/), localized).optional(),
 });
 
 export const OverridesSchema = z.record(z.string().regex(/^\d+$/), OverrideSchema);
