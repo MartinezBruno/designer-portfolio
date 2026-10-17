@@ -6,7 +6,12 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { COMMITTED, failureMessage, SyncError, UNTOUCHED } from '../../scripts/behance/errors.ts';
 import { runSync, type SyncDeps, type SyncReport } from '../../scripts/behance/run-sync.ts';
-import { COVER_FILE, parseSnapshot } from '../../src/lib/projects/snapshot-schema.ts';
+import {
+  ContentSchema,
+  COVER_FILE,
+  MODULE_FILE,
+  parseSnapshot,
+} from '../../src/lib/projects/snapshot-schema.ts';
 import type { Snapshot, SnapshotProject } from '../../src/lib/projects/snapshot-schema.ts';
 
 const fixture = (name: string): Buffer =>
@@ -17,6 +22,7 @@ const PROJECT_HTML = fixture('project.html').toString('utf8');
 const CHALLENGE_HTML = fixture('challenge.html').toString('utf8');
 const COVER_PNG = new Uint8Array(fixture('cover.png'));
 const NOT_IMAGE = new Uint8Array(fixture('not-image.bin'));
+const MODULE_WEBP = new Uint8Array(fixture('module.webp'));
 
 const REPO_TMP = fileURLToPath(new URL('../../tmp/', import.meta.url));
 const PROFILE_URL = 'https://www.behance.net/martifernand7';
@@ -25,6 +31,7 @@ const NOW = new Date('2026-10-17T12:00:00Z');
 const PATHS = {
   snapshot: 'src/data/behance/snapshot.json',
   coversDir: 'src/assets/projects',
+  modulesDir: 'src/assets/projects/modules',
   stagingDir: 'tmp/staging',
   overrides: 'src/data/project-overrides.json',
 };
@@ -69,6 +76,27 @@ function profileWith(ids: readonly string[], edit?: (store: ProfileStoreShape) =
 
 const projectPage = (id: string): string => PROJECT_HTML.replaceAll('1001', id);
 
+interface ProjectStoreShape {
+  project: { project: { allModules: object[] } };
+}
+
+/** Project page for `id` with `extra` modules appended after the fixture's own modules. */
+function projectPageWith(id: string, extra: readonly object[]): string {
+  const page = projectPage(id);
+  const json = STORE_SCRIPT.exec(page)?.[2];
+  if (json === undefined) throw new Error('fixture has no store');
+  const store = JSON.parse(json) as ProjectStoreShape;
+  store.project.project.allModules.push(...extra);
+  return page.replace(
+    STORE_SCRIPT,
+    (_m, open: string, _json: string, close: string) => `${open}${JSON.stringify(store)}${close}`,
+  );
+}
+
+const MODULE_PATH = '/project_modules/';
+const moduleUrl = (variant: string, id: string): string =>
+  `https://mir-s3-cdn-cf.behance.net/project_modules/${variant}/abcdef${id}.png`;
+
 interface Reply {
   status: number;
   body: string | Uint8Array;
@@ -79,6 +107,8 @@ interface FakeOptions {
   profile?: string;
   project?: (id: string, attempt: number) => Reply;
   cover?: Uint8Array;
+  /** Module image replies; the default serves module.webp for every variant. */
+  module?: (url: string) => Reply;
   alwaysChallenge?: boolean;
 }
 
@@ -101,6 +131,10 @@ function makeFetch(options: FakeOptions, events: Event[]): typeof globalThis.fet
       if (options.project !== undefined) return options.project(id, attempt);
       // First request per project is challenged, the replay succeeds.
       return attempt === 1 ? html(CHALLENGE_HTML, 403) : html(projectPage(id));
+    }
+    if (url.startsWith('https://mir-s3-cdn-cf.behance.net/') && url.includes(MODULE_PATH)) {
+      if (options.module !== undefined) return options.module(url);
+      return { status: 200, body: MODULE_WEBP, type: 'image/webp' };
     }
     if (url.startsWith('https://mir-s3-cdn-cf.behance.net/')) {
       return { status: 200, body: options.cover ?? COVER_PNG, type: 'image/png' };
@@ -182,26 +216,57 @@ async function seed(count: number, overrides = '{}\n'): Promise<void> {
   };
   await mkdir(join(root, 'src/data/behance'), { recursive: true });
   await mkdir(join(root, PATHS.coversDir), { recursive: true });
+  await mkdir(join(root, PATHS.modulesDir), { recursive: true });
   await writeFile(join(root, PATHS.snapshot), `${JSON.stringify(snapshot, null, 2)}\n`);
   await writeFile(join(root, PATHS.overrides), overrides);
   for (const project of projects) {
     await writeFile(join(root, PATHS.coversDir, project.cover.file), `old cover ${project.id}`);
   }
+  await writeFile(join(root, PATHS.modulesDir, OLD_MODULE), 'old module image');
 }
 
-/** sha256 of the snapshot and of every file in the covers dir. */
+/** A module image no new snapshot references: GC removes it after a successful run. */
+const OLD_MODULE = '9001-000000009001.webp';
+
+/** sha256 of the snapshot and of every file in the covers and modules dirs. */
 async function fingerprint(): Promise<Record<string, string>> {
   const hash = async (path: string) =>
     createHash('sha256')
       .update(await readFile(join(root, path)))
       .digest('hex');
   const result: Record<string, string> = { [PATHS.snapshot]: await hash(PATHS.snapshot) };
-  for (const name of (await readdir(join(root, PATHS.coversDir))).sort()) {
-    const path = `${PATHS.coversDir}/${name}`;
-    result[path] = await hash(path);
+  for (const dir of [PATHS.coversDir, PATHS.modulesDir]) {
+    const entries = await readdir(join(root, dir), { withFileTypes: true }).catch(() => []);
+    const files = entries.filter((entry) => entry.isFile()).map((entry) => entry.name);
+    for (const name of files.sort()) {
+      const path = `${dir}/${name}`;
+      result[path] = await hash(path);
+    }
   }
   return result;
 }
+
+async function moduleFiles(): Promise<string[]> {
+  const names = await readdir(join(root, PATHS.modulesDir)).catch((): string[] => []);
+  return names.filter((name) => MODULE_FILE.test(name)).sort();
+}
+
+function contentFiles(snapshot: Snapshot): string[] {
+  return snapshot.projects
+    .flatMap((project) =>
+      (project.content ?? []).flatMap((entry) => {
+        if (entry.kind === 'image') return [entry.image.file];
+        if (entry.kind === 'collection') return entry.images.map((image) => image.file);
+        return [];
+      }),
+    )
+    .sort();
+}
+
+const moduleFetches = (events: readonly Event[]): string[] =>
+  events.flatMap((event) =>
+    event.kind === 'fetch' && event.url.includes(MODULE_PATH) ? [event.url] : [],
+  );
 
 async function readSnapshot(): Promise<Snapshot> {
   return parseSnapshot(JSON.parse(await readFile(join(root, PATHS.snapshot), 'utf8')));
@@ -254,7 +319,9 @@ describe('runSync', () => {
         expect(project.cover.width).toBe(808);
         expect(covers).toContain(project.cover.file);
       }
-      expect(covers.sort()).toEqual(snapshot.projects.map((project) => project.cover.file).sort());
+      expect(covers.filter((name) => COVER_FILE.test(name)).sort()).toEqual(
+        snapshot.projects.map((project) => project.cover.file).sort(),
+      );
 
       expect(report.count).toBe(3);
       expect(report.coversAdded).toHaveLength(3);
@@ -307,6 +374,7 @@ describe('runSync', () => {
         'canvasWidth',
         'cover',
         'modules',
+        'content',
       ]);
     });
 
@@ -327,13 +395,157 @@ describe('runSync', () => {
       const { deps, lines } = harness();
       await runSync(deps);
       expect(lines).toContain(
-        'sync:behance: project 1001 has unknown module type FutureModule (kept as raw JSON; Phase 4 must render a fallback)',
+        'sync:behance: unknown module type "FutureModule" in 1001 (project-1). It renders the Behance fallback note.',
       );
+      expect(lines.some((line) => line.includes('Phase 4 must render a fallback'))).toBe(false);
       const project = (await readSnapshot()).projects.find((entry) => entry.id === '1001');
       expect(project?.modules.map((module) => module.__typename)).toEqual([
         'ImageModule',
         'FutureModule',
       ]);
+      expect(project?.content?.at(-1)).toEqual({ kind: 'unknown', type: 'FutureModule' });
+    });
+
+    it('success: warns on a non-allowlisted embed and normalizes text and collections', async () => {
+      await seed(3);
+      const extra = (id: string): object[] => [
+        {
+          __typename: 'MediaCollectionModule',
+          id: 7701,
+          components: ['1', '2'].map((n) => ({
+            id: Number(`77${n}${id}`),
+            imageSizes: { allAvailable: [{ url: moduleUrl('1400_webp', `${n}x${id}`) }] },
+          })),
+        },
+        {
+          __typename: 'TextModule',
+          id: 7702,
+          text: '<div style="color:red"><span>Hello</span> <b>world</b></div>',
+        },
+        {
+          __typename: 'EmbedModule',
+          id: 7703,
+          originalEmbed: '<iframe src="https://evil.example/frame"></iframe>',
+        },
+      ];
+      const { deps, lines } = harness({
+        project: (id, attempt) =>
+          attempt === 1 ? html(CHALLENGE_HTML, 403) : html(projectPageWith(id, extra(id))),
+      });
+      const report = await runSync(deps);
+      expect(lines).toContain(
+        'sync:behance: embed origin "https://evil.example" in 1002 (project-2) is not allowlisted. It renders the Behance fallback note. Add it to the embed allowlist in src/lib/projects/ if it is safe.',
+      );
+      const snapshot = await readSnapshot();
+      const content = snapshot.projects.find((entry) => entry.id === '1002')?.content ?? [];
+      expect(content.map((entry) => entry.kind)).toEqual([
+        'image',
+        'unknown',
+        'collection',
+        'text',
+        'unknown',
+      ]);
+      const text = content.find((entry) => entry.kind === 'text');
+      expect(text?.kind === 'text' ? text.html : '').not.toMatch(/style|span/);
+      // 3 projects x (1 image + 2 collection images)
+      expect(report.modulesAdded).toHaveLength(9);
+      expect(await moduleFiles()).toEqual(contentFiles(snapshot));
+    });
+
+    it('success: writes content and commits exactly the referenced module images', async () => {
+      await seed(3);
+      const { deps, lines } = harness();
+      const report = await runSync(deps);
+      const snapshot = await readSnapshot();
+      for (const project of snapshot.projects) {
+        expect(ContentSchema.array().parse(project.content)).toEqual(project.content);
+        const first = project.content?.[0];
+        expect(first).toEqual({
+          kind: 'image',
+          image: {
+            id: `555${project.id}`,
+            file: expect.stringMatching(new RegExp(`^555${project.id}-[0-9a-f]{12}[.]webp$`)),
+            width: 256,
+            height: 192,
+            sourceUrl: moduleUrl('1400_webp', project.id),
+          },
+          fullBleed: false,
+          caption: '',
+        });
+      }
+      const files = contentFiles(snapshot);
+      expect(files).toHaveLength(3);
+      expect(await moduleFiles()).toEqual(files);
+      for (const file of files) {
+        const stored = await readFile(join(root, PATHS.modulesDir, file));
+        expect(new Uint8Array(stored)).toEqual(MODULE_WEBP);
+      }
+      expect([...report.modulesAdded].sort()).toEqual(files);
+      expect(report.modulesRemoved).toEqual([OLD_MODULE]);
+      expect(report.moduleBytesAdded).toBe(3 * MODULE_WEBP.byteLength);
+      const mb = ((3 * MODULE_WEBP.byteLength) / 1048576).toFixed(2);
+      expect(lines).toContain(`sync:behance: module images: 3 files, ${mb} MB added`);
+    });
+
+    it('success: falls back to the next variant on a 404 and stores WebP', async () => {
+      await seed(3);
+      const { deps } = harness({
+        module: (url) =>
+          url.includes('/1400_webp/')
+            ? html('not found', 404)
+            : { status: 200, body: COVER_PNG, type: 'image/png' },
+      });
+      await runSync(deps);
+      const snapshot = await readSnapshot();
+      for (const project of snapshot.projects) {
+        const first = project.content?.[0];
+        expect(first?.kind === 'image' ? first.image.sourceUrl : null).toBe(
+          moduleUrl('1400', project.id),
+        );
+      }
+      const files = await moduleFiles();
+      expect(files).toHaveLength(3);
+      for (const file of files) {
+        const bytes = await readFile(join(root, PATHS.modulesDir, file));
+        expect(bytes.subarray(0, 4).toString('latin1')).toBe('RIFF');
+        expect(bytes.subarray(8, 12).toString('latin1')).toBe('WEBP');
+      }
+    });
+
+    it('success: a re-sync reuses unchanged module images without a request and keeps them', async () => {
+      await seed(3);
+      await runSync(harness().deps);
+      const files = await moduleFiles();
+      const before = await fingerprint();
+      const second = harness();
+      const report = await runSync(second.deps);
+      expect(moduleFetches(second.events)).toEqual([]);
+      expect(report.modulesAdded).toEqual([]);
+      expect(report.modulesRemoved).toEqual([]);
+      expect(report.moduleBytesAdded).toBe(0);
+      expect(second.lines).toContain('sync:behance: module images: 0 files, 0.00 MB added');
+      // Module GC keeps every image the new snapshot references.
+      expect(await moduleFiles()).toEqual(files);
+      const after = await fingerprint();
+      for (const file of files) {
+        const path = `${PATHS.modulesDir}/${file}`;
+        expect(after[path]).toBe(before[path]);
+      }
+    });
+
+    it('success: a re-sync downloads a module image whose file is missing or corrupt', async () => {
+      await seed(3);
+      await runSync(harness().deps);
+      const [missing, corrupt] = await moduleFiles();
+      if (missing === undefined || corrupt === undefined) throw new Error('expected module files');
+      await rm(join(root, PATHS.modulesDir, missing));
+      await writeFile(join(root, PATHS.modulesDir, corrupt), 'truncated');
+      const second = harness();
+      const report = await runSync(second.deps);
+      expect(moduleFetches(second.events)).toHaveLength(2);
+      expect([...report.modulesAdded].sort()).toEqual([missing, corrupt].sort());
+      const stored = await readFile(join(root, PATHS.modulesDir, corrupt));
+      expect(new Uint8Array(stored)).toEqual(MODULE_WEBP);
     });
 
     it('success: sleeps 2000 ms before every Behance request after the first', async () => {
@@ -342,8 +554,9 @@ describe('runSync', () => {
       await runSync(deps);
       expect(events[0]?.kind).toBe('fetch');
       const fetches = events.filter((event) => event.kind === 'fetch');
-      // profile + 3 x (challenge + replay) + 3 covers
-      expect(fetches).toHaveLength(10);
+      // profile + 3 x (challenge + replay) + 3 covers + 3 module images
+      expect(fetches).toHaveLength(13);
+      expect(moduleFetches(events)).toHaveLength(3);
       events.forEach((event, index) => {
         if (event.kind !== 'fetch' || index === 0) return;
         expect(events[index - 1]).toEqual({ kind: 'sleep', ms: 2000 });
@@ -460,6 +673,27 @@ describe('runSync', () => {
       await expectRefused({}, 'G8', /unknown Behance id 999/, () =>
         seed(3, '{ "999": { "featured": true } }\n'),
       );
+    });
+
+    it('fails when every variant of one module image is unavailable (G4m)', async () => {
+      const module = (url: string): Reply =>
+        url.includes('abcdef1002')
+          ? html('not found', 404)
+          : { status: 200, body: MODULE_WEBP, type: 'image/webp' };
+      await expectRefused({ module }, 'G4m', /could not download module image 5551002 for 1002/);
+      const error = await runSync(harness({ module }).deps).then(
+        () => null,
+        (caught: Error) => caught,
+      );
+      const message = failureMessage(error ?? 'no error');
+      expect(message).toContain('could not download module image');
+      expect(message).toContain('The previous snapshot was left untouched.');
+      expect(await moduleFiles()).toEqual([OLD_MODULE]);
+    });
+
+    it('fails on module image bytes that are not an image (G4m)', async () => {
+      const module = (): Reply => ({ status: 200, body: NOT_IMAGE, type: 'image/webp' });
+      await expectRefused({ module }, 'G4m', /not an image/);
     });
 
     it('fails on a raw project whose publishedOn is a string (G3)', async () => {
