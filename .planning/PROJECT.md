@@ -18,15 +18,16 @@ Visitors (potential clients) immediately feel her design sensibility through a s
 - [x] Section with her 4 most featured services — Validated in Phase 2: Homepage Story
 - [x] Section showing the apps/tools she uses — Validated in Phase 2: Homepage Story
 - [x] Availability badge driven by content (HOME-07) — Validated in Phase 2: Homepage Story
+- [x] Jobs/Projects section on Home with her 3 latest Behance projects (HOME-06), shown as an even row — Validated in Phase 3: Real Behance Work
+- [x] Projects page listing all her Behance projects, newest first, EN/ES (PROJ-01) — Validated in Phase 3: Real Behance Work
+- [x] Consent documented, `pnpm sync:behance` committed snapshot, fail-loud sync, offline build, local overrides, source-agnostic model (DATA-01..06) — Validated in Phase 3: Real Behance Work
 
 ### Active
 
 **Homepage**
-- [ ] Jobs/Projects section with her top 3 latest projects (sourced from Behance)
 - [ ] Contact section with a working form that emails her
 
 **Jobs/Projects page**
-- [ ] Lists all projects from her Behance profile
 - [ ] Search + filtering ("a plus") — filter dimensions depend on what data Behance actually exposes (to be determined in research)
 
 **Job/Project detail page**
@@ -69,7 +70,7 @@ Visitors (potential clients) immediately feel her design sensibility through a s
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | Astro as framework | User request + global convention | ✓ Good — Astro 7.4 skeleton shipped in Phase 1 |
-| Behance data approach decided after research | API availability uncertain | — Pending |
+| Behance data approach decided after research | API availability uncertain | ✓ Good — committed snapshot via `pnpm sync:behance` (cookie-replay scrape) + local overrides; first live sync 2026-10-17 (Phase 3) |
 | Detail page mirrors Behance content | User preference — single source of truth on Behance | — Pending |
 | Working contact form (emails her) | User preference | — Pending |
 | URL-prefix i18n (`/`, `/es/`) | SEO-friendly, shareable | ✓ Good — live in Phase 1 with hreflang/canonical |
@@ -79,6 +80,8 @@ Visitors (potential clients) immediately feel her design sensibility through a s
 | Accent switched to client blue #0F70B7 | Matches her mockup (Phase 2, D-15) | ✓ Good — shipped Phase 2 |
 | Marquee pause via invisible full-band control | User chose no visible button at 02-08 checkpoint | ⚠ Revisit — review WR-01/02 |
 | Taste skill required for all design work | User decision 2026-10-16 | — Pending (first full pass still to do) |
+| Project cards and detail pages show no project date | User decision 2026-10-17 (Phase 3) | ✓ Good — cards shipped without date; Phase 4 SC2/PROJ-03 amended |
+| Home latest work as an even 3-tile row | User decision 2026-10-17 (fixed count of 3) | ✓ Good — shipped Phase 3 |
 
 ## Evolution
 
@@ -98,4 +101,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-16 after Phase 2 (Homepage Story) — roles marquee, 4 services, tools row and availability live in EN/ES; hero retypeset per taste skill*
+*Last updated: 2026-10-17 after Phase 3 (Real Behance Work) — real Behance snapshot (7 projects), Projects page and Home latest work live in EN/ES; sync, offline build and security review green*
