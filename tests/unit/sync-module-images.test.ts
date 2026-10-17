@@ -32,12 +32,19 @@ interface FakeReply {
 }
 
 /** Fake fetch keyed by URL; no real network. */
-function fakeDeps(routes: Record<string, FakeReply>): { deps: FetchDeps; calls: string[] } {
+function fakeDeps(routes: Record<string, FakeReply>): {
+  deps: FetchDeps;
+  calls: string[];
+  agents: (string | null)[];
+} {
   const calls: string[] = [];
+  const agents: (string | null)[] = [];
   const fakeFetch = async (input: string | URL | Request, init?: RequestInit) => {
     const url = String(input);
     calls.push(url);
-    expect(init?.redirect).toBe('error');
+    agents.push(new Headers(init?.headers).get('user-agent'));
+    // Redirects are never followed by fetch itself; fetchModuleImage checks the one allowed hop.
+    expect(init?.redirect).toBe('manual');
     const reply = routes[url];
     if (reply === undefined) throw new Error(`unexpected fetch ${url}`);
     if (reply.reject !== undefined) throw reply.reject;
@@ -47,6 +54,7 @@ function fakeDeps(routes: Record<string, FakeReply>): { deps: FetchDeps; calls: 
   return {
     deps: { fetch: fakeFetch as typeof globalThis.fetch, sleep: async () => {} },
     calls,
+    agents,
   };
 }
 
@@ -55,6 +63,12 @@ const image = (body: Uint8Array, type = 'image/png'): FakeReply => ({
   body,
   headers: { 'content-type': type },
 });
+const redirectTo = (location: string | undefined, status = 302): FakeReply => ({
+  status,
+  headers: location === undefined ? {} : { location },
+});
+const RENDITION = 'https://mir-cdn.behance.net/v1/rendition/project_modules';
+const HOP_1400_WEBP = `${RENDITION}/1400_webp/abc123.png`;
 const notFound: FakeReply = {
   status: 404,
   body: '{"error":"not found"}',
@@ -152,6 +166,97 @@ describe('fetchModuleImage', () => {
     });
     await expectSyncError(() => fetchModuleImage(URL_1400, deps), 'G4m', /too small/);
     await expectSyncError(() => fetchModuleImage(URL_FS, deps), 'G4m', /unknown magic bytes/);
+  });
+});
+
+describe('fetchModuleImage redirects (one allowed CDN hop)', () => {
+  it('follows one 302 to the mir-cdn rendition path with the same UA', async () => {
+    const { deps, calls, agents } = fakeDeps({
+      [URL_1400_WEBP]: redirectTo(HOP_1400_WEBP),
+      [HOP_1400_WEBP]: image(moduleWebp, 'image/webp'),
+    });
+    const result = await fetchModuleImage(URL_1400_WEBP, deps);
+    expect(result.status).toBe('ok');
+    if (result.status === 'ok') expect(result.ext).toBe('webp');
+    expect(calls).toEqual([URL_1400_WEBP, HOP_1400_WEBP]);
+    expect(agents[1]).toBe(agents[0]);
+    expect(agents[0]).not.toBeNull();
+  });
+
+  it.each([301, 303, 307, 308])('follows the allowed hop for status %i', async (status) => {
+    const { deps } = fakeDeps({
+      [URL_1400_WEBP]: redirectTo(HOP_1400_WEBP, status),
+      [HOP_1400_WEBP]: image(moduleWebp, 'image/webp'),
+    });
+    await expect(fetchModuleImage(URL_1400_WEBP, deps)).resolves.toMatchObject({ status: 'ok' });
+  });
+
+  it('keeps the final-response checks after the hop', async () => {
+    const tiny = `${RENDITION}/1400/tiny.png`;
+    const html = `${RENDITION}/1400/html.png`;
+    const missing = `${RENDITION}/1400/missing.png`;
+    const { deps } = fakeDeps({
+      [`${CDN}/1400/tiny.png`]: redirectTo(tiny),
+      [tiny]: image(new Uint8Array([0x89, 0x50])),
+      [`${CDN}/1400/html.png`]: redirectTo(html),
+      [html]: { status: 200, body: '<html></html>', headers: { 'content-type': 'text/html' } },
+      [`${CDN}/1400/missing.png`]: redirectTo(missing),
+      [missing]: notFound,
+    });
+    await expectSyncError(() => fetchModuleImage(`${CDN}/1400/tiny.png`, deps), 'G4m', /too small/);
+    await expect(fetchModuleImage(`${CDN}/1400/html.png`, deps)).resolves.toMatchObject({
+      status: 'skip',
+    });
+    await expect(fetchModuleImage(`${CDN}/1400/missing.png`, deps)).resolves.toMatchObject({
+      status: 'skip',
+    });
+  });
+
+  it('refuses a second hop', async () => {
+    const second = `${RENDITION}/1400_webp/abc123-again.png`;
+    const { deps, calls } = fakeDeps({
+      [URL_1400_WEBP]: redirectTo(HOP_1400_WEBP),
+      [HOP_1400_WEBP]: redirectTo(second),
+    });
+    await expectSyncError(() => fetchModuleImage(URL_1400_WEBP, deps), 'G4m', /redirect/);
+    expect(calls).toEqual([URL_1400_WEBP, HOP_1400_WEBP]);
+  });
+
+  it.each([
+    ['a foreign host', 'https://evil.example/v1/rendition/project_modules/1400_webp/abc123.png'],
+    ['a look-alike host', 'https://mir-cdn.behance.net.evil.example/v1/rendition/project_modules/x.png'],
+    ['the source host', 'https://mir-s3-cdn-cf.behance.net/v1/rendition/project_modules/x.png'],
+    ['a wrong path', 'https://mir-cdn.behance.net/v1/rendition/projects/1400/abc123.png'],
+    ['a path escaping the prefix', 'https://mir-cdn.behance.net/v1/rendition/project_modules/../../x.png'],
+    ['plain http', 'http://mir-cdn.behance.net/v1/rendition/project_modules/1400_webp/abc123.png'],
+    ['userinfo', 'https://user:pass@mir-cdn.behance.net/v1/rendition/project_modules/x.png'],
+    ['a username only', 'https://user@mir-cdn.behance.net/v1/rendition/project_modules/x.png'],
+    ['an explicit port', 'https://mir-cdn.behance.net:8443/v1/rendition/project_modules/x.png'],
+    ['a relative location', '/v1/rendition/project_modules/1400_webp/abc123.png'],
+    ['an unparsable location', 'https://['],
+  ])('refuses a redirect to %s without requesting it', async (_label, location) => {
+    const { deps, calls } = fakeDeps({ [URL_1400_WEBP]: redirectTo(location) });
+    await expectSyncError(() => fetchModuleImage(URL_1400_WEBP, deps), 'G4m', /redirect/);
+    expect(calls).toEqual([URL_1400_WEBP]);
+  });
+
+  it('refuses a redirect without a Location header', async () => {
+    const { deps, calls } = fakeDeps({ [URL_1400_WEBP]: redirectTo(undefined) });
+    await expectSyncError(() => fetchModuleImage(URL_1400_WEBP, deps), 'G4m', /redirect/);
+    expect(calls).toEqual([URL_1400_WEBP]);
+  });
+
+  it('refuses other 3xx statuses', async () => {
+    const { deps } = fakeDeps({ [URL_1400_WEBP]: redirectTo(HOP_1400_WEBP, 300) });
+    await expectSyncError(() => fetchModuleImage(URL_1400_WEBP, deps), 'G4m', /status 300/);
+  });
+
+  it('fails G4m when the hop request itself is refused', async () => {
+    const { deps } = fakeDeps({
+      [URL_1400_WEBP]: redirectTo(HOP_1400_WEBP),
+      [HOP_1400_WEBP]: { status: 0, reject: new TypeError('fetch failed') },
+    });
+    await expectSyncError(() => fetchModuleImage(URL_1400_WEBP, deps), 'G4m', /request failed/);
   });
 });
 
