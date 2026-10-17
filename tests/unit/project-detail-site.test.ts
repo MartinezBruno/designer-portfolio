@@ -13,6 +13,7 @@ function project(overrides: Partial<Project> = {}): Project {
     publishedOn: 1762478100,
     tools: ['Figma', 'Adobe Photoshop'],
     cover: portrait,
+    imageIds: [],
     slug: 'cabreras-motos-posts',
     title: null,
     summary: null,

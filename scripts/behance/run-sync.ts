@@ -29,8 +29,12 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseOverrides } from '../../src/lib/projects/overrides-schema.ts';
 import type { Overrides } from '../../src/lib/projects/overrides-schema.ts';
-import { missingOverrides, validateOverrides } from '../../src/lib/projects/projects.ts';
-import { parseSnapshot } from '../../src/lib/projects/snapshot-schema.ts';
+import {
+  missingModuleAlts,
+  missingOverrides,
+  validateOverrides,
+} from '../../src/lib/projects/projects.ts';
+import { contentImageIds, parseSnapshot } from '../../src/lib/projects/snapshot-schema.ts';
 import type {
   ContentEntry,
   ImageRef,
@@ -297,6 +301,7 @@ export async function runSync(deps: SyncDeps): Promise<SyncReport> {
     const sources = snapshot.projects.map((project) => ({
       id: project.id,
       sourceSlug: project.slug,
+      imageIds: contentImageIds(project.content ?? []),
     }));
     try {
       validateOverrides(sources, overrides);
@@ -342,6 +347,13 @@ export async function runSync(deps: SyncDeps): Promise<SyncReport> {
         );
         return `missing overrides for ${entry.id} (${entry.slug}): ${missing.join(', ')}`;
       });
+    // D-09: a notice only, never a failure.
+    for (const entry of missingModuleAlts(sources, overrides)) {
+      if (entry.missing === 0) continue;
+      checklist.push(
+        `missing module alts for ${entry.id} (${entry.slug}): ${entry.missing} of ${entry.total} images. Add moduleAlt entries in src/data/project-overrides.json. TODO(martina)`,
+      );
+    }
 
     deps.log(`sync:behance: ${count} projects`);
     deps.log(
