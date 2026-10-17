@@ -1,10 +1,11 @@
 ---
 phase: 4
 slug: project-detail-discovery
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-10-17
+reviewed_at: 2026-10-17
 ---
 
 # Phase 4 — UI Design Contract
@@ -180,7 +181,7 @@ No colour token changes. Light theme only.
 | Accent foreground | `#FFFFFF` | `accent-ink` | Label and icon of the contact band button |
 | Destructive | `#B42318` | `danger` | Not used. Phase 4 has no destructive actions |
 
-**Accent reserved for (exhaustive):** items 1–6 are inherited from 03-UI-SPEC. Items 7–8 are new uses of existing patterns.
+**Accent reserved for (exhaustive):** items 1–6 are inherited from 03-UI-SPEC. Item 7 is a new use of an existing pattern.
 1. Hero primary CTA background
 2. 404 primary CTA background
 3. `:focus-visible` outline on every focusable element on light surfaces (surface and surface-alt). New elements: "View on Behance", prose links, the facade button, the facade fallback link, the iframe after activation, the unknown-module link, the contact button, the next tile (whole-tile ring on `::after`), and "Previous"
