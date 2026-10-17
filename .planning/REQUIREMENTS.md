@@ -48,7 +48,7 @@ v1 "done" = working local build (deploy is post-v1).
 
 - [ ] **PROJ-01**: Visitor can browse all her Behance projects on a Projects page, newest first, in both languages
 - [ ] **PROJ-02**: Visitor can open a project detail page that mirrors its Behance content (images, text, grids, embeds) in original language, with a safe fallback for unknown content types
-- [ ] **PROJ-03**: Visitor sees project metadata (date, tools, category), a "View on Behance" link, next/previous project links, and a contact CTA on each detail page
+- [ ] **PROJ-03**: Visitor sees project metadata (tools, category; no project date, user decision 2026-10-17), a "View on Behance" link, next/previous project links, and a contact CTA on each detail page
 - [ ] **PROJ-04**: *(conditional: only if she has ≥8 projects)* Visitor can filter projects by curated category chips
 - [ ] **PROJ-05**: *(conditional: ≥8 projects)* Visitor can text-search projects (accent-insensitive)
 - [ ] **PROJ-06**: *(conditional: ≥8 projects)* Visitor can filter projects by tool and by year

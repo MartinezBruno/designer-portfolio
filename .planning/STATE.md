@@ -67,6 +67,8 @@ Progress: [██████████] 96%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 03]: User 2026-10-17: project cards show no date (year removed from ProjectCard, card view and dictionaries). Phase 4 detail pages must not show the project date either (ROADMAP Phase 4 SC2 and PROJ-03 amended). publishedOn still orders projects. Open: the conditional PROJ-06 year filter (only if there are 8 or more projects) should be confirmed with the user in Phase 4 discuss.
+- [Phase 03]: User 2026-10-17: Home "Latest work" uses an even row (`layout="row"`, `third` tiles); the Projects page keeps the D-18 rhythm.
 - [Roadmap]: Vertical MVP mode. i18n plumbing, motion gate, and lifecycle registry land in Phase 1 (cheap early, expensive to retrofit).
 - [Roadmap]: Stack per research: Astro 7.4, TypeScript ~6.0.3 (not 7.x), Tailwind 4.3 via `@tailwindcss/vite`, Node >= 24.16 (local 24.15 needs upgrade). [Proposed]
 - [Roadmap]: Behance via a committed snapshot plus local overrides. The build never fetches Behance. [Proposed]
