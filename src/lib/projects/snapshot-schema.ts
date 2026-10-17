@@ -24,6 +24,50 @@ const BehancePageUrl = httpsUrlOn(/^www\.behance\.net$/);
 /** The Behance image CDN host the sync downloads covers from. */
 const BehanceCdnUrl = httpsUrlOn(/^mir-s3-cdn-cf\.behance\.net$/);
 
+/** `<digits>-<12 hex>.webp`: module images are always stored as WebP (T-04-04). */
+export const MODULE_FILE = /^\d+-[0-9a-f]{12}\.webp$/;
+
+/** One stored module image. width/height are the real pixel size read from the stored bytes. */
+export const ImageRefSchema = z.strictObject({
+  /** ImageModule id or collection component id (the moduleAlt override key). */
+  id: z.string().regex(/^\d+$/),
+  file: z.string().regex(MODULE_FILE),
+  width: z.int().positive().max(1400),
+  height: z.int().positive(),
+  sourceUrl: BehanceCdnUrl,
+});
+
+/** Source-agnostic project content, normalized at sync time. Text HTML is already sanitized. */
+export const ContentSchema = z.discriminatedUnion('kind', [
+  z.strictObject({
+    kind: z.literal('image'),
+    image: ImageRefSchema,
+    fullBleed: z.boolean(),
+    caption: z.string(),
+  }),
+  z.strictObject({ kind: z.literal('collection'), images: z.array(ImageRefSchema).min(1) }),
+  z.strictObject({ kind: z.literal('text'), html: z.string() }),
+  z.strictObject({
+    kind: z.literal('embed'),
+    provider: z.enum(['figma']),
+    src: httpsUrlOn(/^embed\.figma\.com$/),
+  }),
+  z.strictObject({ kind: z.literal('unknown'), type: z.string() }),
+]);
+
+export type ImageRef = z.infer<typeof ImageRefSchema>;
+
+export type ContentEntry = z.infer<typeof ContentSchema>;
+
+/** Image ids in DOM order: each image entry, then each collection's images in order. */
+export function contentImageIds(content: readonly ContentEntry[]): string[] {
+  return content.flatMap((entry) => {
+    if (entry.kind === 'image') return [entry.image.id];
+    if (entry.kind === 'collection') return entry.images.map((image) => image.id);
+    return [];
+  });
+}
+
 export const SnapshotProjectSchema = z.strictObject({
   id: z.string().regex(/^\d+$/),
   /** The Behance slug, as published. The site slug is derived with toSlug. */
