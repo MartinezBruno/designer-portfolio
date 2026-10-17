@@ -1,0 +1,44 @@
+---
+import ProjectGrid from '../ui/ProjectGrid.astro';
+import { getAllProjects } from '../../lib/content/queries';
+import { useTranslations, type Locale } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+// ProjectsView is the only project reader for this page; the grid and cards stay prop-driven.
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const all = await getAllProjects(locale);
+---
+
+<section
+  aria-labelledby="projects-title"
+  class="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 py-16 sm:px-6 lg:px-8"
+>
+  <div class="flex flex-col gap-6">
+    <h1 id="projects-title" class="font-display text-5xl font-semibold tracking-tight">
+      {t('projects.heading')}
+    </h1>
+    <p class="text-ink max-w-[60ch] text-base text-pretty">{t('projects.intro')}</p>
+  </div>
+  {all.length > 0 ? (
+    <ProjectGrid projects={all} variant="full" headingLevel={2} locale={locale} eagerFirst />
+  ) : (
+    <div class="flex flex-col gap-4">
+      <h2 class="font-display text-2xl font-semibold tracking-tight">
+        {t('projects.empty.heading')}
+      </h2>
+      <p class="text-ink text-base">{t('projects.empty.body')}</p>
+      <p>
+        <a
+          href="#contact"
+          class="text-ink decoration-accent focus-visible:outline-accent inline-flex min-h-11 items-center gap-2 text-base font-semibold decoration-2 underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          {t('projects.empty.cta')}
+        </a>
+      </p>
+    </div>
+  )}
+</section>

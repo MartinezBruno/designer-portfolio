@@ -26,5 +26,24 @@ export default defineConfig(
       'astro/jsx-a11y/no-noninteractive-tabindex': ['error', { roles: ['img'], tags: [] }],
     },
   },
+  // DATA-06 (CONTEXT D-23): the UI depends on the project model and queries.ts only, never on a
+  // source adapter, so swapping Behance for another source never touches components or pages.
+  {
+    files: ['src/components/**', 'src/pages/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/sources/**'],
+              message:
+                'DATA-06 (D-23): UI reads projects only through src/lib/content/queries.ts and the model types, never the source adapter.',
+            },
+          ],
+        },
+      ],
+    },
+  },
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
 );

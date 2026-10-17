@@ -1,0 +1,32 @@
+---
+/**
+ * Project list in received order (D-18). Auto-flow row only: never grid-flow-dense, order-* or
+ * row-span, so DOM, tab and reading order all stay newest first. Plan 03-03 adds the size rhythm.
+ */
+import ProjectCard from './ProjectCard.astro';
+import type { ProjectCardView } from '../../lib/projects/model';
+import type { Locale } from '../../i18n/t';
+
+interface Props {
+  projects: readonly ProjectCardView[];
+  variant: 'compact' | 'full';
+  headingLevel: 2 | 3;
+  locale: Locale;
+  /** Loads the first cover eagerly (the LCP candidate on the Projects page). */
+  eagerFirst?: boolean;
+}
+
+const { projects, variant, headingLevel, locale, eagerFirst = false } = Astro.props;
+---
+
+<ul class="grid grid-cols-1 gap-y-12 md:grid-cols-12 md:gap-x-6">
+  {projects.map((project, index) => (
+    <ProjectCard
+      project={project}
+      variant={variant}
+      headingLevel={headingLevel}
+      locale={locale}
+      eager={eagerFirst && index === 0}
+    />
+  ))}
+</ul>

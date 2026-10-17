@@ -1,5 +1,9 @@
 import { getCollection, getEntry } from 'astro:content';
 import type { Locale } from '../../i18n/config';
+import { buildCategoryTitles, toCardView } from '../projects/card-view';
+import type { ProjectCardView } from '../projects/model';
+import { assertUniqueSlugs, sortProjects, toProjects } from '../projects/projects';
+import { getSnapshotOrigin, getSourceProjects } from '../projects/sources/behance-snapshot';
 import {
   buildRoles,
   buildServices,
@@ -26,4 +30,23 @@ export async function getHomeContent(locale: Locale): Promise<HomeContent> {
     services: buildServices(services, locale),
     tools: buildTools(tools),
   };
+}
+
+let seedWarned = false;
+
+/**
+ * The single project entry point for views (D-23): components and pages read projects only
+ * through this function and the model types, never the source adapter (lint-enforced, DATA-06).
+ * Visible projects come back sorted (explicit order, then newest first) as card views.
+ */
+export async function getAllProjects(locale: Locale): Promise<ProjectCardView[]> {
+  const categoryTitles = buildCategoryTitles(await getCollection('services'), locale);
+  if (getSnapshotOrigin() === 'seed' && !seedWarned) {
+    seedWarned = true;
+    console.warn(
+      'projects: snapshot origin is "seed" (placeholder covers). Run pnpm sync:behance before shipping',
+    );
+  }
+  const projects = sortProjects(assertUniqueSlugs(toProjects(getSourceProjects())));
+  return projects.map((project) => toCardView(project, locale, categoryTitles));
 }

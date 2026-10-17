@@ -5,6 +5,8 @@ export const es = {
   'a11y.skipToContent': 'Saltar al contenido',
   'a11y.newTab': '(se abre en una pestaña nueva)',
   'nav.label': 'Principal',
+  // TODO(martina): review Phase 3 copy (nav, projects page, Home work section).
+  'nav.projects': 'Proyectos',
   'nav.contact': 'Contacto',
   'lang.label': 'Idioma',
   'lang.en': 'English',
@@ -38,4 +40,19 @@ export const es = {
   'notFound.cta': 'Volver al inicio',
   'notFound.altLocalePrompt': '¿Buscas la versión en español?',
   'notFound.altLocaleLink': 'Ir al inicio',
+  'work.heading': 'Trabajo reciente',
+  'work.seeAll': 'Ver todos los proyectos',
+  'projects.heading': 'Proyectos',
+  'projects.intro':
+    'Webs, identidades de marca y contenido para redes, del más reciente al más antiguo.',
+  'projects.meta.category': 'Categoría',
+  'projects.meta.year': 'Año',
+  'projects.meta.tools': 'Herramientas',
+  'projects.coverAlt': '{title} — portada',
+  'projects.empty.heading': 'Hay trabajo nuevo en camino',
+  'projects.empty.body': 'Estoy actualizando esta lista. Escríbeme y te envío trabajos recientes.',
+  'projects.empty.cta': 'Escríbeme',
+  'meta.projects.title': 'Proyectos — Martina Fernandez',
+  'meta.projects.description':
+    'Proyectos de diseño web, branding y redes sociales de Martina Fernandez, del más reciente al más antiguo.',
 } as const satisfies Dictionary;
