@@ -17,10 +17,28 @@ export function readAttempts(text: string): string[] {
     .filter((line) => line !== '');
 }
 
-export type ConnectTarget = string | number | { path?: string; port?: number; host?: string };
+type ConnectOptions = {
+  path?: string | undefined;
+  port?: number | undefined;
+  host?: string | undefined;
+};
+
+/**
+ * First argument of `net.Socket.prototype.connect`. Node's own `net.connect()` passes a normalized
+ * `[options, listener]` array, so a list is unwrapped to its first element.
+ */
+export type ConnectTarget = string | number | ConnectOptions | readonly ConnectTarget[];
+
+function isList(first: ConnectTarget): first is readonly ConnectTarget[] {
+  return Array.isArray(first);
+}
 
 /** True for IPC/pipe connections (a socket path), which the offline guard must let through. */
 export function isIpcConnect(first: ConnectTarget): boolean {
+  if (isList(first)) {
+    const inner = first[0];
+    return inner !== undefined && isIpcConnect(inner);
+  }
   if (typeof first === 'string') return true;
   if (typeof first === 'number') return false;
   return typeof first.path === 'string' && first.path !== '';

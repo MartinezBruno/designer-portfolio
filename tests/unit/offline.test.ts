@@ -54,11 +54,17 @@ describe('readAttempts', () => {
 });
 
 describe('isIpcConnect', () => {
-  it.each([[{ path: '/tmp/x.sock' }], ['/tmp/x.sock']])('treats %o as IPC', (first) => {
-    expect(isIpcConnect(first)).toBe(true);
-  });
+  it.each([[{ path: '/tmp/x.sock' }], ['/tmp/x.sock'], [[{ path: '/tmp/x.sock' }]]])(
+    'treats %o as IPC',
+    (first) => {
+      expect(isIpcConnect(first)).toBe(true);
+    },
+  );
 
-  it.each([[{ port: 443, host: 'a.b' }], [443]])('treats %o as TCP', (first) => {
-    expect(isIpcConnect(first)).toBe(false);
-  });
+  it.each([[{ port: 443, host: 'a.b' }], [443], [[{ port: 443, host: 'a.b' }]], [[]]])(
+    'treats %o as TCP',
+    (first) => {
+      expect(isIpcConnect(first)).toBe(false);
+    },
+  );
 });
