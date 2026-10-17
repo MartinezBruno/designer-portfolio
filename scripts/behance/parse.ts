@@ -2,6 +2,7 @@
 // Reads only the two islands we need (store JSON, keywords meta) and validates them with Zod.
 // Every failure is a named SyncError gate; nothing is guessed.
 import type { z } from 'astro/zod';
+import type { CategoryId } from '../../src/lib/projects/model.ts';
 import { SyncError } from './errors.ts';
 import { RawProfileStoreSchema, RawProjectStoreSchema } from './raw-schemas.ts';
 import type { RawCover, RawModule } from './raw-schemas.ts';
@@ -158,4 +159,28 @@ export function deriveFields(
     .slice(toolsCount + tagsCount)
     .map((keyword) => keyword.trim())
     .filter((keyword) => keyword !== '');
+}
+
+// A Map, not an object literal: field text is scraped, so "constructor" must not hit a prototype key.
+const FIELD_CATEGORIES: ReadonlyMap<string, CategoryId> = new Map<string, CategoryId>([
+  ['graphic design', 'graphic-design'],
+  ['web design', 'web-design'],
+  ['interaction design', 'web-design'],
+  ['ui/ux', 'web-design'],
+  ['branding', 'branding'],
+  ['visual identity', 'branding'],
+  ['advertising', 'social-media'],
+  ['social media', 'social-media'],
+]);
+
+/**
+ * Suggested curated category for the sync checklist (D-22): the first creative field, in field
+ * order, that maps to a category. Case-insensitive and trimmed. Never applied automatically.
+ */
+export function suggestCategory(fields: readonly string[]): CategoryId | null {
+  for (const field of fields) {
+    const category = FIELD_CATEGORIES.get(field.trim().toLowerCase());
+    if (category !== undefined) return category;
+  }
+  return null;
 }
