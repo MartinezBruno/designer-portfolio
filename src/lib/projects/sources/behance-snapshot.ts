@@ -32,7 +32,7 @@ const sourceProjects: readonly SourceProject[] = snapshot.projects.map((project)
   tools: project.tools.map((tool) => tool.title),
   cover: coverFor(project.cover.file),
   // `?? []` only until 04-08 makes content required.
-  imageIds: contentImageIds(project.content ?? []),
+  imageIds: contentImageIds(project.content),
 }));
 
 export function getSourceProjects(): readonly SourceProject[] {

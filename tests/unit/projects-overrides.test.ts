@@ -159,7 +159,7 @@ describe('validateOverrides', () => {
     const seedSources = parseSnapshot(snapshot).projects.map((project) => ({
       id: project.id,
       sourceSlug: project.slug,
-      imageIds: contentImageIds(project.content ?? []),
+      imageIds: contentImageIds(project.content),
     }));
     expect(() => validateOverrides(seedSources, parseOverrides(committed))).not.toThrow();
   });

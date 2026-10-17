@@ -2,7 +2,10 @@
 // Erasable TypeScript only (Node type stripping runs it).
 //
 // - Public pages only: no account access or secrets; the only cookie is the challenge value (D-03).
-// - Hosts are allowlisted before any request (SSRF guard) and every request uses redirect: 'error'.
+// - Hosts are allowlisted before any request (SSRF guard). Pages and covers use redirect: 'error'.
+// - Module images use redirect: 'manual' and follow EXACTLY ONE hop, only from the allowlisted CDN
+//   to https://mir-cdn.behance.net/v1/rendition/project_modules/... (Behance CDN routing seen
+//   2026-10-17, user decision in 04-08). Any other redirect fails G4m before it is requested.
 // - A 403 challenge is replayed once, after deps.sleep(2000), with the SAME user agent.
 // - Spacing between separate page requests is the caller's job (03-08 runSync sleeps 2000 ms
 //   before every Behance HTML request after the first, D-04).
@@ -21,6 +24,10 @@ export interface FetchDeps {
 
 const PAGE_HOSTS: readonly string[] = ['www.behance.net'];
 const CDN_HOSTS: readonly string[] = ['mir-s3-cdn-cf.behance.net'];
+/** The only host a module image may redirect to, and the only path prefix there. */
+const MODULE_REDIRECT_HOSTS: readonly string[] = ['mir-cdn.behance.net'];
+const MODULE_REDIRECT_PATH = '/v1/rendition/project_modules/';
+const REDIRECT_STATUSES: readonly number[] = [301, 302, 303, 307, 308];
 const CHALLENGE = /js_challenge_value=([0-9a-f]{32,})/i;
 const STORE = /<script[^>]*id="beconfig-store_state"[^>]*>([\s\S]*?)<\/script>/;
 const CHALLENGE_DELAY_MS = 2000;
@@ -183,16 +190,56 @@ export type ModuleImageResult =
   { status: 'ok'; bytes: Uint8Array; ext: ImageExt } | { status: 'skip'; reason: string };
 
 /**
+ * The single redirect target a module image may follow, or a G4m error. The Location must be an
+ * absolute https URL on exactly mir-cdn.behance.net (default port, no credentials) whose
+ * normalized path starts with /v1/rendition/project_modules/.
+ */
+function moduleRedirectTarget(url: string, location: string | null): string {
+  const refuse = (why: string): SyncError =>
+    new SyncError('G4m', `${url}: redirect refused (${why})`);
+  if (location === null || location.trim() === '') throw refuse('no Location header');
+  let target: URL;
+  try {
+    // No base URL: a relative Location is refused, the hop must name its host explicitly.
+    target = new URL(location);
+  } catch {
+    throw refuse(`invalid Location ${JSON.stringify(location)}`);
+  }
+  if (
+    target.protocol !== 'https:' ||
+    !MODULE_REDIRECT_HOSTS.includes(target.hostname) ||
+    target.port !== '' ||
+    target.username !== '' ||
+    target.password !== '' ||
+    !target.pathname.startsWith(MODULE_REDIRECT_PATH)
+  ) {
+    throw refuse(
+      `Location ${JSON.stringify(location)} is not https://${MODULE_REDIRECT_HOSTS.join(', ')}${MODULE_REDIRECT_PATH}`,
+    );
+  }
+  return target.href;
+}
+
+/**
  * Downloads one module image variant from the allowlisted CDN (gate G4m).
  * A 404 or a non-image content-type is a `skip` (Behance lists variants that do not exist,
  * RESEARCH Pitfall 2), so the caller can try the next candidate. Every other failure throws.
+ * One CDN redirect hop is followed (see moduleRedirectTarget); the checks run on the final response.
  */
 export async function fetchModuleImage(url: string, deps: FetchDeps): Promise<ModuleImageResult> {
   assertAllowed(url, CDN_HOSTS, 'G4m');
-  const res = await request(url, deps, 'G4m', {
-    headers: { 'user-agent': BEHANCE_UA },
-    redirect: 'error',
-  });
+  const init: RequestInit = { headers: { 'user-agent': BEHANCE_UA }, redirect: 'manual' };
+  let res = await request(url, deps, 'G4m', init);
+  if (REDIRECT_STATUSES.includes(res.status)) {
+    const location = res.headers.get('location');
+    await res.body?.cancel();
+    const target = moduleRedirectTarget(url, location);
+    res = await request(target, deps, 'G4m', init);
+    if (REDIRECT_STATUSES.includes(res.status)) {
+      await res.body?.cancel();
+      throw new SyncError('G4m', `${url}: redirect refused (second hop from ${target})`);
+    }
+  }
   if (res.status === 404) {
     await res.body?.cancel();
     return { status: 'skip', reason: `${url}: status 404` };

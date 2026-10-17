@@ -154,7 +154,7 @@ async function readPrevious(deps: SyncDeps): Promise<PreviousSnapshot> {
   }
   const images = new Map<string, ImageRef>();
   for (const project of snapshot.projects) {
-    for (const image of contentImages(project.content ?? [])) images.set(image.id, image);
+    for (const image of contentImages(project.content)) images.set(image.id, image);
   }
   return { count: snapshot.projects.length, images };
 }
@@ -301,7 +301,7 @@ export async function runSync(deps: SyncDeps): Promise<SyncReport> {
     const sources = snapshot.projects.map((project) => ({
       id: project.id,
       sourceSlug: project.slug,
-      imageIds: contentImageIds(project.content ?? []),
+      imageIds: contentImageIds(project.content),
     }));
     try {
       validateOverrides(sources, overrides);
@@ -321,7 +321,7 @@ export async function runSync(deps: SyncDeps): Promise<SyncReport> {
       // Exactly the files the new content references: module GC removes every other one.
       referencedModules: new Set(
         snapshot.projects.flatMap((project) =>
-          contentImages(project.content ?? []).map((image) => image.file),
+          contentImages(project.content).map((image) => image.file),
         ),
       ),
     });

@@ -1,10 +1,16 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
+import sharp from 'sharp';
 import { describe, expect, it, vi } from 'vitest';
+import { sanitizeText } from '../../scripts/behance/sanitize.ts';
 import committed from '../../src/data/behance/snapshot.json';
 import services from '../../src/data/services.json';
+import { providerForUrl } from '../../src/lib/projects/embeds';
 import { categoryIds } from '../../src/lib/projects/model';
 import {
+  MODULE_FILE,
   parseSnapshot,
+  type ContentEntry,
+  type ImageRef,
   type Snapshot,
   type SnapshotProject,
 } from '../../src/lib/projects/snapshot-schema';
@@ -45,6 +51,7 @@ function validProject(): SnapshotProject {
       width: 808,
     },
     modules: [{ __typename: 'ImageModule', src: 'x' }],
+    content: [],
   };
 }
 
@@ -173,6 +180,75 @@ describe('committed snapshot', () => {
         existsSync(new URL(`../../src/assets/projects/${project.cover.file}`, import.meta.url)),
       ).toBe(true);
     }
+  });
+});
+
+function imageRefs(content: readonly ContentEntry[]): ImageRef[] {
+  return content.flatMap((entry) => {
+    if (entry.kind === 'image') return [entry.image];
+    if (entry.kind === 'collection') return entry.images;
+    return [];
+  });
+}
+
+const MODULES_DIR = new URL('../../src/assets/projects/modules/', import.meta.url);
+
+describe('committed snapshot content (04-08 invariants)', () => {
+  const projects = parseSnapshot(committed).projects;
+
+  it('gives every project a non-empty content array', () => {
+    for (const project of projects) expect(project.content.length).toBeGreaterThan(0);
+  });
+
+  it('stores every text entry as a sanitizer fixed point without inline design styles', () => {
+    for (const project of projects) {
+      for (const entry of project.content) {
+        if (entry.kind !== 'text') continue;
+        expect(sanitizeText(entry.html)).toBe(entry.html);
+        expect(entry.html).not.toMatch(/color|font-family|font-size/i);
+        for (const [, style] of entry.html.matchAll(/style="([^"]*)"/g)) {
+          expect(style).toMatch(/^text-align:\s*(left|right|center|justify);?$/);
+        }
+      }
+    }
+  });
+
+  it('only stores allowlisted embed srcs', () => {
+    for (const project of projects) {
+      for (const entry of project.content) {
+        if (entry.kind === 'embed') expect(providerForUrl(entry.src)).toBe(entry.provider);
+      }
+    }
+  });
+
+  it('keeps image ref ids unique within each project', () => {
+    for (const project of projects) {
+      const ids = imageRefs(project.content).map((ref) => ref.id);
+      expect(new Set(ids).size).toBe(ids.length);
+    }
+  });
+
+  it('has every content image on disk as a WebP of its real pixel size', async () => {
+    for (const project of projects) {
+      for (const ref of imageRefs(project.content)) {
+        const file = new URL(ref.file, MODULES_DIR);
+        expect(existsSync(file), ref.file).toBe(true);
+        const meta = await sharp(file.pathname).metadata();
+        expect(meta.format, ref.file).toBe('webp');
+        expect(meta.width, ref.file).toBe(ref.width);
+        expect(meta.height, ref.file).toBe(ref.height);
+        expect(ref.width).toBeLessThanOrEqual(1400);
+      }
+    }
+  });
+
+  it('has no orphan module image files', () => {
+    const referenced = new Set(
+      projects.flatMap((project) => imageRefs(project.content).map((ref) => ref.file)),
+    );
+    const onDisk = readdirSync(MODULES_DIR).filter((name) => MODULE_FILE.test(name));
+    expect(onDisk.length).toBeGreaterThan(0);
+    for (const name of onDisk) expect(referenced.has(name), name).toBe(true);
   });
 });
 
