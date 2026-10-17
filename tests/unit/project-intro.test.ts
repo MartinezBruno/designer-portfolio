@@ -19,6 +19,8 @@ const baseDetail: ProjectDetailView = {
   cover: portrait,
   coverAlt: 'Brand Refresh — cover',
   seo: { title: 'Brand Refresh — Martina Fernandez', description: 'A refresh.' },
+  next: null,
+  previous: null,
 };
 
 async function render(detail: Partial<ProjectDetailView> = {}): Promise<string> {

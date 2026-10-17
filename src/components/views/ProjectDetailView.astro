@@ -1,10 +1,12 @@
 ---
+import NextProjectTeaser from '../project/NextProjectTeaser.astro';
+import ProjectContactBand from '../project/ProjectContactBand.astro';
 import ProjectIntro from '../project/ProjectIntro.astro';
 import type { Locale } from '../../i18n/t';
 import type { ProjectDetailView } from '../../lib/projects/model';
 
-// Detail page body. The module stack (04-09) and the contact band and teaser (04-04) slot in
-// after the intro band. No motion here (D-04).
+// Detail page body. The module stack (04-09) slots in after the intro band. The page ends with
+// the contact band, then the next-project teaser (omitted with 1 visible project). No motion (D-04).
 interface Props {
   detail: ProjectDetailView;
   locale: Locale;
@@ -16,3 +18,7 @@ const { detail, locale } = Astro.props;
 <article aria-labelledby="project-title">
   <ProjectIntro detail={detail} locale={locale} />
 </article>
+<ProjectContactBand locale={locale} />
+{detail.next !== null && (
+  <NextProjectTeaser next={detail.next} previous={detail.previous} locale={locale} />
+)}
