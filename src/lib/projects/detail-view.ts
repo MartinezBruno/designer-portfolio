@@ -1,6 +1,6 @@
 /**
  * Detail-page helpers that are pure and Node-safe: shared by the site and the e2e helpers, so this
- * file has no astro:* imports and uses `.ts` value imports only.
+ * file imports no Astro virtual modules and uses `.ts` value imports only.
  */
 
 /**
