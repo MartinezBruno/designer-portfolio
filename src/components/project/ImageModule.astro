@@ -1,0 +1,66 @@
+---
+/**
+ * One mirrored Behance image (D-01, D-05, D-06). Local file only, square corners, no frame.
+ * `block` on picture and img removes the inline baseline gap so the stack is seamless.
+ */
+import { Picture } from 'astro:assets';
+import type { ModuleView } from '../../lib/projects/model';
+
+type Props = Omit<Extract<ModuleView, { kind: 'image' }>, 'kind'>;
+
+const { image, alt, widths, fullBleed, caption, captionLang, eager } = Astro.props;
+
+// Literal class strings so Tailwind can see them (UI-SPEC ImageModule).
+const frameClasses = {
+  bleed: 'w-full',
+  padded: 'mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8',
+} as const;
+const frame = frameClasses[fullBleed ? 'bleed' : 'padded'];
+// Spreads so lazy images carry no fetchpriority and Spanish-only captions alone get lang.
+const priority = eager ? { fetchpriority: 'high' as const } : {};
+const captionLangAttr = captionLang === null ? {} : { lang: captionLang };
+---
+
+{caption === null ? (
+  <div class={frame}>
+    <Picture
+      src={image}
+      alt={alt}
+      formats={['avif', 'webp']}
+      widths={[...widths]}
+      sizes="(min-width: 1400px) 1400px, 100vw"
+      width={image.width}
+      height={image.height}
+      loading={eager ? 'eager' : 'lazy'}
+      {...priority}
+      decoding="async"
+      pictureAttributes={{ class: 'block' }}
+      class="bg-surface-alt block h-auto w-full"
+    />
+  </div>
+) : (
+  <figure class="m-0">
+    <div class={frame}>
+      <Picture
+        src={image}
+        alt={alt}
+        formats={['avif', 'webp']}
+        widths={[...widths]}
+        sizes="(min-width: 1400px) 1400px, 100vw"
+        width={image.width}
+        height={image.height}
+        loading={eager ? 'eager' : 'lazy'}
+        {...priority}
+        decoding="async"
+        pictureAttributes={{ class: 'block' }}
+        class="bg-surface-alt block h-auto w-full"
+      />
+    </div>
+    <figcaption
+      {...captionLangAttr}
+      class="text-ink-muted mx-auto max-w-6xl px-4 py-2 text-sm sm:px-6 lg:px-8"
+    >
+      {caption}
+    </figcaption>
+  </figure>
+)}
