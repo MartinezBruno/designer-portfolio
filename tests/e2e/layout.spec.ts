@@ -151,7 +151,10 @@ test.describe('marquee track fill', () => {
           type: 'track-fill',
           description: `${path} @${width}: track=${trackWidth.toFixed(1)} copyA=${copyWidth.toFixed(1)}`,
         });
-        console.log(`[track-fill] ${path} @${width}: track=${trackWidth} copyA=${copyWidth}`);
+        const bandHeight = (await page.locator('section[data-marquee]').boundingBox())?.height;
+        console.log(
+          `[track-fill] ${path} @${width}: track=${trackWidth} copyA=${copyWidth} band=${bandHeight}`,
+        );
         // 1px tolerance for subpixel rounding.
         expect(copyWidth).toBeGreaterThanOrEqual(trackWidth - 1);
       });

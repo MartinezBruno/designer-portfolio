@@ -18,7 +18,7 @@ for (const path of pages) {
 }
 
 // UI-SPEC keyboard order on Home: skip link, wordmark, Contact, EN, ES, hero CTA,
-// marquee pause button, 5 tool tiles, footer email, Behance.
+// invisible marquee pause toggle (button over the band), 5 tool tiles, footer email, Behance.
 interface Step {
   name: string;
   href?: string;

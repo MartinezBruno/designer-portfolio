@@ -61,7 +61,7 @@ describe('RolesMarquee', () => {
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
   });
 
-  it('renders a fixed-label pause toggle with a white focus outline', async () => {
+  it('renders an invisible fixed-label pause toggle covering the band', async () => {
     const html = await render('en');
     expect(count(html, '<button')).toBe(1);
     const button = firstTag(html, '<button[^>]*>');
@@ -69,8 +69,41 @@ describe('RolesMarquee', () => {
     expect(button).toContain('data-marquee-toggle');
     expect(button).toContain('aria-pressed="false"');
     expect(button).toContain('aria-label="Pause roles animation"');
-    expect(classTokens(button)).toContain('focus-visible:outline-accent-ink');
+    const tokens = classTokens(button);
+    // Overlay over the whole band, hidden until motion is on.
+    for (const token of ['absolute', 'inset-0', 'bg-transparent', 'hidden', 'motion-on:block']) {
+      expect(tokens).toContain(token);
+    }
+    // White inset outline on the blue band (D-17), never the accent ring.
+    expect(tokens).toContain('focus-visible:outline-accent-ink');
+    expect(tokens).toContain('focus-visible:-outline-offset-4');
     expect(button).not.toMatch(/focus-visible:outline-accent(?!-ink)/);
+    // No visible play/pause icon: the button is empty and is a sibling of the lists.
+    expect(html).toMatch(/<button[^>]*><\/button>/);
+    expect(html).not.toMatch(/<button[\s\S]*<ul/);
+    expect(classTokens(firstTag(html, '<section[^>]*>'))).toContain('relative');
+  });
+
+  it('pauses on hover, keyboard focus and the paused state', async () => {
+    const html = await render('en');
+    const list = firstTag(html, '<ul[^>]*>');
+    const tokens = classTokens(list);
+    expect(tokens).toContain('group-hover:[animation-play-state:paused]');
+    expect(tokens).toContain(
+      'group-has-[[data-marquee-toggle]:focus-visible]:[animation-play-state:paused]',
+    );
+    expect(tokens).toContain('group-data-paused:[animation-play-state:paused]');
+  });
+
+  it('uses the compact band size', async () => {
+    const html = await render('en');
+    const section = classTokens(firstTag(html, '<section[^>]*>'));
+    expect(section).toContain('py-4');
+    expect(section).not.toContain('py-8');
+    const item = classTokens(firstTag(html, '<li[^>]*>'));
+    expect(item).toContain('motion-on:text-3xl');
+    expect(item).not.toContain('motion-on:text-5xl');
+    expect(classTokens(firstTag(html, '<svg[^>]*>'))).toContain('size-5');
   });
 
   it('hides every icon from assistive tech', async () => {

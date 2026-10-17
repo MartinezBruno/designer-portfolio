@@ -1,7 +1,5 @@
 ---
 import IconAsterisk from '@tabler/icons/outline/asterisk.svg';
-import IconPlayerPause from '@tabler/icons/outline/player-pause.svg';
-import IconPlayerPlay from '@tabler/icons/outline/player-play.svg';
 import { useTranslations, type Locale } from '../../i18n/t';
 
 interface Props {
@@ -12,69 +10,53 @@ interface Props {
 const { roles, locale } = Astro.props;
 const t = useTranslations(locale);
 
+// Pause control (user decision at the 02-08 checkpoint): no visible button. A transparent
+// button covers the band as a sibling of the lists, so list semantics stay intact. Click/tap
+// or Space/Enter toggles aria-pressed + data-paused; hover and keyboard focus also pause
+// (WCAG 2.2.2). White inset focus outline on the blue band (D-17). Hidden without motion.
+
 // Shared by both copies. Without motion the first copy is a static wrapped list.
 const copyClasses =
-  'flex shrink-0 min-w-full flex-wrap items-center justify-center gap-x-[var(--marquee-gap)] gap-y-2 px-4 sm:px-6 lg:px-8 motion-on:flex-nowrap motion-on:justify-around motion-on:px-0 motion-on:animate-marquee motion-reduce:animate-none group-hover:[animation-play-state:paused] group-data-paused:[animation-play-state:paused]';
+  'flex shrink-0 min-w-full flex-wrap items-center justify-center gap-x-[var(--marquee-gap)] gap-y-2 px-4 sm:px-6 lg:px-8 motion-on:flex-nowrap motion-on:justify-around motion-on:px-0 motion-on:animate-marquee motion-reduce:animate-none group-hover:[animation-play-state:paused] group-has-[[data-marquee-toggle]:focus-visible]:[animation-play-state:paused] group-data-paused:[animation-play-state:paused]';
 const itemClasses =
-  'inline-flex items-center gap-6 whitespace-nowrap font-display text-2xl font-semibold text-accent-ink motion-on:text-5xl motion-on:tracking-tight';
+  'inline-flex items-center gap-4 whitespace-nowrap font-display text-2xl font-semibold text-accent-ink motion-on:text-3xl motion-on:tracking-tight';
 ---
 
 <section
   aria-labelledby="roles-title"
   data-marquee
-  class="group bg-accent py-8 text-accent-ink [--marquee-gap:2rem]"
+  class="group relative bg-accent py-4 text-accent-ink [--marquee-gap:2rem]"
 >
   <h2 id="roles-title" class="sr-only">
     {t('roles.heading')}
   </h2>
-  <div class="flex items-center gap-4">
-    <div class="min-w-0 flex-1 overflow-hidden">
-      <div class="flex gap-[var(--marquee-gap)]">
-        <ul class={copyClasses}>
-          {roles.map((role) => (
-            <li class={itemClasses}>
-              <IconAsterisk
-                aria-hidden="true"
-                focusable="false"
-                class="size-6 text-accent-ink/70"
-              />
-              {role}
-            </li>
-          ))}
-        </ul>
-        <ul aria-hidden="true" class:list={[copyClasses, 'hidden motion-on:flex']}>
-          {roles.map((role) => (
-            <li class={itemClasses}>
-              <IconAsterisk
-                aria-hidden="true"
-                focusable="false"
-                class="size-6 text-accent-ink/70"
-              />
-              {role}
-            </li>
-          ))}
-        </ul>
-      </div>
+  <div class="overflow-hidden">
+    <div class="flex gap-[var(--marquee-gap)]">
+      <ul class={copyClasses}>
+        {roles.map((role) => (
+          <li class={itemClasses}>
+            <IconAsterisk aria-hidden="true" focusable="false" class="size-5 text-accent-ink/70" />
+            {role}
+          </li>
+        ))}
+      </ul>
+      <ul aria-hidden="true" class:list={[copyClasses, 'hidden motion-on:flex']}>
+        {roles.map((role) => (
+          <li class={itemClasses}>
+            <IconAsterisk aria-hidden="true" focusable="false" class="size-5 text-accent-ink/70" />
+            {role}
+          </li>
+        ))}
+      </ul>
     </div>
-    <button
-      type="button"
-      data-marquee-toggle
-      aria-pressed="false"
-      aria-label={t('roles.pause')}
-      class="mr-4 hidden min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border-2 border-accent-ink bg-transparent text-accent-ink hover:bg-accent-ink hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink motion-safe:transition-colors motion-safe:duration-150 sm:mr-6 lg:mr-8 motion-on:inline-flex"
-    >
-      <IconPlayerPause
-        aria-hidden="true"
-        focusable="false"
-        class="size-5 group-data-paused:hidden"
-      />
-      <IconPlayerPlay
-        aria-hidden="true"
-        focusable="false"
-        class="hidden size-5 group-data-paused:block"
-      />
-    </button>
   </div>
+  <button
+    type="button"
+    data-marquee-toggle
+    aria-pressed="false"
+    aria-label={t('roles.pause')}
+    class="absolute inset-0 hidden cursor-pointer bg-transparent focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-accent-ink motion-on:block"
+  ></button>
 </section>
 
 <script>
