@@ -159,7 +159,7 @@ Plans:
 
   1. Visitor opens a project detail page in either locale and sees its images, text, grids, and embeds mirrored from Behance in the original language (wrapped in the correct `lang`). Unknown module types render a safe fallback instead of breaking the page.
   2. Each detail page shows tools and category (no project date: decided by the user 2026-10-17), a "View on Behance" link, next/previous project links, and a contact CTA.
-  3. *(If ≥8 projects)* Visitor filters by category chips, tool, and year, and runs an accent-insensitive text search (e.g. "diseno" matches "diseño"). Reloading the URL restores the same filters, screen readers hear the result count, and an empty result offers "clear filters".
+  3. *(If ≥8 projects)* Visitor filters by category chips and tool (no year filter, D-17), and runs an accent-insensitive text search (e.g. "diseno" matches "diseño"). Reloading the URL restores the same filters, screen readers hear the result count, and an empty result offers "clear filters".
   4. *(If <8 projects)* PROJ-04..07 are recorded as not applicable, with the confirmed count from Phase 3 as evidence, and the Projects page has no filter UI.
 
 **Plans**: 11 plans

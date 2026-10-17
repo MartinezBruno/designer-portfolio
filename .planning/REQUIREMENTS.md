@@ -49,10 +49,10 @@ v1 "done" = working local build (deploy is post-v1).
 - [x] **PROJ-01**: Visitor can browse all her Behance projects on a Projects page, newest first, in both languages
 - [ ] **PROJ-02**: Visitor can open a project detail page that mirrors its Behance content (images, text, grids, embeds) in original language, with a safe fallback for unknown content types
 - [ ] **PROJ-03**: Visitor sees project metadata (tools, category; no project date, user decision 2026-10-17), a "View on Behance" link, next/previous project links, and a contact CTA on each detail page
-- [ ] **PROJ-04**: *(conditional: only if she has ≥8 projects)* Visitor can filter projects by curated category chips
-- [ ] **PROJ-05**: *(conditional: ≥8 projects)* Visitor can text-search projects (accent-insensitive)
-- [ ] **PROJ-06**: *(conditional: ≥8 projects)* Visitor can filter projects by tool and by year
-- [ ] **PROJ-07**: *(conditional: ≥8 projects)* Filter/search state is reflected in the URL, the result count is announced to screen readers, and an empty state offers "clear filters"
+- [ ] **PROJ-04**: *(conditional: only if she has ≥8 projects)* Visitor can filter projects by curated category chips — **N/A (Phase 4, D-16):** 7 projects in the committed snapshot (origin behance-sync), confirmed live 2026-10-16 (Phase 3 D-05); threshold is 8. Revisit when pnpm sync:behance prints the ≥8 notice.
+- [ ] **PROJ-05**: *(conditional: ≥8 projects)* Visitor can text-search projects (accent-insensitive) — **N/A (Phase 4, D-16):** 7 projects in the committed snapshot (origin behance-sync), confirmed live 2026-10-16 (Phase 3 D-05); threshold is 8. Revisit when pnpm sync:behance prints the ≥8 notice.
+- [ ] **PROJ-06**: *(conditional: ≥8 projects)* Visitor can filter projects by tool (year filter dropped: it would expose the project dates the user chose to hide, D-17, 2026-10-17) — **N/A (Phase 4, D-16):** 7 projects in the committed snapshot (origin behance-sync), confirmed live 2026-10-16 (Phase 3 D-05); threshold is 8. Revisit when pnpm sync:behance prints the ≥8 notice.
+- [ ] **PROJ-07**: *(conditional: ≥8 projects)* Filter/search state is reflected in the URL, the result count is announced to screen readers, and an empty state offers "clear filters" — **N/A (Phase 4, D-16):** 7 projects in the committed snapshot (origin behance-sync), confirmed live 2026-10-16 (Phase 3 D-05); threshold is 8. Revisit when pnpm sync:behance prints the ≥8 notice.
 
 ### Contact (CONT)
 
@@ -143,10 +143,10 @@ Updated during roadmap creation.
 | PROJ-01 | Phase 3 | Complete |
 | PROJ-02 | Phase 4 | Pending |
 | PROJ-03 | Phase 4 | Pending |
-| PROJ-04 | Phase 4 | Pending |
-| PROJ-05 | Phase 4 | Pending |
-| PROJ-06 | Phase 4 | Pending |
-| PROJ-07 | Phase 4 | Pending |
+| PROJ-04 | Phase 4 | N/A (7 projects < 8) |
+| PROJ-05 | Phase 4 | N/A (7 projects < 8) |
+| PROJ-06 | Phase 4 | N/A (7 projects < 8) |
+| PROJ-07 | Phase 4 | N/A (7 projects < 8) |
 | CONT-01 | Phase 5 | Pending |
 | CONT-02 | Phase 5 | Pending |
 | CONT-03 | Phase 5 | Pending |
@@ -170,7 +170,7 @@ Updated during roadmap creation.
 - Mapped to phases: 49
 - Unmapped: 0 ✓
 
-Note: PROJ-04..07 are conditional on ≥8 projects; Phase 3 confirms the count and Phase 4 records them as N/A if below threshold.
+Note: PROJ-04..07 are conditional on ≥8 projects; Phase 3 confirmed the count (7) and Phase 4 recorded them as N/A on 2026-10-17 (D-16). PROJ-06 dropped the year filter (D-17).
 
 ---
 *Requirements defined: 2026-10-15*
