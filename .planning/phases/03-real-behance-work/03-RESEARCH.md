@@ -533,19 +533,24 @@ This goes in its own commit **before** any `scripts/behance/*` or `scripts/sync-
 | A4 | 7 covers ≈ 2 MB in git (1 measured at 301 KB) | D-21 | Must be measured, as required by D-21. Not a blocker |
 | A5 | Nothing else in `astro build` uses the network besides telemetry (verified in the spike copy; real-repo build may differ if new integrations are added) | Pitfall 2 | `build:offline` would catch it |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Consent date**
    - What we know: written consent exists (D-01). The date is not supplied.
    - Recommendation: write `TODO(martina-date)` and list it in the SUMMARY "Known Stubs". It does not block the sync.
+   - RESOLVED: 03-06 Task 1 writes `docs/CONSENT.md` with `TODO(martina-date)` and lists it under "Known Stubs"; 03-10 Task 2 (human checkpoint) asks the user for the date.
 2. **Exact semantics of `order` on the Projects page** ("manual tiebreak or override", D-17)
    - Recommendation: explicit `order` values sort first (ascending), then newest first. With no `order`, it's pure newest first. Confirm in plan review; it's a one-line comparator change if wrong.
+   - RESOLVED: adopted as recommended. 03-01 Task 1 implements `sortProjects` (explicit `order` ascending first, then `publishedOn` desc, then id) with unit tests in `tests/unit/projects-order.test.ts`; 03-04 applies the `order` override through it.
 3. **Fallback `contentLang`** for Behance titles without overrides (D-10 requires a `lang` but names no source)
    - Recommendation: an optional `contentLang` override field with default `'es'`. Confirm with the user (A2).
+   - RESOLVED: 03-01 Task 1 `toProjects` defaults `contentLang` to `'es'`; 03-02 Task 2 `toCardView` derives `titleLang` from it; 03-04 adds the optional `contentLang` override field.
 4. **Home section when fewer than 3 visible projects** (for example most hidden)
    - Recommendation: render what exists (1–2 cards). Omit the whole section at 0 and throw at build if the snapshot has 0 projects (already enforced by `.min(1)`). The UI-SPEC can override this.
+   - RESOLVED: 03-04 Task 2 `selectHomeProjects` returns what exists when fewer than 3 are visible; 03-05 Task 2 `LatestWork` renders nothing at 0; 03-01 Task 1 `SnapshotSchema` enforces `projects.min(1)`.
 5. **Where `getLatestProjects`/`getAllProjects` live**
    - Recommendation: export them from the existing `src/lib/content/queries.ts` (single data entry point), with the implementation in `src/lib/projects/`.
+   - RESOLVED: 03-02 Task 2 adds `getAllProjects` to `src/lib/content/queries.ts`; 03-04 Task 3 adds `getLatestProjects` there; 03-02 Task 3 enforces the boundary with ESLint (DATA-06).
 
 ## Environment Availability
 

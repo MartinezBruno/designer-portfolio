@@ -115,7 +115,37 @@ Plans:
   4. Visitor sees the 3 latest projects on the homepage, sorted by publish date and linking to their detail-page URLs, and a Projects page listing all projects newest first at `/projects` and `/es/projects` (exact slugs to be decided in planning).
   5. Developer can hide, reorder, feature, recategorize, or add alt text to a project through local overrides, and the change shows up on the site. UI components read only the source-agnostic typed model, never the Behance adapter.
 
-**Plans**: TBD
+**Plans:** 10 plans in 6 waves
+
+Plans:
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Typed project model, slug rule, snapshot schema, seed snapshot and fail-loud read path (fixtures first)
+- [ ] 03-06-PLAN.md — Consent note (own commit, ancestry-gated) and tested sync building blocks (parse, challenge fetch, covers)
+- [ ] 03-07-PLAN.md — `pnpm build:offline` network-blocked build proof
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 03-02-PLAN.md — Projects page (EN/ES) from the seed snapshot: card view, getAllProjects, DATA-06 lint boundary
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 03-03-PLAN.md — Asymmetric fixed-rhythm grid and compact/full ProjectCard, taste gate
+- [ ] 03-04-PLAN.md — Local overrides (hide/order/feature/category/alt/titles) and Home selection rule
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 03-05-PLAN.md — Home "Latest work" section, Projects nav link, two-row mobile header, keyboard order
+- [ ] 03-08-PLAN.md — `runSync` gates, atomic commit protocol, `pnpm sync:behance` CLI
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 03-09-PLAN.md — Live sync run (user go-ahead checkpoint) with measurements, curated overrides, real-imagery taste gate
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 03-10-PLAN.md — Phase gate and user review (checkpoint)
+
 **UI hint**: yes
 **Research flag**: Needs `/gsd:plan-phase --research-phase`. Topics: reconcile 7 vs 14 projects, `hasMore`/pagination, unknown module types, how durable the challenge replay is, build time and git size for about 150 images, consent wording. Plan the typed model and fixtures first so UI work is not blocked by the scraper.
 
