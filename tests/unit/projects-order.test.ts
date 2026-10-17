@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import portrait from '../../src/assets/hero/portrait.png';
 import type { OrderFields, SourceProject } from '../../src/lib/projects/model';
-import { assertUniqueSlugs, sortProjects, toProjects } from '../../src/lib/projects/projects';
+import { applyOverrides, assertUniqueSlugs, sortProjects } from '../../src/lib/projects/projects';
 
 function source(id: string, sourceSlug: string, publishedOn: number): SourceProject {
   return {
@@ -25,11 +25,11 @@ function order(id: string, publishedOn: number, extra: Partial<OrderFields> = {}
   };
 }
 
-describe('toProjects', () => {
+describe('applyOverrides with no overrides', () => {
   const sources = [source('238078789', 'Cabreras-motos-Posts', 1762478100), source('1', 'Mart', 5)];
 
   it('derives the slug and fills the defaults', () => {
-    const [first] = toProjects(sources);
+    const [first] = applyOverrides(sources, {});
     expect(first).toEqual({
       ...sources[0],
       slug: 'cabreras-motos-posts',
@@ -48,7 +48,7 @@ describe('toProjects', () => {
     const fingerprint = (): string[] =>
       sources.map((item) => `${item.id}|${item.sourceSlug}|${item.tools.join(',')}`);
     const before = fingerprint();
-    const projects = toProjects(sources);
+    const projects = applyOverrides(sources, {});
     expect(projects).toHaveLength(2);
     expect(projects[0]).not.toBe(sources[0]);
     expect(projects[0]?.tools).not.toBe(sources[0]?.tools);

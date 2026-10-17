@@ -1,0 +1,230 @@
+import { describe, expect, it } from 'vitest';
+import portrait from '../../src/assets/hero/portrait.png';
+import committed from '../../src/data/project-overrides.json';
+import snapshot from '../../src/data/behance/snapshot.json';
+import type { SourceProject } from '../../src/lib/projects/model';
+import { parseOverrides, type Overrides } from '../../src/lib/projects/overrides-schema';
+import {
+  applyOverrides,
+  missingOverrides,
+  sortProjects,
+  validateOverrides,
+} from '../../src/lib/projects/projects';
+
+const FIX_SUFFIX = '. Fix src/data/project-overrides.json';
+
+function source(id: string, sourceSlug: string, publishedOn: number): SourceProject {
+  return {
+    id,
+    sourceSlug,
+    sourceTitle: `Title ${id}`,
+    sourceUrl: `https://www.behance.net/gallery/${id}/${sourceSlug}`,
+    publishedOn,
+    tools: ['Figma'],
+    cover: portrait,
+  };
+}
+
+const sources = [
+  source('238078789', 'Cabreras-motos-Posts', 1762478100),
+  source('227934855', 'PuroV', 1749658367),
+  source('172473551', 'Mart', 1686103564),
+];
+
+describe('parseOverrides', () => {
+  it('accepts an empty object', () => {
+    expect(parseOverrides({})).toEqual({});
+  });
+
+  it('accepts the committed file', () => {
+    const parsed = parseOverrides(committed);
+    expect(Object.keys(parsed)).toHaveLength(7);
+  });
+
+  it('rejects a non-digit Behance id key', () => {
+    expect(() => parseOverrides({ abc: {} })).toThrow(
+      /^project-overrides: .+\. Fix src\/data\/project-overrides\.json$/,
+    );
+  });
+
+  it('rejects an unknown field (strict object)', () => {
+    let message = '';
+    try {
+      parseOverrides({ '238078789': { catgory: 'branding' } });
+    } catch (error) {
+      if (error instanceof Error) message = error.message;
+    }
+    expect(message.startsWith('project-overrides: 238078789: ')).toBe(true);
+    expect(message.endsWith(FIX_SUFFIX)).toBe(true);
+    expect(message).toContain('catgory');
+  });
+
+  it('rejects an invalid category with the UI-SPEC message', () => {
+    expect(() => parseOverrides({ '238078789': { category: 'illustration' } })).toThrow(
+      'project-overrides: invalid category "illustration" for 238078789. Use one of graphic-design, web-design, branding, social-media',
+    );
+  });
+
+  it('rejects a slug that does not match the slug pattern', () => {
+    expect(() => parseOverrides({ '238078789': { slug: 'Bad Slug' } })).toThrow(
+      /^project-overrides: 238078789\.slug: .+\. Fix src\/data\/project-overrides\.json$/,
+    );
+  });
+
+  it('rejects a title without es', () => {
+    expect(() => parseOverrides({ '238078789': { title: { en: 'Posts' } } })).toThrow(
+      /^project-overrides: 238078789\.title\.es: .+\. Fix src\/data\/project-overrides\.json$/,
+    );
+  });
+});
+
+describe('validateOverrides', () => {
+  it('passes for known ids and unique slugs', () => {
+    expect(() =>
+      validateOverrides(sources, { '238078789': { title: { en: 'Posts', es: 'Posts' } } }),
+    ).not.toThrow();
+  });
+
+  it('throws on an unknown Behance id', () => {
+    expect(() => validateOverrides(sources, { '999': {} })).toThrow(
+      'project-overrides: unknown Behance id 999. Remove it or fix the id in src/data/project-overrides.json',
+    );
+  });
+
+  it('throws on a title over 32 characters naming the locale', () => {
+    const long = 'x'.repeat(33);
+    expect(() =>
+      validateOverrides(sources, { '238078789': { title: { en: 'Short', es: long } } }),
+    ).toThrow(
+      'project-overrides: title.es for 238078789 is 33 characters (max 32). Shorten it in src/data/project-overrides.json',
+    );
+  });
+
+  it('accepts a title of exactly 32 characters', () => {
+    const edge = 'x'.repeat(32);
+    expect(() =>
+      validateOverrides(sources, { '238078789': { title: { en: edge, es: edge } } }),
+    ).not.toThrow();
+  });
+
+  it('throws when a slug override collides with a derived slug', () => {
+    expect(() => validateOverrides(sources, { '238078789': { slug: 'mart' } })).toThrow(
+      'projects: duplicate slug "mart" (238078789, 172473551). Add a "slug" override to one of them',
+    );
+  });
+
+  it('throws on a slug collision even when one project is hidden', () => {
+    expect(() =>
+      validateOverrides(sources, {
+        '172473551': { hidden: true },
+        '238078789': { slug: 'mart' },
+      }),
+    ).toThrow('projects: duplicate slug "mart"');
+  });
+
+  it('validates the committed file against the seed snapshot', () => {
+    const seedSources = snapshot.projects.map((project) => ({
+      id: project.id,
+      sourceSlug: project.slug,
+    }));
+    expect(() => validateOverrides(seedSources, parseOverrides(committed))).not.toThrow();
+  });
+});
+
+describe('applyOverrides', () => {
+  const overrides: Overrides = {
+    '238078789': {
+      slug: 'cabreras-motos',
+      title: { en: 'Social posts', es: 'Posts' },
+      summary: { en: 'Posts for a shop.', es: 'Posts para una tienda.' },
+      coverAlt: { en: 'A motorbike', es: 'Una moto' },
+      category: 'social-media',
+      featured: true,
+      order: 2,
+      contentLang: 'en',
+    },
+    '227934855': { hidden: true },
+  };
+
+  it('copies every curated field and replaces the slug', () => {
+    const [first] = applyOverrides(sources, overrides);
+    expect(first).toEqual({
+      ...sources[0],
+      slug: 'cabreras-motos',
+      title: { en: 'Social posts', es: 'Posts' },
+      summary: { en: 'Posts for a shop.', es: 'Posts para una tienda.' },
+      coverAlt: { en: 'A motorbike', es: 'Una moto' },
+      category: 'social-media',
+      featured: true,
+      hidden: false,
+      order: 2,
+      contentLang: 'en',
+    });
+  });
+
+  it('gives projects without an entry the defaults', () => {
+    const projects = applyOverrides(sources, overrides);
+    expect(projects[2]).toEqual({
+      ...sources[2],
+      slug: 'mart',
+      title: null,
+      summary: null,
+      coverAlt: null,
+      category: null,
+      featured: false,
+      hidden: false,
+      order: null,
+      contentLang: 'es',
+    });
+  });
+
+  it('hidden projects are excluded by sortProjects', () => {
+    const visible = sortProjects(applyOverrides(sources, overrides));
+    expect(visible.map((project) => project.id)).toEqual(['238078789', '172473551']);
+  });
+
+  it('never leaves undefined-valued properties', () => {
+    for (const project of applyOverrides(sources, { '227934855': { hidden: true } })) {
+      for (const value of Object.values(project)) expect(value).not.toBeUndefined();
+    }
+  });
+
+  it('returns new objects and does not mutate the input', () => {
+    const fingerprint = (): string =>
+      JSON.stringify([sources.map((item) => [item.id, item.sourceSlug, item.tools]), overrides]);
+    const before = fingerprint();
+    const projects = applyOverrides(sources, overrides);
+    expect(projects[0]).not.toBe(sources[0]);
+    expect(projects[0]?.tools).not.toBe(sources[0]?.tools);
+    expect(projects[0]?.title).not.toBe(overrides['238078789']?.title);
+    expect(fingerprint()).toBe(before);
+  });
+
+  it('validates before merging', () => {
+    expect(() => applyOverrides(sources, { '999': {} })).toThrow('unknown Behance id 999');
+  });
+});
+
+describe('missingOverrides', () => {
+  it('lists the absent fields per source project', () => {
+    const result = missingOverrides(sources, {
+      '238078789': {
+        title: { en: 'Posts', es: 'Posts' },
+        category: 'social-media',
+        summary: { en: 'Posts.', es: 'Posts.' },
+        coverAlt: { en: 'A bike', es: 'Una moto' },
+      },
+      '227934855': { title: { en: 'PuroV', es: 'PuroV' } },
+    });
+    expect(result).toEqual([
+      { id: '238078789', slug: 'cabreras-motos-posts', missing: [] },
+      { id: '227934855', slug: 'purov', missing: ['category', 'summary', 'coverAlt'] },
+      { id: '172473551', slug: 'mart', missing: ['title', 'category', 'summary', 'coverAlt'] },
+    ]);
+  });
+
+  it('uses the slug override when present', () => {
+    const [first] = missingOverrides(sources, { '238078789': { slug: 'motos' } });
+    expect(first?.slug).toBe('motos');
+  });
+});
