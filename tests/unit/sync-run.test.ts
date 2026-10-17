@@ -200,6 +200,7 @@ function seedProject(id: string, publishedOn: number): SnapshotProject {
       width: 808,
     },
     modules: [],
+    content: [],
   };
 }
 
@@ -254,7 +255,7 @@ async function moduleFiles(): Promise<string[]> {
 function contentFiles(snapshot: Snapshot): string[] {
   return snapshot.projects
     .flatMap((project) =>
-      (project.content ?? []).flatMap((entry) => {
+      project.content.flatMap((entry) => {
         if (entry.kind === 'image') return [entry.image.file];
         if (entry.kind === 'collection') return entry.images.map((image) => image.file);
         return [];
@@ -406,7 +407,7 @@ describe('runSync', () => {
         'ImageModule',
         'FutureModule',
       ]);
-      expect(project?.content?.at(-1)).toEqual({ kind: 'unknown', type: 'FutureModule' });
+      expect(project?.content.at(-1)).toEqual({ kind: 'unknown', type: 'FutureModule' });
     });
 
     it('success: warns on a non-allowlisted embed and normalizes text and collections', async () => {
@@ -462,7 +463,7 @@ describe('runSync', () => {
       const snapshot = await readSnapshot();
       for (const project of snapshot.projects) {
         expect(ContentSchema.array().parse(project.content)).toEqual(project.content);
-        const first = project.content?.[0];
+        const first = project.content[0];
         expect(first).toEqual({
           kind: 'image',
           image: {
@@ -501,7 +502,7 @@ describe('runSync', () => {
       await runSync(deps);
       const snapshot = await readSnapshot();
       for (const project of snapshot.projects) {
-        const first = project.content?.[0];
+        const first = project.content[0];
         expect(first?.kind === 'image' ? first.image.sourceUrl : null).toBe(
           moduleUrl('1400', project.id),
         );
