@@ -162,7 +162,7 @@ function seedProject(id: string, publishedOn: number): SnapshotProject {
     canvasWidth: null,
     cover: {
       file: `${id}-${id.padStart(12, '0')}.png`,
-      sourceUrl: `https://www.behance.net/gallery/${id}/seed-${id}`,
+      sourceUrl: `https://mir-s3-cdn-cf.behance.net/projects/max_808/${id}.png`,
       width: 808,
     },
     modules: [],

@@ -41,7 +41,7 @@ function validProject(): SnapshotProject {
     canvasWidth: null,
     cover: {
       file: '172473551-0123456789ab.png',
-      sourceUrl: 'https://www.behance.net/gallery/172473551/Mart',
+      sourceUrl: 'https://mir-s3-cdn-cf.behance.net/projects/max_808/172473551.png',
       width: 808,
     },
     modules: [{ __typename: 'ImageModule', src: 'x' }],
@@ -112,6 +112,38 @@ describe('parseSnapshot', () => {
 
   it('rejects an unknown origin', () => {
     expectInvalid({ ...validSnapshot(), origin: 'manual' }, 'origin');
+  });
+
+  const UNSAFE_URLS = [
+    'javascript:alert(1)',
+    'data:text/html,x',
+    'file:///etc/passwd',
+    'http://www.behance.net/gallery/172473551/Mart',
+    'https://evil.example/gallery/172473551/Mart',
+    'https://www.behance.net.evil.example/gallery/172473551/Mart',
+    'https://user:pass@www.behance.net/gallery/172473551/Mart',
+  ];
+
+  it.each(UNSAFE_URLS)('rejects project url %j', (url) => {
+    expectInvalid({ ...validSnapshot(), projects: [{ ...validProject(), url }] }, 'projects.0.url');
+  });
+
+  it.each(UNSAFE_URLS)('rejects profile url %j', (url) => {
+    const snapshot = validSnapshot();
+    expectInvalid({ ...snapshot, profile: { ...snapshot.profile, url } }, 'profile.url');
+  });
+
+  it.each([
+    ...UNSAFE_URLS,
+    'https://mir-cdn.behance.net/x.png',
+    'https://www.behance.net/x.png',
+    'https://user@mir-s3-cdn-cf.behance.net/x.png',
+  ])('rejects cover sourceUrl %j', (sourceUrl) => {
+    const project = validProject();
+    expectInvalid(
+      { ...validSnapshot(), projects: [{ ...project, cover: { ...project.cover, sourceUrl } }] },
+      'projects.0.cover.sourceUrl',
+    );
   });
 });
 

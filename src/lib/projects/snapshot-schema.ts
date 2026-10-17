@@ -7,12 +7,29 @@ export const COVER_FILE = /^\d+-[0-9a-f]{12}\.(png|jpg|webp)$/;
 
 const TaxonomySchema = z.strictObject({ id: z.int(), title: z.string() });
 
+/**
+ * https URL on one exact host, with no credentials. The snapshot is a committed, hand-editable
+ * file, so a bare z.url() (which accepts javascript:, data: and file: URLs) is not enough for a
+ * field the site may render as a link (T-03-05).
+ */
+function httpsUrlOn(host: RegExp) {
+  return z.url({ protocol: /^https$/, hostname: host }).refine((value) => {
+    const url = new URL(value);
+    return url.username === '' && url.password === '';
+  }, 'URL must not contain credentials');
+}
+
+/** Behance pages: the profile and project galleries. */
+const BehancePageUrl = httpsUrlOn(/^www\.behance\.net$/);
+/** The Behance image CDN host the sync downloads covers from. */
+const BehanceCdnUrl = httpsUrlOn(/^mir-s3-cdn-cf\.behance\.net$/);
+
 export const SnapshotProjectSchema = z.strictObject({
   id: z.string().regex(/^\d+$/),
   /** The Behance slug, as published. The site slug is derived with toSlug. */
   slug: z.string().min(1),
   name: z.string().min(1),
-  url: z.url(),
+  url: BehancePageUrl,
   /** Unix seconds. */
   publishedOn: z.int().positive(),
   modifiedOn: z.int().nullable(),
@@ -24,7 +41,7 @@ export const SnapshotProjectSchema = z.strictObject({
   canvasWidth: z.int().nullable(),
   cover: z.strictObject({
     file: z.string().regex(COVER_FILE),
-    sourceUrl: z.url(),
+    sourceUrl: BehanceCdnUrl,
     width: z.int().nullable(),
   }),
   /** Full module JSON, kept for the mirrored detail pages. */
@@ -35,7 +52,7 @@ export const SnapshotSchema = z.strictObject({
   version: z.literal(1),
   origin: z.enum(['seed', 'behance-sync']),
   syncedAt: z.iso.datetime(),
-  profile: z.strictObject({ username: z.string().min(1), url: z.url() }),
+  profile: z.strictObject({ username: z.string().min(1), url: BehancePageUrl }),
   projects: z.array(SnapshotProjectSchema).min(1),
 });
 
