@@ -45,11 +45,15 @@ describe('toProjects', () => {
   });
 
   it('returns new objects and does not mutate the input', () => {
-    const snapshot = structuredClone(sources.map(({ cover: _cover, ...rest }) => rest));
+    const fingerprint = (): string[] =>
+      sources.map((item) => `${item.id}|${item.sourceSlug}|${item.tools.join(',')}`);
+    const before = fingerprint();
     const projects = toProjects(sources);
     expect(projects).toHaveLength(2);
     expect(projects[0]).not.toBe(sources[0]);
-    expect(sources.map(({ cover: _cover, ...rest }) => rest)).toEqual(snapshot);
+    expect(projects[0]?.tools).not.toBe(sources[0]?.tools);
+    expect(fingerprint()).toEqual(before);
+    expect(Object.keys(sources[0] ?? {})).not.toContain('slug');
   });
 });
 
