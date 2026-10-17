@@ -178,3 +178,42 @@ export async function fetchCover(
   if (ext === null) throw new SyncError('G4', `${url}: not an image (unknown magic bytes)`);
   return { bytes, ext };
 }
+
+export type ModuleImageResult =
+  { status: 'ok'; bytes: Uint8Array; ext: ImageExt } | { status: 'skip'; reason: string };
+
+/**
+ * Downloads one module image variant from the allowlisted CDN (gate G4m).
+ * A 404 or a non-image content-type is a `skip` (Behance lists variants that do not exist,
+ * RESEARCH Pitfall 2), so the caller can try the next candidate. Every other failure throws.
+ */
+export async function fetchModuleImage(url: string, deps: FetchDeps): Promise<ModuleImageResult> {
+  assertAllowed(url, CDN_HOSTS, 'G4m');
+  const res = await request(url, deps, 'G4m', {
+    headers: { 'user-agent': BEHANCE_UA },
+    redirect: 'error',
+  });
+  if (res.status === 404) {
+    await res.body?.cancel();
+    return { status: 'skip', reason: `${url}: status 404` };
+  }
+  if (res.status !== 200) {
+    await res.body?.cancel();
+    throw new SyncError('G4m', `${url}: status ${res.status}`);
+  }
+  const contentType = res.headers.get('content-type') ?? '';
+  if (!contentType.toLowerCase().startsWith('image/')) {
+    await res.body?.cancel();
+    return {
+      status: 'skip',
+      reason: `${url}: content-type ${JSON.stringify(contentType)} is not image/*`,
+    };
+  }
+  const bytes = await readCapped(res, MAX_COVER_BYTES, 'G4m', url);
+  if (bytes.byteLength <= MIN_COVER_BYTES) {
+    throw new SyncError('G4m', `${url}: image too small (${bytes.byteLength} bytes)`);
+  }
+  const ext = sniffImage(bytes);
+  if (ext === null) throw new SyncError('G4m', `${url}: not an image (unknown magic bytes)`);
+  return { status: 'ok', bytes, ext };
+}
