@@ -1,0 +1,36 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import IconArrowRight from '@tabler/icons/outline/arrow-right.svg';
+import ButtonLink from '../ui/ButtonLink.astro';
+import { useTranslations, type Locale } from '../../i18n/t';
+
+// Detail-page contact band (D-15): a field change to surface-alt, not a box. Its button is the
+// page's only accent button and points at the Home contact section of the same locale.
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const contactHref = `${getRelativeLocaleUrl(locale, '/')}#contact`;
+---
+
+<section aria-labelledby="project-cta-title" class="bg-surface-alt">
+  <div class="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-16 sm:px-6 md:flex-row md:items-end md:justify-between lg:px-8">
+    <div class="flex flex-col gap-2">
+      <h2
+        id="project-cta-title"
+        class="font-display text-ink text-2xl font-semibold tracking-tight text-pretty"
+      >
+        {t('detail.cta.heading')}
+      </h2>
+      <p class="text-ink max-w-[60ch] text-base">{t('detail.cta.body')}</p>
+    </div>
+    <ButtonLink href={contactHref}>
+      {t('detail.cta.button')}
+      <Fragment slot="icon">
+        <IconArrowRight aria-hidden="true" focusable="false" class="size-5" />
+      </Fragment>
+    </ButtonLink>
+  </div>
+</section>
