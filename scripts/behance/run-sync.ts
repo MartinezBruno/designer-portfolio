@@ -224,6 +224,9 @@ export async function runSync(deps: SyncDeps): Promise<SyncReport> {
       snapshot: deps.paths.snapshot,
       coversDir: deps.paths.coversDir,
       referenced: new Set(snapshot.projects.map((project) => project.cover.file)),
+      // Placeholder until 04-07 wires module image downloads into the sync.
+      modulesDir: join(deps.paths.coversDir, 'modules'),
+      referencedModules: new Set(),
     });
     committed = true;
 

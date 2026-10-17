@@ -1,18 +1,25 @@
 // Staging and commit protocol for the Behance sync (RESEARCH Pattern 4).
 // Erasable TypeScript only (Node type stripping runs it). All paths are relative to `root`.
 //
+// Covers are staged at `<staging>/<name>` and committed to coversDir. Module images are staged at
+// `<staging>/modules/<name>` and committed to modulesDir (a subdirectory of coversDir in the repo,
+// src/assets/projects/modules). Each set has its own name regex and its own GC, so a cover GC can
+// never delete a module image (RESEARCH Pitfall 1).
+//
 // Order inside commitSync:
-//   1. Copy each staged cover to a hidden `.<name>.partial` file in coversDir, then rename it to
-//      its final name, so a copy cut off partway never sits under a cover name. A cover already
+//   0. Pre-flight: every referenced cover and module image is staged or already present. Nothing
+//      is written before this passes.
+//   1. Copy each staged file to a hidden `.<name>.partial` file in its target dir, then rename it
+//      to its final name, so a copy cut off partway never sits under a real name. A file already
 //      on disk under that name is kept untouched when its bytes equal the staged ones. If they
 //      differ, the file on disk is a truncated or corrupt copy (the name is the hash of the staged
 //      bytes), and the rename replaces it atomically.
 //   2. One rename of staging/snapshot.json over the target snapshot.json. This is the ONLY step
 //      that changes what the site reads, and rename within one filesystem is atomic.
-//   3. Delete COVER_FILE names in coversDir that the new snapshot no longer references, and any
-//      `.partial` leftover of a killed run.
+//   3. Delete COVER_FILE names in coversDir and MODULE_FILE names in modulesDir that the new
+//      snapshot no longer references, and any `.partial` leftover of a killed run.
 //
-// A crash between (1) and (2) leaves only extra, unreferenced cover files next to the previous
+// A crash between (1) and (2) leaves only extra, unreferenced files next to the previous
 // snapshot; the site ignores them and the next successful run's GC removes them. A crash between
 // (2) and (3) leaves the same kind of leftovers. Directory renames are not used: renaming a
 // staged covers dir over a non-empty coversDir fails with ENOTEMPTY and would not be atomic for
@@ -28,13 +35,16 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { COVER_FILE } from '../../src/lib/projects/snapshot-schema.ts';
+import { COVER_FILE, MODULE_FILE } from '../../src/lib/projects/snapshot-schema.ts';
 import { postCommitError } from './errors.ts';
 
 const STAGED_SNAPSHOT = 'snapshot.json';
+const STAGED_MODULES = 'modules';
 
 /** A cover copy in progress (or left over by a killed run): never read by the site. */
 const PARTIAL_FILE = /^\.\d+-[0-9a-f]{12}\.(png|jpg|webp)\.partial$/;
+/** A module image copy in progress (or left over by a killed run). */
+const MODULE_PARTIAL_FILE = /^\.\d+-[0-9a-f]{12}\.webp\.partial$/;
 
 const partialName = (name: string): string => `.${name}.partial`;
 
@@ -44,16 +54,40 @@ export interface CommitInput {
   snapshot: string;
   coversDir: string;
   referenced: ReadonlySet<string>;
+  modulesDir: string;
+  referencedModules: ReadonlySet<string>;
 }
 
 export interface CommitResult {
   added: string[];
   removed: string[];
+  modulesAdded: string[];
+  modulesRemoved: string[];
+}
+
+/** One committed file set: where it is staged, where it goes, and which names belong to it. */
+interface FileSet {
+  label: string;
+  staging: string;
+  target: string;
+  targetLabel: string;
+  names: readonly string[];
+  referenced: ReadonlySet<string>;
+  file: RegExp;
+  partial: RegExp;
 }
 
 function assertCoverName(name: string): void {
   if (!COVER_FILE.test(name)) {
     throw new Error(`invalid cover file name ${JSON.stringify(name)} (expected <id>-<hash>.<ext>)`);
+  }
+}
+
+function assertModuleName(name: string): void {
+  if (!MODULE_FILE.test(name)) {
+    throw new Error(
+      `invalid module image file name ${JSON.stringify(name)} (expected <id>-<hash>.webp)`,
+    );
   }
 }
 
@@ -85,6 +119,18 @@ export async function writeStagedCover(
   await writeFile(join(root, stagingDir, name), bytes);
 }
 
+export async function writeStagedModule(
+  root: string,
+  stagingDir: string,
+  name: string,
+  bytes: Uint8Array,
+): Promise<void> {
+  assertModuleName(name);
+  const dir = join(root, stagingDir, STAGED_MODULES);
+  await mkdir(dir, { recursive: true });
+  await writeFile(join(dir, name), bytes);
+}
+
 export async function writeStagedSnapshot(
   root: string,
   stagingDir: string,
@@ -96,29 +142,24 @@ export async function writeStagedSnapshot(
   );
 }
 
-export async function commitSync(input: CommitInput): Promise<CommitResult> {
-  const staging = join(input.root, input.stagingDir);
-  const covers = join(input.root, input.coversDir);
-  const target = join(input.root, input.snapshot);
-  const referenced = [...input.referenced].sort();
-  referenced.forEach(assertCoverName);
-
-  // Pre-flight: every referenced cover must be staged or already present, before any write.
-  for (const name of referenced) {
-    if (!(await exists(join(staging, name))) && !(await exists(join(covers, name)))) {
-      throw new Error(`cover ${name} is neither staged nor in ${input.coversDir}`);
+async function preflight(set: FileSet): Promise<void> {
+  for (const name of set.names) {
+    if (!(await exists(join(set.staging, name))) && !(await exists(join(set.target, name)))) {
+      throw new Error(`${set.label} ${name} is neither staged nor in ${set.targetLabel}`);
     }
   }
+}
 
-  // (1) Covers: copy to a partial file, then rename into place. An intact existing cover is kept.
-  await mkdir(covers, { recursive: true });
+/** Copy-if-absent through a partial file. Returns the names actually written. */
+async function copyStaged(set: FileSet): Promise<string[]> {
   const added: string[] = [];
-  for (const name of referenced) {
-    const staged = join(staging, name);
+  for (const name of set.names) {
+    const staged = join(set.staging, name);
     if (!(await exists(staged))) continue;
-    const final = join(covers, name);
+    await mkdir(set.target, { recursive: true });
+    const final = join(set.target, name);
     if ((await exists(final)) && (await sameBytes(staged, final))) continue;
-    const partial = join(covers, partialName(name));
+    const partial = join(set.target, partialName(name));
     try {
       await copyFile(staged, partial);
       await rename(partial, final);
@@ -127,27 +168,74 @@ export async function commitSync(input: CommitInput): Promise<CommitResult> {
     }
     added.push(name);
   }
+  return added;
+}
+
+/** Removes unreferenced names of this set and stale partials (not reported). */
+async function collect(set: FileSet): Promise<string[]> {
+  if (!(await exists(set.target))) return [];
+  const removed: string[] = [];
+  for (const name of (await readdir(set.target)).sort()) {
+    const stale = set.partial.test(name);
+    if (!stale && (!set.file.test(name) || set.referenced.has(name))) continue;
+    await rm(join(set.target, name));
+    if (!stale) removed.push(name);
+  }
+  return removed;
+}
+
+export async function commitSync(input: CommitInput): Promise<CommitResult> {
+  const staging = join(input.root, input.stagingDir);
+  const target = join(input.root, input.snapshot);
+  const coverNames = [...input.referenced].sort();
+  const moduleNames = [...input.referencedModules].sort();
+  coverNames.forEach(assertCoverName);
+  moduleNames.forEach(assertModuleName);
+
+  const covers: FileSet = {
+    label: 'cover',
+    staging,
+    target: join(input.root, input.coversDir),
+    targetLabel: input.coversDir,
+    names: coverNames,
+    referenced: input.referenced,
+    file: COVER_FILE,
+    partial: PARTIAL_FILE,
+  };
+  const modules: FileSet = {
+    label: 'module image',
+    staging: join(staging, STAGED_MODULES),
+    target: join(input.root, input.modulesDir),
+    targetLabel: input.modulesDir,
+    names: moduleNames,
+    referenced: input.referencedModules,
+    file: MODULE_FILE,
+    partial: MODULE_PARTIAL_FILE,
+  };
+
+  // (0) Pre-flight for both sets, before any write.
+  await preflight(covers);
+  await preflight(modules);
+
+  // (1) Covers, then module images. The covers dir always exists after this step.
+  await mkdir(covers.target, { recursive: true });
+  const added = await copyStaged(covers);
+  const modulesAdded = await copyStaged(modules);
 
   // (2) The single atomic switch of what the site reads.
   await mkdir(dirname(target), { recursive: true });
   await rename(join(staging, STAGED_SNAPSHOT), target);
 
-  // (3) GC: COVER_FILE names the new snapshot no longer references, and stale `.partial` copies
-  // (not reported in `removed`). The new snapshot is
-  // live from here on, so a failure is reported as a post-commit error.
-  const removed: string[] = [];
+  // (3) GC, each set with its own regex and referenced set. The new snapshot is live from here
+  // on, so a failure is reported as a post-commit error. The cover GC skips the `modules`
+  // directory because it does not match COVER_FILE.
   try {
-    for (const name of (await readdir(covers)).sort()) {
-      const stale = PARTIAL_FILE.test(name);
-      if (!stale && (!COVER_FILE.test(name) || input.referenced.has(name))) continue;
-      await rm(join(covers, name));
-      if (!stale) removed.push(name);
-    }
+    const removed = await collect(covers);
+    const modulesRemoved = await collect(modules);
+    return { added, removed, modulesAdded, modulesRemoved };
   } catch (error) {
     throw postCommitError(error instanceof Error ? error : String(error));
   }
-
-  return { added, removed };
 }
 
 export async function removeStaging(root: string, stagingDir: string): Promise<void> {
