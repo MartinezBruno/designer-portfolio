@@ -263,6 +263,10 @@ export async function runSync(deps: SyncDeps): Promise<SyncReport> {
     if (committed) throw postCommitError(error instanceof Error ? error : String(error));
     throw error;
   } finally {
-    await removeStaging(root, stagingDir);
+    // A cleanup failure (EPERM, EBUSY) must not replace the real error or turn success into a
+    // failure: the staging dir is only scratch space under tmp/.
+    await removeStaging(root, stagingDir).catch((error: Error) => {
+      deps.log(`sync:behance: could not remove staging dir ${stagingDir}: ${error.message}`);
+    });
   }
 }

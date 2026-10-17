@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -504,6 +504,56 @@ describe('runSync', () => {
       };
       await expectCommittedFailure(deps, /stdout closed/);
     });
+  });
+});
+
+// Root ignores directory permissions, so the cleanup failure cannot be simulated there.
+const canDenyWrites = process.getuid?.() !== 0;
+
+describe.runIf(canDenyWrites)('runSync when the staging dir cannot be removed', () => {
+  const staging = (): string => join(root, 'tmp');
+
+  /** Makes staging's parent read-only once the run reaches the covers, so cleanup fails. */
+  function lockStagingParent(deps: SyncDeps): void {
+    const fetch = deps.fetch;
+    deps.fetch = async (input, init) => {
+      if (String(input).startsWith('https://mir-s3-cdn-cf.behance.net/')) {
+        await chmod(staging(), 0o555);
+      }
+      return fetch(input, init);
+    };
+  }
+
+  afterEach(async () => {
+    await chmod(staging(), 0o755).catch(() => undefined);
+  });
+
+  it('keeps the original sync error and logs the cleanup failure', async () => {
+    await seed(3);
+    const { deps, lines } = harness({ cover: NOT_IMAGE });
+    lockStagingParent(deps);
+    const error = await runSync(deps).then(
+      () => null,
+      (caught: Error) => caught,
+    );
+    expect(error).toBeInstanceOf(SyncError);
+    expect(error instanceof SyncError && error.gate).toBe('G4');
+    expect(error?.message).toMatch(/not an image/);
+    expect(lines.some((line) => line.includes('could not remove staging dir tmp/staging'))).toBe(
+      true,
+    );
+  });
+
+  it('still succeeds when only the cleanup fails', async () => {
+    await seed(3);
+    const { deps, lines } = harness();
+    lockStagingParent(deps);
+    const report = await runSync(deps);
+    expect(report.count).toBe(3);
+    expect((await readSnapshot()).origin).toBe('behance-sync');
+    expect(lines.some((line) => line.includes('could not remove staging dir tmp/staging'))).toBe(
+      true,
+    );
   });
 });
 
