@@ -31,7 +31,9 @@ test.describe('motion gate with prefers-reduced-motion: reduce', () => {
       await page.goto(path);
       await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-      await expect(page.locator('#main picture img')).toBeVisible();
+      await expect(
+        page.locator('#main section[aria-labelledby="hero-title"] picture img'),
+      ).toBeVisible();
       await expect(page.getByRole('banner')).toBeVisible();
       await expect(page.getByRole('contentinfo')).toBeVisible();
     });
@@ -46,7 +48,9 @@ test.describe('motion gate without JavaScript', () => {
       await page.goto(path);
       await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-      await expect(page.locator('#main picture img')).toBeVisible();
+      await expect(
+        page.locator('#main section[aria-labelledby="hero-title"] picture img'),
+      ).toBeVisible();
       await expect(page.locator('footer svg').first()).toBeVisible();
     });
   }

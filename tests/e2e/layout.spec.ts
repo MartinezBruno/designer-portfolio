@@ -161,3 +161,72 @@ test.describe('marquee track fill', () => {
     }
   }
 });
+
+// Phase 3 (D-20, UI-SPEC Header nav): two-row header below sm, one 64px row from sm, and the
+// sticky header never covers a focused project tile (scroll-pt on html, WCAG 2.4.11).
+test.describe('phase 3 header and layout', () => {
+  const phase3Pages = [
+    ['/', en],
+    ['/es/', es],
+    ['/projects/', en],
+    ['/es/projects/', es],
+  ] as const;
+
+  for (const [path, dict] of phase3Pages) {
+    test(`at 320px ${path} has no horizontal overflow and a one-line wordmark`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 320, height: 640 });
+      await page.goto(path);
+      const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+      expect(scrollWidth).toBeLessThanOrEqual(320);
+
+      const wordmark = page.getByRole('banner').getByRole('link', { name: site.name });
+      const box = await wordmark.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box?.height ?? Infinity).toBeLessThanOrEqual(44 + 2);
+    });
+
+    test(`header on ${path} is one 64px row at 640px and two rows at 390px`, async ({ page }) => {
+      const header = page.getByRole('banner');
+
+      await page.setViewportSize({ width: 640, height: 800 });
+      await page.goto(path);
+      const wide = (await header.boundingBox())?.height ?? 0;
+      expect(Math.abs(wide - 64)).toBeLessThanOrEqual(1);
+
+      await page.setViewportSize({ width: 390, height: 844 });
+      const narrow = (await header.boundingBox())?.height ?? 0;
+      expect(Math.abs(narrow - 89)).toBeLessThanOrEqual(2);
+    });
+
+    test(`nav on ${path} lists Projects before Contact`, async ({ page }) => {
+      await page.goto(path);
+      const nav = page.getByRole('navigation', { name: dict['nav.label'], exact: true });
+      const names = await nav.getByRole('link').allTextContents();
+      expect(names.map((name) => name.trim())).toEqual([dict['nav.projects'], dict['nav.contact']]);
+    });
+  }
+
+  test('on /projects/ a focused tile is never hidden under the sticky header', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/projects/');
+
+    await page.getByRole('contentinfo').getByRole('link', { name: site.email }).focus();
+    let onProject = false;
+    for (let presses = 0; presses < 10 && !onProject; presses++) {
+      await page.keyboard.press('Shift+Tab');
+      onProject = await page.evaluate(
+        () => document.activeElement?.matches('main article a') ?? false,
+      );
+    }
+    expect(onProject, 'Shift+Tab should reach a project link').toBe(true);
+
+    const { tileTop, headerBottom } = await page.evaluate(() => {
+      const tile = document.activeElement?.closest('article')?.getBoundingClientRect();
+      const header = document.querySelector('header')?.getBoundingClientRect();
+      return { tileTop: tile?.top ?? -Infinity, headerBottom: header?.bottom ?? Infinity };
+    });
+    expect(tileTop).toBeGreaterThanOrEqual(headerBottom);
+  });
+});
