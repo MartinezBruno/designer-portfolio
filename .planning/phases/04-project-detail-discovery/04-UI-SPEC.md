@@ -529,7 +529,7 @@ Notes:
 Developer-facing copy (sync and build output, one line each). Each message keeps the problem + file + fix structure:
 - `sync:behance: unknown module type "{type}" in {id} ({slug}). It renders the Behance fallback note.` (existing warning, kept)
 - `sync:behance: embed origin "{origin}" in {id} ({slug}) is not allowlisted. It renders the Behance fallback note. Add it to the embed allowlist in src/lib/projects/ if it is safe.`
-- `sync:behance: could not download module image {moduleId} for {id} ({slug}): {reason}. The previous snapshot and images were left untouched.` `[CONTEXT D-05, DATA-03]`
+- `sync:behance: could not download module image {moduleId} for {id} ({slug}): {reason}. The previous snapshot was left untouched.` `[CONTEXT D-05, DATA-03]`
 - Checklist notice (does not fail the sync): `missing module alts for {id} ({slug}): {n} of {total} images. Add moduleAlt entries in src/data/project-overrides.json. TODO(martina)` `[CONTEXT D-09]`
 - `project-overrides: moduleAlt key {key} for {id} matches no image in the snapshot. Fix or remove it in src/data/project-overrides.json`
 - `project-overrides: moduleAlt.{locale} for {id}/{key} is {n} characters (max 125). Shorten it in src/data/project-overrides.json`
