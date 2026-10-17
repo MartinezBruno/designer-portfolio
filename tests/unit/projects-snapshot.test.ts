@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
-import seed from '../../src/data/behance/snapshot.json';
+import committed from '../../src/data/behance/snapshot.json';
 import services from '../../src/data/services.json';
 import { categoryIds } from '../../src/lib/projects/model';
 import {
@@ -115,11 +115,11 @@ describe('parseSnapshot', () => {
   });
 });
 
-describe('seed snapshot', () => {
-  const parsed = parseSnapshot(seed);
+describe('committed snapshot', () => {
+  const parsed = parseSnapshot(committed);
 
-  it('parses with origin seed and the 7 known ids, newest first', () => {
-    expect(parsed.origin).toBe('seed');
+  it('parses with origin behance-sync and the 7 known ids, newest first', () => {
+    expect(parsed.origin).toBe('behance-sync');
     expect(parsed.projects.map((project) => project.id)).toEqual(KNOWN_IDS);
   });
 
@@ -151,14 +151,14 @@ describe('behance snapshot adapter', () => {
   });
 
   it('maps tools to titles in source order', () => {
-    const titles = parseSnapshot(seed).projects.map((project) =>
+    const titles = parseSnapshot(committed).projects.map((project) =>
       project.tools.map((tool) => tool.title),
     );
     expect(getSourceProjects().map((project) => [...project.tools])).toEqual(titles);
   });
 
-  it('reports the seed origin', () => {
-    expect(getSnapshotOrigin()).toBe('seed');
+  it('reports the behance-sync origin', () => {
+    expect(getSnapshotOrigin()).toBe('behance-sync');
   });
 });
 
