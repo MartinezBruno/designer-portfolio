@@ -32,7 +32,9 @@ function withStore(html: string, edit: (store: StoreShape) => void): string {
 
 interface StoreShape {
   profile: {
-    activeSection: { work: { profileProjects: Record<string, string | number>[]; hasMore: boolean } };
+    activeSection: {
+      work: { profileProjects: Record<string, string | number>[]; hasMore: boolean };
+    };
   };
 }
 
@@ -179,9 +181,7 @@ describe('pickCover', () => {
   });
 
   it('throws gate G4 when only WEBP or null-width entries exist', () => {
-    const covers = profileCovers().filter(
-      (cover) => cover.type === 'WEBP' || cover.width === null,
-    );
+    const covers = profileCovers().filter((cover) => cover.type === 'WEBP' || cover.width === null);
     expectSyncError(() => pickCover(covers), 'G4', /no usable cover/);
   });
 });
