@@ -49,7 +49,6 @@ describe('toCardView', () => {
       title: 'Cabrera´s motos, Posts',
       titleLang: 'es',
       category: null,
-      year: 2025,
       tools: ['Figma', 'Adobe Photoshop'],
       summary: null,
       cover: portrait,
@@ -95,9 +94,8 @@ describe('toCardView', () => {
     expect(view.category).toBe('Web design');
   });
 
-  it('takes the year in UTC', () => {
-    // 2023-12-31T23:59:59Z
-    expect(toCardView(project({ publishedOn: 1704067199 }), 'en', categoryTitles).year).toBe(2023);
+  it('carries no project date (removed by the user 2026-10-17)', () => {
+    expect(toCardView(project(), 'en', categoryTitles)).not.toHaveProperty('year');
   });
 });
 

@@ -45,7 +45,6 @@ export interface ProjectCardView {
   title: string;
   titleLang: Locale | null;
   category: string | null;
-  year: number;
   tools: readonly string[];
   summary: string | null;
   cover: ImageMetadata;

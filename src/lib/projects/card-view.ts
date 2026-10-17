@@ -23,7 +23,6 @@ export function toCardView(
     titleLang:
       project.title !== null || project.contentLang === locale ? null : project.contentLang,
     category: project.category === null ? null : categoryTitles[project.category],
-    year: new Date(project.publishedOn * 1000).getUTCFullYear(),
     tools: [...project.tools],
     summary: project.summary?.[locale] ?? null,
     cover: project.cover,

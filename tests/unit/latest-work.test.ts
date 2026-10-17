@@ -13,7 +13,6 @@ function project(slug: string): ProjectCardView {
     title: `Title ${slug}`,
     titleLang: null,
     category: 'Branding',
-    year: 2024,
     tools: ['Figma'],
     summary: 'A summary that compact cards never show.',
     cover: portrait,

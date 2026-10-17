@@ -42,7 +42,6 @@ export const en = {
   'projects.heading': 'Projects',
   'projects.intro': 'Websites, brand identities and social content, newest first.',
   'projects.meta.category': 'Category',
-  'projects.meta.year': 'Year',
   'projects.meta.tools': 'Tools',
   'projects.coverAlt': '{title} — cover',
   'projects.empty.heading': 'New work is on the way',

@@ -67,7 +67,7 @@ test.describe('latest work', () => {
           await expect(links.nth(index)).toHaveText(row.title);
         }
 
-        // Compact: cover, title, category and year only (D-11, D-19).
+        // Compact: cover, title and category only (D-11, D-19; no date, user 2026-10-17).
         await expect(section.locator('dt', { hasText: dict['projects.meta.tools'] })).toHaveCount(
           0,
         );
@@ -75,7 +75,7 @@ test.describe('latest work', () => {
         const articles = section.locator('article');
         await expect(articles).toHaveCount(expected.length);
         for (let index = 0; index < expected.length; index++) {
-          await expect(articles.nth(index).locator('time')).toHaveCount(1);
+          await expect(articles.nth(index).locator('time')).toHaveCount(0);
         }
       });
 

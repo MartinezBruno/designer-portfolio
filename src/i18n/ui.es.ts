@@ -46,7 +46,6 @@ export const es = {
   'projects.intro':
     'Webs, identidades de marca y contenido para redes, del más reciente al más antiguo.',
   'projects.meta.category': 'Categoría',
-  'projects.meta.year': 'Año',
   'projects.meta.tools': 'Herramientas',
   'projects.coverAlt': '{title} — portada',
   'projects.empty.heading': 'Hay trabajo nuevo en camino',

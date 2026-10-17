@@ -11,7 +11,6 @@ const baseProject: ProjectCardView = {
   title: 'Brand Refresh',
   titleLang: null,
   category: 'Branding',
-  year: 2024,
   tools: ['Figma', 'Adobe Illustrator'],
   summary: 'A full identity refresh for a local bakery.',
   cover: portrait,
@@ -60,19 +59,20 @@ describe('project card full variant', () => {
     expect(html).toContain('<h2');
     expect(html).toContain(baseProject.summary);
     expect(html).toContain('Figma, Adobe Illustrator');
-    expect(html.match(/<dt/g)).toHaveLength(3);
+    expect(html.match(/<dt/g)).toHaveLength(2);
+    expect(html).not.toContain('<time');
   });
 });
 
 describe('project card compact variant', () => {
-  it('renders an h3 with category and year but no summary or tools', async () => {
+  it('renders an h3 with category but no summary, tools or date', async () => {
     const html = await render({ variant: 'compact' });
     expect(html).toContain('<h3');
     expect(html).not.toContain('<h2');
     expect(html).not.toContain(baseProject.summary);
     expect(html).not.toContain('Figma');
     expect(html).toContain('Branding');
-    expect(html).toContain('2024');
+    expect(html).not.toContain('<time');
     expect(html.match(/<a /g)).toHaveLength(1);
   });
 });

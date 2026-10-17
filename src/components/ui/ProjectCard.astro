@@ -93,12 +93,6 @@ const priority = eager ? { fetchpriority: 'high' as const } : {};
             <dd>{project.category}</dd>
           </div>
         )}
-        <div class="flex gap-1">
-          <dt class="sr-only">{t('projects.meta.year')}</dt>
-          <dd>
-            <time datetime={String(project.year)}>{project.year}</time>
-          </dd>
-        </div>
         {full && project.tools.length > 0 && (
           <div class="flex basis-full gap-1">
             <dt class="sr-only">{t('projects.meta.tools')}</dt>

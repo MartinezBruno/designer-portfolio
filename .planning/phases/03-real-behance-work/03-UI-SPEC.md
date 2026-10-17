@@ -129,7 +129,7 @@ Rules:
   - Title overrides (`title.en` and `title.es`) are therefore **at most 32 characters**. The overrides schema enforces this with `.max(32)`, so a longer title fails the build. `[Default; Upstream: taste copy.md "about 32 characters is safe"]`
 - No `truncate`, no `line-clamp`, no fixed text heights. Spanish runs 15–25% longer and wraps naturally `[Upstream: 02-UI-SPEC]`.
 - **Fallback titles keep the original language.** When a project has no title override for the page locale, the Behance title renders inside `<span lang={contentLang}>`. `contentLang` defaults to `es` and can be overridden. The `lang` attribute is omitted when `contentLang` equals the page locale. `[CONTEXT D-10; Upstream: 03-RESEARCH A2, Open Question 3]`
-- Year is `<time datetime="YYYY">YYYY</time>`, computed in UTC `[Upstream: 03-RESEARCH Pattern 6]`.
+- ~~Year is `<time datetime="YYYY">YYYY</time>`, computed in UTC.~~ **Amended 2026-10-17 (user): project cards show no date.** `publishedOn` still drives the newest-first order but is never rendered, on any card or (per the user) on the Phase 4 detail page.
 - Category and tools are **never uppercased** and never letter-spaced `[Taste: no tiny uppercase letter-spaced labels]`.
 
 ---
@@ -325,7 +325,6 @@ Props: `project: ProjectCardView`, `variant: 'compact' | 'full'`, `headingLevel:
       {variant === 'full' && summary && <p class="max-w-[60ch] text-base text-ink">{summary}</p>}
       <dl class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-muted">
         {category && <div class="flex gap-1"><dt class="sr-only">{t('projects.meta.category')}</dt><dd>{category}</dd></div>}
-        <div class="flex gap-1"><dt class="sr-only">{t('projects.meta.year')}</dt><dd><time datetime={year}>{year}</time></dd></div>
         {variant === 'full' && tools.length > 0 &&
           <div class="flex basis-full gap-1"><dt class="sr-only">{t('projects.meta.tools')}</dt><dd>{tools.join(', ')}</dd></div>}
       </dl>
@@ -341,11 +340,11 @@ Props: `project: ProjectCardView`, `variant: 'compact' | 'full'`, `headingLevel:
 - **Link classes:** `text-ink decoration-accent decoration-2 underline-offset-4 group-hover/card:underline focus-visible:underline outline-hidden after:absolute after:inset-0 after:content-[''] focus-visible:after:outline-2 focus-visible:after:outline-offset-4 focus-visible:after:outline-accent`, with `group/card` on the `<article>`.
   - Hovering anywhere on the tile underlines the title. Nothing else changes.
   - Motion-driven hover (cover scale, reveal) is Phase 6.
-- **Meta is plain text, not chips.** Category, year and tools are a `<dl>` with visually hidden `<dt>` labels:
-  - Screen readers hear "Category, Web design; Year, 2025; Tools, Figma, Adobe Photoshop".
-  - Sighted users see `Web design   2025` on one line, with tools on the next (full variant).
+- **Meta is plain text, not chips.** Category and tools are a `<dl>` with visually hidden `<dt>` labels (no year: **Amended 2026-10-17 (user): project cards show no date.**):
+  - Screen readers hear "Category, Web design; Tools, Figma, Adobe Photoshop".
+  - Sighted users see `Web design` on one line, with tools on the next (full variant).
   - Category is never a pill and never colored. `[Taste: no pill badges]; [CONTEXT D-11, D-12]`
-- **Without a category override** the category item is omitted, so only the year shows. **Without a summary** the summary line is omitted. With no tools, the tools line is omitted. No placeholder text and no reserved space. `[CONTEXT D-14, D-22]`
+- **Without a category override** the category item is omitted (compact cards then show no meta line). **Without a summary** the summary line is omitted. With no tools, the tools line is omitted. No placeholder text and no reserved space. `[CONTEXT D-14, D-22]`
 - **Compact (Home)** shows the cover, the title at `text-base font-semibold`, and category + year. **Full (Projects)** shows the cover, the title at `font-display text-2xl font-semibold tracking-tight`, the summary, category + year, and tools. All information is visible at rest. Nothing exists only on hover or focus. `[CONTEXT D-11, D-19]`
 - **`sizesFor(size)`** (literal strings):
   - `large` / `large-end`: `(min-width: 1152px) 625px, (min-width: 768px) 57vw, 100vw`
@@ -391,7 +390,6 @@ UI strings go in `src/i18n/ui.en.ts` / `ui.es.ts` (`satisfies Dictionary`). Per-
 | Projects page heading (h1) | `projects.heading` | Projects | Proyectos |
 | Projects page intro | `projects.intro` | Websites, brand identities and social content, newest first. | Webs, identidades de marca y contenido para redes, del más reciente al más antiguo. |
 | Meta label, sr-only `dt` | `projects.meta.category` | Category | Categoría |
-| Meta label, sr-only `dt` | `projects.meta.year` | Year | Año |
 | Meta label, sr-only `dt` | `projects.meta.tools` | Tools | Herramientas |
 | Cover alt fallback (interpolated) | `projects.coverAlt` | {title} — cover | {title} — portada |
 | Empty state heading | `projects.empty.heading` | New work is on the way | Hay trabajo nuevo en camino |
