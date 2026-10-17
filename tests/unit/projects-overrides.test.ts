@@ -6,14 +6,21 @@ import type { SourceProject } from '../../src/lib/projects/model';
 import { parseOverrides, type Overrides } from '../../src/lib/projects/overrides-schema';
 import {
   applyOverrides,
+  missingModuleAlts,
   missingOverrides,
   sortProjects,
   validateOverrides,
 } from '../../src/lib/projects/projects';
+import { contentImageIds, parseSnapshot } from '../../src/lib/projects/snapshot-schema';
 
 const FIX_SUFFIX = '. Fix src/data/project-overrides.json';
 
-function source(id: string, sourceSlug: string, publishedOn: number): SourceProject {
+function source(
+  id: string,
+  sourceSlug: string,
+  publishedOn: number,
+  imageIds: readonly string[] = [],
+): SourceProject {
   return {
     id,
     sourceSlug,
@@ -22,14 +29,17 @@ function source(id: string, sourceSlug: string, publishedOn: number): SourceProj
     publishedOn,
     tools: ['Figma'],
     cover: portrait,
+    imageIds,
   };
 }
 
 const sources = [
-  source('238078789', 'Cabreras-motos-Posts', 1762478100),
-  source('227934855', 'PuroV', 1749658367),
+  source('238078789', 'Cabreras-motos-Posts', 1762478100, ['1450079099', '1450079100']),
+  source('227934855', 'PuroV', 1749658367, ['1350000001', '1350000002', '1350000003']),
   source('172473551', 'Mart', 1686103564),
 ];
+
+const alt = (en: string, es = en): { en: string; es: string } => ({ en, es });
 
 describe('parseOverrides', () => {
   it('accepts an empty object', () => {
@@ -75,6 +85,29 @@ describe('parseOverrides', () => {
     expect(() => parseOverrides({ '238078789': { title: { en: 'Posts' } } })).toThrow(
       /^project-overrides: 238078789\.title\.es: .+\. Fix src\/data\/project-overrides\.json$/,
     );
+  });
+
+  it('accepts a moduleAlt map keyed by image id', () => {
+    const parsed = parseOverrides({
+      '238078789': { moduleAlt: { '1450079099': { en: 'A poster', es: 'Un póster' } } },
+    });
+    expect(parsed['238078789']?.moduleAlt).toEqual({
+      '1450079099': { en: 'A poster', es: 'Un póster' },
+    });
+  });
+
+  it('rejects a non-digit moduleAlt key', () => {
+    expect(() =>
+      parseOverrides({ '238078789': { moduleAlt: { hero: { en: 'A', es: 'B' } } } }),
+    ).toThrow(
+      /^project-overrides: 238078789\.moduleAlt\.hero: .+\. Fix src\/data\/project-overrides\.json$/,
+    );
+  });
+
+  it('rejects a moduleAlt value without es', () => {
+    expect(() =>
+      parseOverrides({ '238078789': { moduleAlt: { '1450079099': { en: 'A' } } } }),
+    ).toThrow(/^project-overrides: 238078789\.moduleAlt\.1450079099\.es: /);
   });
 });
 
@@ -123,11 +156,71 @@ describe('validateOverrides', () => {
   });
 
   it('validates the committed file against the seed snapshot', () => {
-    const seedSources = snapshot.projects.map((project) => ({
+    const seedSources = parseSnapshot(snapshot).projects.map((project) => ({
       id: project.id,
       sourceSlug: project.slug,
+      imageIds: contentImageIds(project.content ?? []),
     }));
     expect(() => validateOverrides(seedSources, parseOverrides(committed))).not.toThrow();
+  });
+
+  it('accepts moduleAlt keys that match the project images', () => {
+    expect(() =>
+      validateOverrides(sources, {
+        '238078789': { moduleAlt: { '1450079099': alt('A poster', 'Un póster') } },
+      }),
+    ).not.toThrow();
+  });
+
+  it('throws on a moduleAlt key that matches no image of that project', () => {
+    // 1350000001 belongs to another project.
+    expect(() =>
+      validateOverrides(sources, { '238078789': { moduleAlt: { '1350000001': alt('A') } } }),
+    ).toThrow(
+      'project-overrides: moduleAlt key 1350000001 for 238078789 matches no image in the snapshot. Fix or remove it in src/data/project-overrides.json',
+    );
+  });
+
+  it('throws on a moduleAlt value over 125 characters naming the locale and key', () => {
+    const long = 'x'.repeat(126);
+    expect(() =>
+      validateOverrides(sources, {
+        '238078789': { moduleAlt: { '1450079100': alt('Short', long) } },
+      }),
+    ).toThrow(
+      'project-overrides: moduleAlt.es for 238078789/1450079100 is 126 characters (max 125). Shorten it in src/data/project-overrides.json',
+    );
+  });
+
+  it('counts moduleAlt length by code points', () => {
+    const edge = '🌶'.repeat(125);
+    expect(() =>
+      validateOverrides(sources, { '238078789': { moduleAlt: { '1450079099': alt(edge) } } }),
+    ).not.toThrow();
+    expect(() =>
+      validateOverrides(sources, {
+        '238078789': { moduleAlt: { '1450079099': alt(`${edge}🌶`) } },
+      }),
+    ).toThrow('moduleAlt.en for 238078789/1450079099 is 126 characters (max 125)');
+  });
+});
+
+describe('missingModuleAlts', () => {
+  it('counts the images without a moduleAlt entry per project', () => {
+    const result = missingModuleAlts(sources, {
+      '238078789': { moduleAlt: { '1450079099': alt('A'), '1450079100': alt('B') } },
+      '227934855': { slug: 'puro-v', moduleAlt: { '1350000002': alt('C') } },
+    });
+    expect(result).toEqual([
+      { id: '238078789', slug: 'cabreras-motos-posts', missing: 0, total: 2 },
+      { id: '227934855', slug: 'puro-v', missing: 2, total: 3 },
+      { id: '172473551', slug: 'mart', missing: 0, total: 0 },
+    ]);
+  });
+
+  it('treats a project without overrides as missing every image', () => {
+    const [first] = missingModuleAlts(sources, {});
+    expect(first).toEqual({ id: '238078789', slug: 'cabreras-motos-posts', missing: 2, total: 2 });
   });
 });
 

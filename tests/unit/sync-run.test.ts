@@ -334,6 +334,9 @@ describe('runSync', () => {
         'missing overrides for 1003 (project-3): title, category (suggested: graphic-design), summary, coverAlt',
         'missing overrides for 1002 (project-2): title, category (suggested: graphic-design), summary, coverAlt',
         'missing overrides for 1001 (project-1): title, category (suggested: graphic-design), summary, coverAlt',
+        'missing module alts for 1003 (project-3): 1 of 1 images. Add moduleAlt entries in src/data/project-overrides.json. TODO(martina)',
+        'missing module alts for 1002 (project-2): 1 of 1 images. Add moduleAlt entries in src/data/project-overrides.json. TODO(martina)',
+        'missing module alts for 1001 (project-1): 1 of 1 images. Add moduleAlt entries in src/data/project-overrides.json. TODO(martina)',
       ]);
       expect(lines).toContain('sync:behance: 3 projects');
       for (const line of report.checklist) expect(lines).toContain(line);
@@ -548,6 +551,21 @@ describe('runSync', () => {
       expect(new Uint8Array(stored)).toEqual(MODULE_WEBP);
     });
 
+    it('success: lists only the projects with missing module alts', async () => {
+      await seed(
+        3,
+        `${JSON.stringify({ '1001': { moduleAlt: { '5551001': { en: 'A poster', es: 'Un póster' } } } })}\n`,
+      );
+      const { deps, lines } = harness();
+      const report = await runSync(deps);
+      const alts = report.checklist.filter((line) => line.startsWith('missing module alts'));
+      expect(alts).toEqual([
+        'missing module alts for 1003 (project-3): 1 of 1 images. Add moduleAlt entries in src/data/project-overrides.json. TODO(martina)',
+        'missing module alts for 1002 (project-2): 1 of 1 images. Add moduleAlt entries in src/data/project-overrides.json. TODO(martina)',
+      ]);
+      for (const line of alts) expect(lines).toContain(line);
+    });
+
     it('success: sleeps 2000 ms before every Behance request after the first', async () => {
       await seed(3);
       const { deps, events } = harness();
@@ -694,6 +712,21 @@ describe('runSync', () => {
     it('fails on module image bytes that are not an image (G4m)', async () => {
       const module = (): Reply => ({ status: 200, body: NOT_IMAGE, type: 'image/webp' });
       await expectRefused({ module }, 'G4m', /not an image/);
+    });
+
+    it('fails on a moduleAlt key that matches no synced image (G8)', async () => {
+      const overrides = `${JSON.stringify({ '1001': { moduleAlt: { '5551002': { en: 'A', es: 'B' } } } })}\n`;
+      await expectRefused({}, 'G8', /moduleAlt key 5551002 for 1001 matches no image/, () =>
+        seed(3, overrides),
+      );
+    });
+
+    it('fails on a moduleAlt value over 125 characters (G8)', async () => {
+      const long = 'x'.repeat(126);
+      const overrides = `${JSON.stringify({ '1001': { moduleAlt: { '5551001': { en: long, es: 'B' } } } })}\n`;
+      await expectRefused({}, 'G8', /moduleAlt\.en for 1001\/5551001 is 126 characters/, () =>
+        seed(3, overrides),
+      );
     });
 
     it('fails on a raw project whose publishedOn is a string (G3)', async () => {
