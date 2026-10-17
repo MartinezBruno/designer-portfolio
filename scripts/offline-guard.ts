@@ -2,12 +2,18 @@
 // stripping). Blocks fetch, TCP sockets, DNS (lookup and resolve*, callback and promises APIs) and
 // UDP, and records one line per attempt in the log that scripts/assert-offline.ts checks.
 // IPC/pipe sockets stay allowed so Vite/esbuild keep working.
+//
+// Coverage: the main thread, child processes (they inherit NODE_OPTIONS) and worker_threads
+// workers (each Worker is started with `--require` of this file, see below). Not covered: native
+// addons doing their own I/O, and subprocesses that are not Node (for example a shell `curl`).
 import dgram from 'node:dgram';
 import dns from 'node:dns';
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
 import net from 'node:net';
 import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import workerThreads from 'node:worker_threads';
 import { isIpcConnect } from './offline.ts';
 import type { ConnectTarget } from './offline.ts';
 
@@ -16,7 +22,8 @@ const ACTIVE = 'OFFLINE_GUARD_ACTIVE';
 
 mkdirSync(dirname(log), { recursive: true });
 // Child processes inherit NODE_OPTIONS and load this guard again: only the first one truncates.
-if (process.env[ACTIVE] !== '1') {
+// Workers share the log and never truncate it.
+if (workerThreads.isMainThread && process.env[ACTIVE] !== '1') {
   writeFileSync(log, '');
   process.env[ACTIVE] = '1';
 }
@@ -132,6 +139,26 @@ function blockDgram(name: 'send' | 'connect'): void {
 
 blockDgram('send');
 blockDgram('connect');
+
+// Workers: `--import` preloads do not run in worker_threads, so every Worker loads this guard
+// through `--require` (Node loads this ESM file with require(esm); it has no top-level await).
+// A custom `env` object gets the log path and the active flag so the worker writes to this log.
+const GUARD = fileURLToPath(import.meta.url);
+const OriginalWorker = workerThreads.Worker;
+
+class GuardedWorker extends OriginalWorker {
+  constructor(filename: string | URL, options: workerThreads.WorkerOptions = {}) {
+    // A nested worker inherits `--require GUARD` twice; the module cache loads it once.
+    const execArgv = ['--require', GUARD, ...(options.execArgv ?? process.execArgv)];
+    const env =
+      typeof options.env === 'object' && options.env !== null
+        ? { ...options.env, OFFLINE_GUARD_LOG: log, [ACTIVE]: '1' }
+        : options.env;
+    super(filename, { ...options, execArgv, ...(env === undefined ? {} : { env }) });
+  }
+}
+
+Object.assign(workerThreads, { Worker: GuardedWorker });
 
 // ESM named imports of builtins (`import { lookup } from 'node:dns'`) are separate bindings that
 // only pick up the patches above after this call.

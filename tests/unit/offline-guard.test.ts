@@ -2,7 +2,7 @@
 // and checks that each network entry point is blocked and logged. Targets are `.invalid` names and
 // TEST-NET addresses, so even a guard regression sends nothing that can resolve or reach a host.
 import { spawnSync } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -30,19 +30,17 @@ interface ProbeResult {
 
 async function probe(source: string): Promise<ProbeResult> {
   const log = join(dir, 'guard.log');
+  const script = join(dir, 'probe.mjs');
+  await writeFile(script, source);
   const base = Object.fromEntries(
     Object.entries(process.env).filter(([name]) => !name.startsWith('OFFLINE_GUARD')),
   );
-  const result = spawnSync(
-    process.execPath,
-    ['--import=./scripts/offline-guard.ts', '--input-type=module', '-e', source],
-    {
-      cwd: ROOT,
-      encoding: 'utf8',
-      env: { ...base, OFFLINE_GUARD_LOG: log },
-      timeout: 20000,
-    },
-  );
+  const result = spawnSync(process.execPath, ['--import=./scripts/offline-guard.ts', script], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    env: { ...base, OFFLINE_GUARD_LOG: log },
+    timeout: 20000,
+  });
   const text = await readFile(log, 'utf8');
   return {
     status: result.status,
@@ -101,5 +99,43 @@ describe('offline guard: DNS and UDP', () => {
     expect(result.status).toBe(0);
     expect(JSON.parse(result.stdout)).toEqual(['offline', 'offline']);
     expect(result.log).toEqual(['udp send 53 192.0.2.1', 'udp connect 53 192.0.2.2']);
+  });
+});
+
+describe('offline guard: worker threads', () => {
+  it('loads the guard in eval, file and custom-env workers and logs their attempts', async () => {
+    const result = await probe(`
+      import { writeFileSync } from 'node:fs';
+      import { join } from 'node:path';
+      import { Worker } from 'node:worker_threads';
+      const body = (label) => \`
+        import('node:worker_threads').then(({ parentPort }) =>
+          fetch('https://\${label}.invalid/').then(
+            () => parentPort.postMessage('resolved'),
+            (error) => parentPort.postMessage(error.message),
+          ),
+        );
+      \`;
+      const file = join(process.env.OFFLINE_GUARD_LOG, '..', 'worker.cjs');
+      writeFileSync(file, body('file-worker'));
+      const run = (worker) => new Promise((done, fail) => {
+        worker.once('message', done);
+        worker.once('error', fail);
+      });
+      const messages = [
+        await run(new Worker(body('eval-worker'), { eval: true })),
+        await run(new Worker(file)),
+        await run(new Worker(body('env-worker'), { eval: true, env: {} })),
+      ];
+      console.log(JSON.stringify(messages));
+    `);
+    expect(result.stderr).toBe('');
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout)).toEqual(['offline', 'offline', 'offline']);
+    expect(result.log).toEqual([
+      'fetch https://eval-worker.invalid/',
+      'fetch https://file-worker.invalid/',
+      'fetch https://env-worker.invalid/',
+    ]);
   });
 });
