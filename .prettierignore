@@ -7,3 +7,4 @@ CLAUDE.md
 test-results
 playwright-report
 src/data/behance/snapshot.json
+tests/fixtures/behance
