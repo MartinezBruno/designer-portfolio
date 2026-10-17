@@ -115,14 +115,14 @@ Plans:
   4. Visitor sees the 3 latest projects on the homepage, sorted by publish date and linking to their detail-page URLs, and a Projects page listing all projects newest first at `/projects` and `/es/projects` (exact slugs to be decided in planning).
   5. Developer can hide, reorder, feature, recategorize, or add alt text to a project through local overrides, and the change shows up on the site. UI components read only the source-agnostic typed model, never the Behance adapter.
 
-**Plans:** 10 plans in 6 waves
+**Plans:** 3/10 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — Typed project model, slug rule, snapshot schema, seed snapshot and fail-loud read path (fixtures first)
-- [ ] 03-06-PLAN.md — Consent note (own commit, ancestry-gated) and tested sync building blocks (parse, challenge fetch, covers)
-- [ ] 03-07-PLAN.md — `pnpm build:offline` network-blocked build proof
+- [x] 03-01-PLAN.md — Typed project model, slug rule, snapshot schema, seed snapshot and fail-loud read path (fixtures first)
+- [x] 03-06-PLAN.md — Consent note (own commit, ancestry-gated) and tested sync building blocks (parse, challenge fetch, covers)
+- [x] 03-07-PLAN.md — `pnpm build:offline` network-blocked build proof
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -240,7 +240,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 |-------|----------------|--------|-----------|
 | 1. Bilingual Walking Skeleton | 5/5 | Complete   | 2026-10-16 |
 | 2. Homepage Story | 8/8 | Complete   | 2026-10-17 |
-| 3. Real Behance Work | 0/TBD | Not started | - |
+| 3. Real Behance Work | 3/10 | In Progress|  |
 | 4. Project Detail & Discovery | 0/TBD | Not started | - |
 | 5. Contact | 0/TBD | Not started | - |
 | 6. Scroll & Interaction Motion | 0/TBD | Not started | - |
