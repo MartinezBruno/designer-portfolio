@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test';
 import { site } from '../../src/data/site';
 import { en } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
+import { interpolate } from '../../src/i18n/t';
+import { expectedDetails } from './helpers/projects';
 
 const cases = [
   { path: '/', lang: 'en', dict: en, ogLocale: 'en_US', ogAlternate: 'es_ES' },
@@ -53,5 +55,77 @@ for (const { path, lang, dict, ogLocale, ogAlternate } of cases) {
       await expect(og('og:type')).toHaveAttribute('content', 'website');
       await expect(og('og:url')).toHaveAttribute('content', `${site.url}${path}`);
     });
+  });
+}
+
+const detailCases = [
+  { locale: 'en', lang: 'en', dict: en },
+  { locale: 'es', lang: 'es', dict: es },
+] as const;
+
+for (const { locale, lang, dict } of detailCases) {
+  for (const detail of expectedDetails(locale)) {
+    test.describe(`SEO head on ${detail.href}`, () => {
+      test('has localized title, description, canonical and alternates', async ({ page }) => {
+        await page.goto(detail.href);
+        await expect(page.locator('html')).toHaveAttribute('lang', lang);
+        await expect(page).toHaveTitle(
+          interpolate(dict['meta.project.title'], { title: detail.title }),
+        );
+        const description =
+          detail.summary ?? interpolate(dict['meta.project.description'], { title: detail.title });
+        await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+          'content',
+          description,
+        );
+        await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+          'href',
+          `${site.url}${detail.href}`,
+        );
+        const enHref = `${site.url}/projects/${detail.slug}/`;
+        const esHref = `${site.url}/es/projects/${detail.slug}/`;
+        const expected = [
+          ['en', enHref],
+          ['es', esHref],
+          ['x-default', enHref],
+        ] as const;
+        for (const [hreflang, href] of expected) {
+          await expect(
+            page.locator(`link[rel="alternate"][hreflang="${hreflang}"]`),
+          ).toHaveAttribute('href', href);
+        }
+      });
+
+      test('has a same-origin absolute JPG og:image that is served', async ({ page, request }) => {
+        await page.goto(detail.href);
+        const ogImage = page.locator('meta[property="og:image"]');
+        await expect(ogImage).toHaveCount(1);
+        const content = await ogImage.getAttribute('content');
+        if (content === null) throw new Error('og:image has no content');
+        const url = new URL(content);
+        expect(url.origin).toBe(new URL(site.url).origin);
+        expect(url.pathname).toMatch(/\.jpg$/);
+        const response = await request.get(url.pathname);
+        expect(response.status()).toBe(200);
+        expect(response.headers()['content-type']).toMatch(/^image\//);
+      });
+
+      test('has no project year in any meta tag (D-12)', async ({ page }) => {
+        await page.goto(detail.href);
+        const contents = await page
+          .locator('meta[content]')
+          .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('content') ?? ''));
+        // Whole-token match: cover file names are numeric ids that can contain year digits.
+        const year = new RegExp(`\\b${detail.year}\\b`);
+        for (const content of contents) expect(content).not.toMatch(year);
+      });
+    });
+  }
+}
+
+for (const path of ['/', '/projects/', '/es/', '/es/projects/', '/no-such-page/']) {
+  test(`${path} has no og:image`, async ({ page }) => {
+    await page.goto(path);
+    await expect(page.locator('meta[property="og:image"]')).toHaveCount(0);
   });
 }
