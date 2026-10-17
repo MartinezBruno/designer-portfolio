@@ -14,13 +14,14 @@ Visitors (potential clients) immediately feel her design sensibility through a s
 
 - [x] Hero with greeting, professional title, description and an image — Validated in Phase 1: Bilingual Walking Skeleton
 - [x] Language toggle EN/ES with URL-prefix routing (`/` = English default, `/es/...` = Spanish) — Validated in Phase 1: Bilingual Walking Skeleton
+- [x] Marquee listing all the jobs/roles she does (web design, social media manager, etc.) — Validated in Phase 2: Homepage Story
+- [x] Section with her 4 most featured services — Validated in Phase 2: Homepage Story
+- [x] Section showing the apps/tools she uses — Validated in Phase 2: Homepage Story
+- [x] Availability badge driven by content (HOME-07) — Validated in Phase 2: Homepage Story
 
 ### Active
 
 **Homepage**
-- [ ] Marquee listing all the jobs/roles she does (web design, social media manager, etc.)
-- [ ] Section with her 4 most featured services
-- [ ] Section showing the apps/tools she uses
 - [ ] Jobs/Projects section with her top 3 latest projects (sourced from Behance)
 - [ ] Contact section with a working form that emails her
 
@@ -74,6 +75,9 @@ Visitors (potential clients) immediately feel her design sensibility through a s
 | We draft Spanish translations | User preference; she reviews | — Pending |
 | Figma as reference only | Final design fully up to us | — Pending |
 | v1 done = local build | User definition; Cloudflare deploy later | — Pending |
+| Accent switched to client blue #0F70B7 | Matches her mockup (Phase 2, D-15) | ✓ Good — shipped Phase 2 |
+| Marquee pause via invisible full-band control | User chose no visible button at 02-08 checkpoint | ⚠ Revisit — review WR-01/02 |
+| Taste skill required for all design work | User decision 2026-10-16 | — Pending (first full pass still to do) |
 
 ## Evolution
 
@@ -93,4 +97,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-16 after Phase 1 (Bilingual Walking Skeleton) — Astro site live at / and /es/ with all quality gates green*
+*Last updated: 2026-10-16 after Phase 2 (Homepage Story) — roles marquee, 4 services, tools row and availability live in EN/ES; hero retypeset per taste skill*
