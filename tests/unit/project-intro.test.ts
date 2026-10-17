@@ -21,6 +21,7 @@ const baseDetail: ProjectDetailView = {
   seo: { title: 'Brand Refresh — Martina Fernandez', description: 'A refresh.' },
   next: null,
   previous: null,
+  modules: [],
 };
 
 async function render(detail: Partial<ProjectDetailView> = {}): Promise<string> {

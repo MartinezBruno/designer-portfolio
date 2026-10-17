@@ -3,6 +3,7 @@
 import type { ImageMetadata } from 'astro';
 import type { Locale } from '../../i18n/config.ts';
 import type { ToolIconKey } from '../content/icons.ts';
+import type { EmbedProviderId } from './embeds.ts';
 
 /** Curated categories. Same ids, same order as src/data/services.json. */
 export const categoryIds = ['graphic-design', 'web-design', 'branding', 'social-media'] as const;
@@ -19,6 +20,21 @@ export interface OrderFields {
   hidden: boolean;
 }
 
+/** One locally stored content image. Intrinsic dimensions come from the file (D-06). */
+export interface SourceImage {
+  /** Module or collection component id: the moduleAlt override key. */
+  id: string;
+  image: ImageMetadata;
+}
+
+/** Source-agnostic content module, in source order (D-05, D-08). */
+export type SourceModule =
+  | { kind: 'image'; image: SourceImage; fullBleed: boolean; caption: string }
+  | { kind: 'collection'; images: readonly SourceImage[] }
+  | { kind: 'text'; html: string }
+  | { kind: 'embed'; provider: EmbedProviderId; src: string }
+  | { kind: 'unknown' };
+
 /** What any source (snapshot, manual content) must provide for a project. */
 export interface SourceProject {
   id: string;
@@ -31,6 +47,8 @@ export interface SourceProject {
   cover: ImageMetadata;
   /** Content image ids in DOM order: the keys moduleAlt overrides may use (D-09). */
   imageIds: readonly string[];
+  /** Content modules in source order. */
+  modules: readonly SourceModule[];
 }
 
 export interface Project extends SourceProject, OrderFields {
@@ -40,6 +58,8 @@ export interface Project extends SourceProject, OrderFields {
   coverAlt: Localized<string> | null;
   category: CategoryId | null;
   contentLang: Locale;
+  /** Curated per-image alt text keyed by image id (D-09). Empty when none is curated. */
+  moduleAlt: Readonly<Record<string, Localized<string>>>;
 }
 
 export interface ProjectCardView {
@@ -66,6 +86,40 @@ export interface DetailTool {
   icon: ToolIconKey | null;
 }
 
+/** One image of a justified collection row (D-10). */
+export interface CollectionItemView {
+  image: ImageMetadata;
+  alt: string;
+  /** width / height, 4 decimals: the flex-grow factor of the item. */
+  ratio: number;
+  widths: readonly number[];
+  sizes: string;
+  eager: boolean;
+}
+
+/** One localized, render-ready content module. No Behance shapes reach the UI (DATA-06). */
+export type ModuleView =
+  | {
+      kind: 'image';
+      image: ImageMetadata;
+      alt: string;
+      widths: readonly number[];
+      fullBleed: boolean;
+      caption: string | null;
+      captionLang: Locale | null;
+      eager: boolean;
+    }
+  | { kind: 'collection'; rows: readonly (readonly CollectionItemView[])[] }
+  | { kind: 'text'; html: string; lang: Locale | null }
+  | {
+      kind: 'embed';
+      provider: EmbedProviderId;
+      providerName: string;
+      src: string;
+      iframeTitle: string;
+    }
+  | { kind: 'unknown' };
+
 /** Resolved, already-localized detail page data. No optional properties; no date (D-12). */
 export interface ProjectDetailView {
   slug: string;
@@ -81,4 +135,6 @@ export interface ProjectDetailView {
   /** Wrapping neighbours in the /projects order (D-13). Null with 1 project; previous null with 2. */
   next: TeaserView | null;
   previous: TeaserView | null;
+  /** Content modules in source order; never empty (zero modules → one unknown note). */
+  modules: readonly ModuleView[];
 }

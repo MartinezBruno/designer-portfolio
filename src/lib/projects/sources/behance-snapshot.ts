@@ -3,8 +3,14 @@
 // files only, so no remote URL reaches astro:assets.
 import type { ImageMetadata } from 'astro';
 import raw from '../../../data/behance/snapshot.json';
-import type { SourceProject } from '../model';
-import { contentImageIds, parseSnapshot, type Snapshot } from '../snapshot-schema';
+import type { SourceImage, SourceModule, SourceProject } from '../model';
+import {
+  contentImageIds,
+  parseSnapshot,
+  type ContentEntry,
+  type ImageRef,
+  type Snapshot,
+} from '../snapshot-schema';
 
 const snapshot = parseSnapshot(raw);
 
@@ -23,6 +29,47 @@ function coverFor(file: string): ImageMetadata {
   return cover.default;
 }
 
+const moduleImages = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/projects/modules/*.webp',
+  { eager: true },
+);
+
+function moduleImageFor(file: string): ImageMetadata {
+  const image = moduleImages[`/src/assets/projects/modules/${file}`];
+  if (image === undefined) {
+    throw new Error(
+      `snapshot: missing module image ${file} in src/assets/projects/modules/. Re-run pnpm sync:behance or restore it from git`,
+    );
+  }
+  return image.default;
+}
+
+// Intrinsic dimensions come from the stored file's ImageMetadata (D-06); 04-08 tests that the
+// snapshot width/height equal the files.
+function toSourceImage(ref: ImageRef): SourceImage {
+  return { id: ref.id, image: moduleImageFor(ref.file) };
+}
+
+function toSourceModule(entry: ContentEntry): SourceModule {
+  switch (entry.kind) {
+    case 'image':
+      return {
+        kind: 'image',
+        image: toSourceImage(entry.image),
+        fullBleed: entry.fullBleed,
+        caption: entry.caption,
+      };
+    case 'collection':
+      return { kind: 'collection', images: entry.images.map(toSourceImage) };
+    case 'text':
+      return { kind: 'text', html: entry.html };
+    case 'embed':
+      return { kind: 'embed', provider: entry.provider, src: entry.src };
+    case 'unknown':
+      return { kind: 'unknown' };
+  }
+}
+
 const sourceProjects: readonly SourceProject[] = snapshot.projects.map((project) => ({
   id: project.id,
   sourceSlug: project.slug,
@@ -31,8 +78,8 @@ const sourceProjects: readonly SourceProject[] = snapshot.projects.map((project)
   publishedOn: project.publishedOn,
   tools: project.tools.map((tool) => tool.title),
   cover: coverFor(project.cover.file),
-  // `?? []` only until 04-08 makes content required.
   imageIds: contentImageIds(project.content),
+  modules: project.content.map(toSourceModule),
 }));
 
 export function getSourceProjects(): readonly SourceProject[] {

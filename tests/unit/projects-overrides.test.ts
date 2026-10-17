@@ -30,6 +30,7 @@ function source(
     tools: ['Figma'],
     cover: portrait,
     imageIds,
+    modules: [],
   };
 }
 
@@ -252,6 +253,7 @@ describe('applyOverrides', () => {
       hidden: false,
       order: 2,
       contentLang: 'en',
+      moduleAlt: {},
     });
   });
 
@@ -268,7 +270,17 @@ describe('applyOverrides', () => {
       hidden: false,
       order: null,
       contentLang: 'es',
+      moduleAlt: {},
     });
+  });
+
+  it('copies moduleAlt entry by entry into a fresh object', () => {
+    const moduleAlt = { '1450079099': alt('A poster', 'Un póster') };
+    const withAlt: Overrides = { '238078789': { moduleAlt } };
+    const [first] = applyOverrides(sources, withAlt);
+    expect(first?.moduleAlt).toEqual(moduleAlt);
+    expect(first?.moduleAlt).not.toBe(moduleAlt);
+    expect(first?.moduleAlt['1450079099']).not.toBe(moduleAlt['1450079099']);
   });
 
   it('hidden projects are excluded by sortProjects', () => {

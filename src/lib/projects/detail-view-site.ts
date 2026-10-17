@@ -7,7 +7,109 @@ import { interpolate, useTranslations } from '../../i18n/t';
 import type { ToolIconKey } from '../content/icons';
 import type { ToolEntry } from '../content/home';
 import { toCardView } from './card-view';
-import type { CategoryId, Project, ProjectDetailView, TeaserView } from './model';
+import { collectionItemSizes, collectionRows, injectNewTabHint, moduleWidths } from './detail-view';
+import { EMBED_PROVIDERS } from './embeds';
+import type {
+  CategoryId,
+  CollectionItemView,
+  ModuleView,
+  Project,
+  ProjectDetailView,
+  SourceImage,
+  TeaserView,
+} from './model';
+
+function ratioOf(image: SourceImage): number {
+  return Math.round((image.image.width / image.image.height) * 10_000) / 10_000;
+}
+
+/**
+ * Localized, render-ready modules. Images are numbered across image modules and collection
+ * components in DOM order; only the first is eager. Alt is the curated moduleAlt or the numbered
+ * fallback, never Behance's auto alt (D-09). Zero modules render one unknown note.
+ */
+export function toModuleViews(project: Project, locale: Locale, title: string): ModuleView[] {
+  const t = useTranslations(locale);
+  const total = project.modules.reduce((count, module) => {
+    if (module.kind === 'image') return count + 1;
+    if (module.kind === 'collection') return count + module.images.length;
+    return count;
+  }, 0);
+  let n = 0;
+  const next = (image: SourceImage): { alt: string; eager: boolean } => {
+    n += 1;
+    const alt =
+      project.moduleAlt[image.id]?.[locale] ??
+      interpolate(t('detail.imageAlt'), { title, n, total });
+    return { alt, eager: n === 1 };
+  };
+  const contentLang = project.contentLang === locale ? null : project.contentLang;
+
+  const views = project.modules.map((module): ModuleView => {
+    switch (module.kind) {
+      case 'image': {
+        const { alt, eager } = next(module.image);
+        return {
+          kind: 'image',
+          image: module.image.image,
+          alt,
+          widths: moduleWidths(module.image.image.width),
+          fullBleed: module.fullBleed,
+          caption: module.caption === '' ? null : module.caption,
+          captionLang: module.caption === '' ? null : contentLang,
+          eager,
+        };
+      }
+      case 'collection': {
+        const rows: CollectionItemView[][] = [];
+        let start = 0;
+        for (const length of collectionRows(module.images.length)) {
+          const row = module.images.slice(start, start + length);
+          start += length;
+          const sum = row.reduce((total, image) => total + ratioOf(image), 0);
+          rows.push(
+            row.map((image) => {
+              const ratio = ratioOf(image);
+              const { alt, eager } = next(image);
+              return {
+                image: image.image,
+                alt,
+                ratio,
+                widths: moduleWidths(image.image.width),
+                sizes: collectionItemSizes(ratio / sum),
+                eager,
+              };
+            }),
+          );
+        }
+        return { kind: 'collection', rows };
+      }
+      case 'text':
+        return {
+          kind: 'text',
+          // Render-time hint (RESEARCH Open Question 2): the snapshot stores no token.
+          html: injectNewTabHint(module.html, t('a11y.newTab'), locale),
+          lang: contentLang,
+        };
+      case 'embed': {
+        const providerName = EMBED_PROVIDERS[module.provider].name;
+        return {
+          kind: 'embed',
+          provider: module.provider,
+          providerName,
+          src: module.src,
+          iframeTitle: interpolate(t('detail.embed.iframeTitle'), {
+            title,
+            provider: providerName,
+          }),
+        };
+      }
+      case 'unknown':
+        return { kind: 'unknown' };
+    }
+  });
+  return views.length > 0 ? views : [{ kind: 'unknown' }];
+}
 
 /** Tool name → icon key. Behance tool titles match tools.json names exactly (D-12). */
 export function buildToolIcons(entries: readonly ToolEntry[]): ReadonlyMap<string, ToolIconKey> {
@@ -59,5 +161,6 @@ export function toDetailView(
     },
     next: toTeaserView(neighbours.next, locale, categoryTitles),
     previous: toTeaserView(neighbours.previous, locale, categoryTitles),
+    modules: toModuleViews(project, locale, title),
   };
 }
