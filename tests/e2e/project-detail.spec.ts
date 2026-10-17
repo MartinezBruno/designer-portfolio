@@ -1,7 +1,50 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { en } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
 import { expectedDetails } from './helpers/projects';
+
+const WIDTHS = [320, 390, 768, 1440] as const;
+
+/** Headings that must hold the two-line rule: the h1, every h2 in main, and the next-tile h3. */
+async function headingLines(page: Page): Promise<{ text: string; lines: number }[]> {
+  return page
+    .locator('main h1, main h2, section[aria-labelledby="next-project-title"] h3')
+    .evaluateAll((els) =>
+      els
+        .filter((el) => el.getClientRects().length > 0 && !el.closest('.sr-only'))
+        .map((el) => {
+          const style = getComputedStyle(el);
+          const lineHeight = Number.parseFloat(style.lineHeight);
+          const { height } = el.getBoundingClientRect();
+          return {
+            text: el.textContent.replace(/\s+/g, ' ').trim(),
+            lines: Math.round(height / lineHeight),
+          };
+        }),
+    );
+}
+
+/**
+ * Reading order check: each element in DOM order must sit below or to the right of the one
+ * before it (row-major), so visual order equals DOM order.
+ */
+async function expectVisualOrder(items: Locator): Promise<void> {
+  const boxes = await items.evaluateAll((els) =>
+    els.map((el) => {
+      const r = el.getBoundingClientRect();
+      return { top: r.top, bottom: r.bottom, left: r.left, right: r.right };
+    }),
+  );
+  expect(boxes.length).toBeGreaterThan(1);
+  for (let i = 1; i < boxes.length; i++) {
+    const a = boxes[i - 1];
+    const b = boxes[i];
+    if (a === undefined || b === undefined) continue;
+    const below = b.top >= a.bottom - 1;
+    const right = b.left >= a.right - 1;
+    expect(below || right, `item ${String(i)} renders before item ${String(i - 1)}`).toBe(true);
+  }
+}
 
 const cases = [
   { lang: 'en', dict: en },
@@ -14,6 +57,21 @@ for (const { lang, dict } of cases) {
 
     test('every visible project has a detail page', () => {
       expect(details.length).toBeGreaterThan(0);
+    });
+
+    test('next and previous wrap around the /projects order (D-13)', () => {
+      const first = details[0];
+      const last = details.at(-1);
+      expect(first).toBeDefined();
+      expect(last).toBeDefined();
+      if (details.length >= 3) {
+        expect(last?.next?.href).toBe(first?.href);
+        expect(first?.previous?.href).toBe(last?.href);
+      }
+      for (const [index, detail] of details.entries()) {
+        if (details.length < 2) break;
+        expect(detail.next?.href).toBe(details[(index + 1) % details.length]?.href);
+      }
     });
 
     for (const detail of details) {
@@ -96,6 +154,107 @@ for (const { lang, dict } of cases) {
           const copy = metaContents.filter((content) => !/^(https?:)?\//.test(content));
           for (const content of copy) expect(content).not.toContain(detail.year);
           await expect(page).not.toHaveTitle(new RegExp(detail.year));
+        });
+
+        test('ends with the contact band, then next and previous (D-13..D-15)', async ({
+          page,
+        }) => {
+          await page.goto(detail.href);
+          const band = page.locator('main section[aria-labelledby="project-cta-title"]');
+          await expect(band.locator('h2')).toHaveText(dict['detail.cta.heading']);
+          const contact = band.locator('a');
+          await expect(contact).toHaveCount(1);
+          await expect(contact).toHaveAttribute(
+            'href',
+            lang === 'en' ? '/#contact' : '/es/#contact',
+          );
+          await expect(contact).toHaveAccessibleName(dict['detail.cta.button']);
+          // The contact button is the page's only accent button.
+          await expect(page.locator('main a.bg-accent, main button.bg-accent')).toHaveCount(1);
+
+          const teaser = page.locator('main section[aria-labelledby="next-project-title"]');
+          if (detail.next === null) {
+            await expect(teaser).toHaveCount(0);
+            return;
+          }
+          await expect(teaser.locator('h2')).toHaveText(dict['detail.next.heading']);
+          const tile = teaser.locator('article h3 a');
+          await expect(tile).toHaveCount(1);
+          await expect(tile).toHaveAttribute('href', detail.next.href);
+          await expect(tile).toHaveAccessibleName(
+            `${dict['detail.next.srPrefix']} ${detail.next.title}`,
+          );
+          const previous = teaser.locator('a', { hasText: dict['detail.previous'] });
+          if (detail.previous === null) {
+            await expect(previous).toHaveCount(0);
+          } else {
+            await expect(previous).toHaveAttribute('href', detail.previous.href);
+            await expect(previous).toHaveAccessibleName(
+              `${dict['detail.previous']} ${detail.previous.title}`,
+            );
+            expect((await page.request.get(detail.previous.href)).status()).toBe(200);
+          }
+          expect((await page.request.get(detail.next.href)).status()).toBe(200);
+        });
+
+        test('draws the next-tile focus ring on ::after for keyboard focus', async ({ page }) => {
+          test.skip(detail.next === null, 'no teaser with a single project');
+          await page.goto(detail.href);
+          const teaser = page.locator('main section[aria-labelledby="next-project-title"]');
+          // Tab into the tile from the stop just before it (Previous, or the contact button).
+          const before =
+            detail.previous === null
+              ? page.locator('main section[aria-labelledby="project-cta-title"] a')
+              : teaser.locator('a', { hasText: dict['detail.previous'] });
+          await before.focus();
+          await page.keyboard.press('Tab');
+          const focused = await page.evaluate(() => {
+            const el = document.activeElement;
+            if (!(el instanceof HTMLElement)) return null;
+            return {
+              href: el.getAttribute('href'),
+              focusVisible: el.matches(':focus-visible'),
+              afterOutline: getComputedStyle(el, '::after').outlineStyle,
+            };
+          });
+          expect(focused?.href).toBe(detail.next?.href);
+          expect(focused?.focusVisible).toBe(true);
+          expect(focused?.afterOutline).toBe('solid');
+        });
+
+        test('keeps headings to two lines and never overflows at 320px', async ({ page }) => {
+          for (const width of WIDTHS) {
+            await page.setViewportSize({ width, height: 900 });
+            await page.goto(detail.href);
+            const headings = await headingLines(page);
+            // h1, contact band h2 and (with 2+ projects) the teaser h2 and h3.
+            expect(headings.length).toBeGreaterThanOrEqual(detail.next === null ? 2 : 4);
+            for (const heading of headings) {
+              expect(
+                heading.lines,
+                `"${heading.text}" wraps to ${String(heading.lines)} lines at ${String(width)}px`,
+              ).toBeLessThanOrEqual(2);
+            }
+            if (width === 320) {
+              const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+              expect(scrollWidth).toBeLessThanOrEqual(320);
+            }
+          }
+        });
+
+        test('visual order equals DOM order in the meta row and the teaser', async ({ page }) => {
+          for (const width of [1440, 390] as const) {
+            await page.setViewportSize({ width, height: 900 });
+            await page.goto(detail.href);
+            const meta = page.locator(
+              'article header dl > div, article header a[href^="https://www.behance.net"]',
+            );
+            if ((await meta.count()) > 1) await expectVisualOrder(meta);
+            if (detail.next !== null) {
+              const teaser = page.locator('main section[aria-labelledby="next-project-title"]');
+              await expectVisualOrder(teaser.locator('h2, div > a, article'));
+            }
+          }
         });
 
         test('does not repeat the cover (D-11)', async ({ page }) => {

@@ -35,9 +35,13 @@ for (const { path, lang, dict, canonical, otherHref } of cases) {
       await page.goto(path);
       const links = page.locator('main article h2 a');
       await expect(links).toHaveCount(expected.length);
-      // TODO(phase-4): remove — detail pages land in Phase 4 (D-09)
       const hrefs = await links.evaluateAll((els) => els.map((el) => el.getAttribute('href')));
       expect(hrefs).toEqual(expected.map((project) => project.href));
+      // Every card opens a real detail page (Phase 4 closes the Phase 3 D-09 debt).
+      for (const href of hrefs) {
+        expect(href).not.toBeNull();
+        expect((await page.request.get(href ?? '')).status(), `${href ?? ''} resolves`).toBe(200);
+      }
     });
 
     test('card titles carry the right language', async ({ page }) => {

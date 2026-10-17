@@ -58,13 +58,13 @@ test.describe('latest work', () => {
       test('lists the Home selection in order with compact cards', async ({ page }) => {
         const section = page.locator('section[aria-labelledby="work-title"]');
         const expected = expectedHome(locale);
-        // TODO(phase-4): remove — detail pages land in Phase 4 (D-09)
-        // The links are asserted, never followed: the detail pages do not exist yet.
         const links = section.locator('article h3 a');
         await expect(links).toHaveCount(expected.length);
         for (const [index, row] of expected.entries()) {
           await expect(links.nth(index)).toHaveAttribute('href', row.href);
           await expect(links.nth(index)).toHaveText(row.title);
+          // Every card opens a real detail page (Phase 4 closes the Phase 3 D-09 debt).
+          expect((await page.request.get(row.href)).status(), `${row.href} resolves`).toBe(200);
         }
 
         // Compact: cover, title and category only (D-11, D-19; no date, user 2026-10-17).

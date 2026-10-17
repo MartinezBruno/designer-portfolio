@@ -4,9 +4,38 @@ import { site } from '../../src/data/site';
 import tools from '../../src/data/tools.json' with { type: 'json' };
 import { en, type Dictionary } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
-import { expectedHome, expectedProjects, type ExpectedProject } from './helpers/projects';
+import {
+  expectedDetails,
+  expectedHome,
+  expectedProjects,
+  type ExpectedProject,
+} from './helpers/projects';
 
-const pages = ['/', '/es/', '/projects/', '/es/projects/', '/does-not-exist', '/es/404/'] as const;
+// Detail pages under axe: one with prose links, one with an embed, one image-led. The slugs are
+// resolved through the helper (snapshot + overrides), so a renamed or hidden project fails here.
+const AXE_DETAIL_SLUGS = ['website-instablogs', 'portfolio-web', 'sistema-visual'] as const;
+
+function detailPaths(): string[] {
+  return (['en', 'es'] as const).flatMap((locale) =>
+    AXE_DETAIL_SLUGS.map((slug) => {
+      const detail = expectedDetails(locale).find((entry) => entry.slug === slug);
+      if (detail === undefined) throw new Error(`a11y: no visible project with slug "${slug}"`);
+      return detail.href;
+    }),
+  );
+}
+
+const detailPages = detailPaths();
+
+const pages = [
+  '/',
+  '/es/',
+  '/projects/',
+  '/es/projects/',
+  '/does-not-exist',
+  '/es/404/',
+  ...detailPages,
+];
 
 for (const path of pages) {
   test(`${path} has zero WCAG 2.2 AA axe violations`, async ({ page }) => {
@@ -35,8 +64,7 @@ interface Step {
 
 const PROJECT_HREF = /^\/(es\/)?projects\/[a-z0-9-]+\/$/;
 
-// TODO(phase-4): remove — detail pages land in Phase 4 (D-09)
-// Project links are asserted by href, never followed: the detail pages do not exist yet.
+// Project links are asserted by href and followed (expect 200): detail pages exist since Phase 4.
 function projectSteps(rows: readonly ExpectedProject[]): Step[] {
   return rows.map((row) => ({
     name: row.title,
@@ -127,7 +155,12 @@ async function tabAndExpect(page: Page, step: Step): Promise<void> {
   });
   expect(focused, `expected focus on ${step.name}`).not.toBeNull();
   if (step.href !== undefined) expect(focused?.href).toBe(step.href);
-  if (step.hrefPattern !== undefined) expect(focused?.href).toMatch(step.hrefPattern);
+  if (step.hrefPattern !== undefined) {
+    expect(focused?.href).toMatch(step.hrefPattern);
+    // Project links open real detail pages (Phase 4 closed the Phase 3 D-09 skip).
+    const response = await page.request.get(focused?.href ?? '');
+    expect(response.status(), `${step.name} resolves`).toBe(200);
+  }
   if (step.tag !== undefined) expect(focused?.tag).toBe(step.tag);
   if (step.role !== undefined) expect(focused?.role).toBe(step.role);
   expect(focused?.name).toContain(step.name);
@@ -184,7 +217,7 @@ test.describe('with prefers-reduced-motion: reduce', () => {
     });
   }
 
-  for (const path of ['/projects/', '/es/projects/'] as const) {
+  for (const path of ['/projects/', '/es/projects/', ...detailPages]) {
     test(`${path} has zero WCAG 2.2 AA axe violations under reduced motion`, async ({ page }) => {
       await page.goto(path);
       await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');

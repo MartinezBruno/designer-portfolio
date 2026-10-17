@@ -5,6 +5,7 @@ import overridesRaw from '../../../src/data/project-overrides.json' with { type:
 import services from '../../../src/data/services.json' with { type: 'json' };
 import snapshot from '../../../src/data/behance/snapshot.json' with { type: 'json' };
 import tools from '../../../src/data/tools.json' with { type: 'json' };
+import { neighbours } from '../../../src/lib/projects/detail-view.ts';
 import { parseOverrides } from '../../../src/lib/projects/overrides-schema.ts';
 import { selectHomeProjects, sortProjects } from '../../../src/lib/projects/projects.ts';
 import { toSlug } from '../../../src/lib/projects/slug.ts';
@@ -76,13 +77,22 @@ export interface ExpectedDetail {
   year: string;
   /** Cover file name without extension; astro:assets keeps it in the optimized file name. */
   coverStem: string;
+  /** Wrapping neighbours in the `/projects` order (D-13), from the site's own helper. */
+  next: { href: string; title: string } | null;
+  previous: { href: string; title: string } | null;
+}
+
+function link(project: ExpectedProject | null): { href: string; title: string } | null {
+  return project === null ? null : { href: project.href, title: project.title };
 }
 
 const toolNames = new Set(tools.map((tool) => tool.name));
 
 /** Detail pages in `/projects` order (D-13), hidden projects excluded. */
 export function expectedDetails(locale: Locale): ExpectedDetail[] {
-  return expectedProjects(locale).map((project) => {
+  const sorted = expectedProjects(locale);
+  return sorted.map((project) => {
+    const pair = neighbours(sorted, project.slug);
     const source = snapshot.projects.find((entry) => entry.id === project.id);
     if (source === undefined) throw new Error(`helpers: no snapshot project ${project.id}`);
     return {
@@ -96,6 +106,8 @@ export function expectedDetails(locale: Locale): ExpectedDetail[] {
       behanceUrl: source.url,
       year: String(new Date(source.publishedOn * 1000).getUTCFullYear()),
       coverStem: source.cover.file.replace(/\.[a-z]+$/, ''),
+      next: link(pair.next),
+      previous: link(pair.previous),
     };
   });
 }
