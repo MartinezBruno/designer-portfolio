@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-10-17T15:27:24.395Z"
-last_activity: 2026-10-17 -- Phase 03 execution started
+stopped_at: Completed 03-09-PLAN.md
+last_updated: "2026-10-17T17:00:51.598Z"
+last_activity: 2026-10-17
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 23
-  completed_plans: 13
+  completed_plans: 22
   percent: 25
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-10-15)
 ## Current Position
 
 Phase: 03 (real-behance-work) — EXECUTING
-Plan: 1 of 10
-Status: Executing Phase 03
-Last activity: 2026-10-17 -- Phase 03 execution started
+Plan: 10 of 10
+Status: Ready to execute (03-10 next)
+Last activity: 2026-10-17 -- Completed 03-09 (real Behance sync, curated overrides)
 
-Progress: [██████████] 100%
+Progress: [██████████] 96%
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Progress: [██████████] 100%
 | Phase 01 P03 | 4 min | 3 tasks | 19 files |
 | Phase 01 P04 | 6min | 3 tasks | 14 files |
 | Phase 01 P05 | 6min | 3 tasks | 10 files |
+| Phase 03 P09 | 7 min | 3 tasks | 21 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,9 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-04: root 404.html is English with a lang=es Spanish cross-link; dist/es/404.html deferred to deploy time (no build.format preserve)
 - [Phase 01]: 01-05: motion gate defaults to 'off' when matchMedia is unavailable; only set:html in src/ is motionGateInline
 - [Phase 01]: 01-05: lifecycle registry isolates init and cleanup errors; bindToAstro mounts immediately and listens to raw astro:page-load/before-swap
+- [Phase 03]: 03-09: real Behance sync run once (user: run-now); 7 projects, so PROJ-04..07 stay N/A (D-05/D-06)
+- [Phase 03]: 03-09: PuroV and Mart category graphic-design per sync checklist; tags suggest branding as an alternative (TODO(martina))
+- [Phase 03]: 03-09: focal-point (/projects/) and empty-screens (Home, /projects/) still FAIL with real covers; PuroV wordmark crops at the 7/8 tile; awaiting user decision
 
 ### Pending Todos
 
@@ -88,8 +92,7 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 3: Martina's explicit consent (DATA-01) is required before the Behance sync script is built.
-- Phase 3: Project count unresolved (7 vs 14). It decides whether PROJ-04..07 (filters/search) apply in Phase 4.
+- Phase 3: Taste gate open items need a user decision: focal-point FAIL on /projects/, empty-screens FAIL on Home and /projects/, PuroV cover crop at 7/8 (see 03-09-SUMMARY).
 - Phase 7: Page-transition approach open (`<ClientRouter />` vs native cross-document view transitions).
 - Phases 3, 5, 7 flagged for deeper research before planning.
 - Open questions for Martina: availability badge, brand fonts, custom domain, testimonials (v2).
@@ -104,6 +107,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-17T03:36:19.947Z
-Stopped at: Phase 3 UI-SPEC approved
-Resume file: .planning/phases/03-real-behance-work/03-UI-SPEC.md
+Last session: 2026-10-17T17:00:51.593Z
+Stopped at: Completed 03-09-PLAN.md
+Resume file: None

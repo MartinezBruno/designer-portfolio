@@ -38,10 +38,10 @@ v1 "done" = working local build (deploy is post-v1).
 ### Behance Data (DATA)
 
 - [ ] **DATA-01**: Martina's explicit consent to pulling her Behance content is obtained and documented before the sync script is built
-- [ ] **DATA-02**: Developer can run `pnpm sync:behance` to fetch her profile and all project content (images, text, grids, embeds, tags, tools, dates) into a committed snapshot with locally optimized images
+- [x] **DATA-02**: Developer can run `pnpm sync:behance` to fetch her profile and all project content (images, text, grids, embeds, tags, tools, dates) into a committed snapshot with locally optimized images
 - [ ] **DATA-03**: Sync fails loudly and never overwrites a good snapshot with empty, partial, or challenge-page data
 - [ ] **DATA-04**: Site builds successfully offline / when Behance is unreachable (build reads only the snapshot)
-- [ ] **DATA-05**: Developer can curate per-project overrides locally: category, alt text, featured/order/hidden
+- [x] **DATA-05**: Developer can curate per-project overrides locally: category, alt text, featured/order/hidden
 - [ ] **DATA-06**: Project data is exposed through a source-agnostic typed model, so the source (scrape, Playwright, manual) can change without touching UI
 
 ### Projects (PROJ)
@@ -135,10 +135,10 @@ Updated during roadmap creation.
 | HOME-07 | Phase 2 | Pending |
 | HOME-08 | Phase 5 | Pending |
 | DATA-01 | Phase 3 | Pending |
-| DATA-02 | Phase 3 | Pending |
+| DATA-02 | Phase 3 | Complete |
 | DATA-03 | Phase 3 | Pending |
 | DATA-04 | Phase 3 | Pending |
-| DATA-05 | Phase 3 | Pending |
+| DATA-05 | Phase 3 | Complete |
 | DATA-06 | Phase 3 | Pending |
 | PROJ-01 | Phase 3 | Pending |
 | PROJ-02 | Phase 4 | Pending |

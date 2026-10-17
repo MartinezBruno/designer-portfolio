@@ -115,7 +115,7 @@ Plans:
   4. Visitor sees the 3 latest projects on the homepage, sorted by publish date and linking to their detail-page URLs, and a Projects page listing all projects newest first at `/projects` and `/es/projects` (exact slugs to be decided in planning).
   5. Developer can hide, reorder, feature, recategorize, or add alt text to a project through local overrides, and the change shows up on the site. UI components read only the source-agnostic typed model, never the Behance adapter.
 
-**Plans:** 8/10 plans executed
+**Plans:** 9/10 plans executed
 
 Plans:
 **Wave 1**
@@ -140,7 +140,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 03-09-PLAN.md — Live sync run (user go-ahead checkpoint) with measurements, curated overrides, real-imagery taste gate
+- [x] 03-09-PLAN.md — Live sync run (user go-ahead checkpoint) with measurements, curated overrides, real-imagery taste gate
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
@@ -240,7 +240,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 |-------|----------------|--------|-----------|
 | 1. Bilingual Walking Skeleton | 5/5 | Complete   | 2026-10-16 |
 | 2. Homepage Story | 8/8 | Complete   | 2026-10-17 |
-| 3. Real Behance Work | 8/10 | In Progress|  |
+| 3. Real Behance Work | 9/10 | In Progress|  |
 | 4. Project Detail & Discovery | 0/TBD | Not started | - |
 | 5. Contact | 0/TBD | Not started | - |
 | 6. Scroll & Interaction Motion | 0/TBD | Not started | - |
