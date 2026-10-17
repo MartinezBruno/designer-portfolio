@@ -18,7 +18,7 @@ const { detail, locale } = Astro.props;
 
 <article aria-labelledby="project-title">
   <ProjectIntro detail={detail} locale={locale} />
-  {/* Seamless module stack (D-01): no gap, no padding, no lang wrapper (text roots carry lang). */}
+  {/* Edge-to-edge module stack (D-01): no gap, no padding, no lang wrapper (text roots carry lang). */}
   <div class="mx-auto flex w-full max-w-[1400px] flex-col">
     {detail.modules.map((module) => (
       <ProjectModule module={module} behanceUrl={detail.behanceUrl} locale={locale} />
