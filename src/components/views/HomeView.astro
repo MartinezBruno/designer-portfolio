@@ -1,5 +1,6 @@
 ---
 import Hero from '../sections/Hero.astro';
+import { getHomeContent } from '../../lib/content/queries';
 import type { Locale } from '../../i18n/t';
 
 interface Props {
@@ -7,6 +8,7 @@ interface Props {
 }
 
 const { locale } = Astro.props;
+const content = await getHomeContent(locale);
 ---
 
-<Hero locale={locale} />
+<Hero locale={locale} available={content.available} />
