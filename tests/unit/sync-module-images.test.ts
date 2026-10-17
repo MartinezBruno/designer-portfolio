@@ -224,10 +224,16 @@ describe('fetchModuleImage redirects (one allowed CDN hop)', () => {
 
   it.each([
     ['a foreign host', 'https://evil.example/v1/rendition/project_modules/1400_webp/abc123.png'],
-    ['a look-alike host', 'https://mir-cdn.behance.net.evil.example/v1/rendition/project_modules/x.png'],
+    [
+      'a look-alike host',
+      'https://mir-cdn.behance.net.evil.example/v1/rendition/project_modules/x.png',
+    ],
     ['the source host', 'https://mir-s3-cdn-cf.behance.net/v1/rendition/project_modules/x.png'],
     ['a wrong path', 'https://mir-cdn.behance.net/v1/rendition/projects/1400/abc123.png'],
-    ['a path escaping the prefix', 'https://mir-cdn.behance.net/v1/rendition/project_modules/../../x.png'],
+    [
+      'a path escaping the prefix',
+      'https://mir-cdn.behance.net/v1/rendition/project_modules/../../x.png',
+    ],
     ['plain http', 'http://mir-cdn.behance.net/v1/rendition/project_modules/1400_webp/abc123.png'],
     ['userinfo', 'https://user:pass@mir-cdn.behance.net/v1/rendition/project_modules/x.png'],
     ['a username only', 'https://user@mir-cdn.behance.net/v1/rendition/project_modules/x.png'],

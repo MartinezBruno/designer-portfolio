@@ -277,7 +277,7 @@ const ContentSchema = z.discriminatedUnion('kind', [
 
 **Recommended rule** `[Proposed]`:
 1. Candidates, in order, picked by path segment (never by array position, mirroring `pickCover`): `1400_webp`, `1400`, `max_1200_webp`, `max_1200`, `fs_webp`, `fs`.
-2. For each candidate, use the same guards as `fetchCover`: host allowlist, `redirect: 'error'`, `image/*`, size cap, magic-byte sniff. **A 404 or non-image moves to the next candidate.** Network errors and oversize bodies fail the whole sync, as they do today.
+2. For each candidate, use the same guards as `fetchCover`: host allowlist, `redirect: 'error'`, `image/*`, size cap, magic-byte sniff. **A 404 or non-image moves to the next candidate.** Network errors and oversize bodies fail the whole sync, as they do today. **Amended 2026-10-17 (04-08, user decision "Allow one hop"):** module image GETs use `redirect: 'manual'` and follow exactly one hop, only from `mir-s3-cdn-cf.behance.net` to `https://mir-cdn.behance.net/v1/rendition/project_modules/…` (no credentials, default port). Any other redirect, a second hop or a missing Location fails G4m. Pages and covers keep `redirect: 'error'`.
 3. WebP bytes with width ≤ 1400 → stored as-is. PNG/JPG → `sharp(bytes).resize({ width: 1400, withoutEnlargement: true }).webp({ quality: 82 }).toBuffer()`. The quality value is `[Assumption]` and should be tuned by eye on one PuroV image.
 4. Name it `<imageId>-<sha256(storedBytes)[0..12]>.webp`, so no scraped text ever reaches a path.
 5. Pacing: requests go through the existing `paced` fetch (2 s spacing). That means about 180 requests ≈ **6–7 minutes** per run `[Inference: 1 profile + 7 pages (+ challenge replays) + 7 covers + 154 images + ~6 fallbacks, × 2 s]`.
@@ -635,7 +635,7 @@ moduleAlt: z.record(z.string().regex(/^\d+$/), localized).optional(),
 | V4 Access Control | no | — |
 | V5 Input Validation / Output Encoding | **yes** | Zod strict schemas (snapshot `content`, `moduleAlt`); sanitize-html allowlist; `{}` interpolation everywhere except the one sanitized `set:html` |
 | V6 Cryptography | no (sha256 only for file naming, via `node:crypto`) | — |
-| V12 Files and Resources | **yes** | Host-allowlisted downloads, `redirect: 'error'`, size caps, magic-byte sniff, names from digits + hash only |
+| V12 Files and Resources | **yes** | Host-allowlisted downloads, `redirect: 'error'` (module images: one validated CDN hop, 04-08), size caps, magic-byte sniff, names from digits + hash only |
 | V14 Configuration / third-party content | **yes** | iframe sandbox + allowlist + click-to-load; `rel="noopener noreferrer"` |
 
 ### Known Threat Patterns for this stack
@@ -645,7 +645,7 @@ moduleAlt: z.record(z.string().regex(/^\d+$/), localized).optional(),
 | Malicious embed src (`javascript:`, other origins) | Tampering / Elevation | Sync allowlist → Zod host-pinned https URL → client re-check before `iframe.src`; `createElement`, never `innerHTML` |
 | Reverse tabnabbing from prose and external links | Spoofing | `rel="noopener noreferrer"` set by the sanitizer transform; e2e asserts every `target=_blank` |
 | Path traversal / arbitrary file write from scraped names | Tampering | `MODULE_FILE` regex; ids must be digits; hash names (existing T-03-05 pattern) |
-| SSRF / unexpected hosts in the sync | Info disclosure | Existing `assertAllowed` CDN allowlist + `redirect: 'error'` for every candidate |
+| SSRF / unexpected hosts in the sync | Info disclosure | Existing `assertAllowed` CDN allowlist + `redirect: 'error'` for pages and covers; module images follow one validated hop to `mir-cdn.behance.net/v1/rendition/project_modules/` only (04-08 amendment) |
 | Privacy leak to Figma before consent | Info disclosure | No third-party request before click (e2e request log) |
 | DoS through huge images | DoS | Existing 10 MB cap (`MAX_COVER_BYTES`); max observed module image 1.27 MB |
 
