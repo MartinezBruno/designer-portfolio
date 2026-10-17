@@ -1,4 +1,6 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import seed from '../../src/data/behance/snapshot.json';
 import services from '../../src/data/services.json';
 import { categoryIds } from '../../src/lib/projects/model';
 import {
@@ -6,6 +8,20 @@ import {
   type Snapshot,
   type SnapshotProject,
 } from '../../src/lib/projects/snapshot-schema';
+import {
+  getSnapshotOrigin,
+  getSourceProjects,
+} from '../../src/lib/projects/sources/behance-snapshot';
+
+const KNOWN_IDS = [
+  '238078789',
+  '227934855',
+  '226450035',
+  '202447185',
+  '185594991',
+  '176799549',
+  '172473551',
+];
 
 const PREFIX = 'snapshot: invalid or missing src/data/behance/snapshot.json (';
 const SUFFIX = '). Re-run pnpm sync:behance or restore it from git';
@@ -96,5 +112,52 @@ describe('parseSnapshot', () => {
 
   it('rejects an unknown origin', () => {
     expectInvalid({ ...validSnapshot(), origin: 'manual' }, 'origin');
+  });
+});
+
+describe('seed snapshot', () => {
+  const parsed = parseSnapshot(seed);
+
+  it('parses with origin seed and the 7 known ids, newest first', () => {
+    expect(parsed.origin).toBe('seed');
+    expect(parsed.projects.map((project) => project.id)).toEqual(KNOWN_IDS);
+  });
+
+  it('keeps the Behance names verbatim', () => {
+    expect(parsed.projects[0]?.name).toBe('Cabrera\u00b4s motos, Posts');
+    expect(parsed.projects.map((project) => project.name)).toContain('Website "Reciclick"');
+  });
+
+  it('has every cover file on disk', () => {
+    for (const project of parsed.projects) {
+      expect(
+        existsSync(new URL(`../../src/assets/projects/${project.cover.file}`, import.meta.url)),
+      ).toBe(true);
+    }
+  });
+});
+
+describe('behance snapshot adapter', () => {
+  it('returns 7 source projects with local covers that have dimensions', () => {
+    const projects = getSourceProjects();
+    expect(projects.map((project) => project.id)).toEqual(KNOWN_IDS);
+    for (const project of projects) {
+      expect(project.cover.width).toBeGreaterThan(0);
+      expect(project.cover.height).toBeGreaterThan(0);
+      expect(project.sourceUrl).toBe(
+        `https://www.behance.net/gallery/${project.id}/${project.sourceSlug}`,
+      );
+    }
+  });
+
+  it('maps tools to titles in source order', () => {
+    const titles = parseSnapshot(seed).projects.map((project) =>
+      project.tools.map((tool) => tool.title),
+    );
+    expect(getSourceProjects().map((project) => [...project.tools])).toEqual(titles);
+  });
+
+  it('reports the seed origin', () => {
+    expect(getSnapshotOrigin()).toBe('seed');
   });
 });
