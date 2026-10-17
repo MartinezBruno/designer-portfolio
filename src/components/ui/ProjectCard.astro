@@ -30,16 +30,19 @@ const sizeClasses: Record<TileSize, string> = {
   large: 'md:col-span-7',
   small: 'md:col-span-5',
   'large-end': 'md:col-span-7 md:col-start-6',
+  third: 'md:col-span-4',
 };
 const aspectClasses: Record<TileSize, string> = {
   large: 'aspect-[5/4]',
   small: 'aspect-[5/4] md:aspect-[7/8]',
   'large-end': 'aspect-[5/4]',
+  third: 'aspect-[5/4]',
 };
 const sizesFor: Record<TileSize, string> = {
   large: '(min-width: 1152px) 625px, (min-width: 768px) 57vw, 100vw',
   small: '(min-width: 1152px) 440px, (min-width: 768px) 40vw, 100vw',
   'large-end': '(min-width: 1152px) 625px, (min-width: 768px) 57vw, 100vw',
+  third: '(min-width: 1152px) 347px, (min-width: 768px) 31vw, 100vw',
 };
 // Spread so lazy covers carry no fetchpriority attribute at all (exactOptionalPropertyTypes).
 const priority = eager ? { fetchpriority: 'high' as const } : {};

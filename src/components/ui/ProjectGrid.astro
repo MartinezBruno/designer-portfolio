@@ -2,7 +2,7 @@
 /**
  * Project list in received order (D-18). Auto-flow row only: no dense packing, no explicit item
  * ordering and no row spanning, so DOM, tab and reading order all stay newest first. Tile sizes
- * come from tileSize().
+ * come from tileSize(), or are all `third` for the fixed-count even row (`layout="row"`).
  */
 import ProjectCard from './ProjectCard.astro';
 import { tileSize } from '../../lib/projects/layout';
@@ -16,9 +16,11 @@ interface Props {
   locale: Locale;
   /** Loads the first cover eagerly (the LCP candidate on the Projects page). */
   eagerFirst?: boolean;
+  /** `row`: every tile spans 4 columns, for a fixed count of up to 3 (Home "Latest work"). */
+  layout?: 'rhythm' | 'row';
 }
 
-const { projects, variant, headingLevel, locale, eagerFirst } = Astro.props;
+const { projects, variant, headingLevel, locale, eagerFirst, layout = 'rhythm' } = Astro.props;
 ---
 
 <ul class="grid grid-cols-1 gap-y-12 md:grid-cols-12 md:gap-x-6">
@@ -28,7 +30,7 @@ const { projects, variant, headingLevel, locale, eagerFirst } = Astro.props;
       variant={variant}
       headingLevel={headingLevel}
       locale={locale}
-      size={tileSize(index, projects.length)}
+      size={layout === 'row' ? 'third' : tileSize(index, projects.length)}
       eager={eagerFirst === true && index === 0}
     />
   ))}

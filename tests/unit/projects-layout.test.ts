@@ -13,7 +13,7 @@ const sequences: ReadonlyArray<readonly [number, readonly TileSize[]]> = [
 
 describe('tileSize', () => {
   it('exposes the three tile sizes', () => {
-    expect(tileSizes).toEqual(['large', 'small', 'large-end']);
+    expect(tileSizes).toEqual(['large', 'small', 'large-end', 'third']);
   });
 
   it.each(sequences)('count %i follows the fixed rhythm', (count, expected) => {

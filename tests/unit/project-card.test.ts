@@ -137,12 +137,23 @@ describe('project card size', () => {
     expect(classTokens(mediaTag(html))).toContain('aspect-[5/4]');
   });
 
+  it('third spans 4 columns with an uncropped 5/4 cover', async () => {
+    const html = await render({ size: 'third' });
+    expect(classTokens(rootTag(html))).toContain('md:col-span-4');
+    expect(classTokens(rootTag(html))).not.toContain('md:col-start-6');
+    expect(classTokens(mediaTag(html))).toContain('aspect-[5/4]');
+    expect(classTokens(mediaTag(html))).not.toContain('md:aspect-[7/8]');
+  });
+
   it('sets responsive sizes per tile size', async () => {
     expect(await render({ size: 'large' })).toContain(
       'sizes="(min-width: 1152px) 625px, (min-width: 768px) 57vw, 100vw"',
     );
     expect(await render({ size: 'small' })).toContain(
       'sizes="(min-width: 1152px) 440px, (min-width: 768px) 40vw, 100vw"',
+    );
+    expect(await render({ size: 'third' })).toContain(
+      'sizes="(min-width: 1152px) 347px, (min-width: 768px) 31vw, 100vw"',
     );
   });
 });
@@ -155,7 +166,7 @@ describe('project card safety', () => {
   });
 
   it.each(['full', 'compact'] as const)('%s never renders forbidden patterns', async (variant) => {
-    for (const size of ['large', 'small', 'large-end'] as const) {
+    for (const size of ['large', 'small', 'large-end', 'third'] as const) {
       const html = await render({ variant, size });
       for (const forbidden of [
         'Image may contain',

@@ -26,7 +26,13 @@ const t = useTranslations(locale);
     <h2 id="work-title" class="font-display text-2xl font-semibold tracking-tight">
       {t('work.heading')}
     </h2>
-    <ProjectGrid projects={projects} variant="compact" headingLevel={3} locale={locale} />
+    <ProjectGrid
+      projects={projects}
+      variant="compact"
+      headingLevel={3}
+      locale={locale}
+      layout="row"
+    />
     <p>
       <a
         href={getRelativeLocaleUrl(locale, 'projects')}

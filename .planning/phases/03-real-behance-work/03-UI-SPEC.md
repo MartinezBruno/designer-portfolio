@@ -231,7 +231,7 @@ Measured result of exactly this layout `[Verified, same method]`:
 - **Placement:** inside the existing `<div class="flex flex-col gap-16 py-16">` in `HomeView.astro`, between `FeaturedServices` and `ToolsRow`. It replaces the placeholder comment. `[CONTEXT D-16]`
 - **Markup:** `<section aria-labelledby="work-title" class="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 sm:px-6 lg:px-8">`, containing:
   1. `<h2 id="work-title">` with `t('work.heading')`
-  2. `<ProjectGrid projects={latest} variant="compact" headingLevel={3} />`
+  2. `<ProjectGrid projects={latest} variant="compact" headingLevel={3} layout="row" />`. **Amended 2026-10-17 (user):** Home shows a fixed count (max 3), so it does not use the D-18 rhythm. Every tile is size `third` (`md:col-span-4`, `aspect-[5/4]` at every width, `sizes="(min-width: 1152px) 347px, (min-width: 768px) 31vw, 100vw"`), giving one even row on the 12-column grid. This removes the empty left half the `large-end` tile left on Home (taste `empty-screens`) and the 7/8 crop of square wordmarks. The Projects page keeps the D-18 rhythm.
   3. `<p><a href={getRelativeLocaleUrl(locale, 'projects')} …>{t('work.seeAll')}<IconArrowRight …/></a></p>`
 - **Selection:** up to 3 projects. Featured projects come first (by `order`, then date). The remaining slots are the latest by `publishedOn`. Hidden projects are excluded. `[CONTEXT D-17]`
 - **Count states:**

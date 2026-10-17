@@ -57,6 +57,17 @@ describe('LatestWork', () => {
     expect(seeAllLink(html, '/es/projects/')).toContain(es['work.seeAll']);
   });
 
+  it('lays the cards out as an even row of 4-column tiles', async () => {
+    const html = await render(three);
+    const tiles = html.match(/<li[^>]*class="[^"]*"/g) ?? [];
+    expect(tiles).toHaveLength(3);
+    for (const tile of tiles) {
+      expect(tile).toContain('md:col-span-4');
+      expect(tile).not.toMatch(/md:col-span-[57]|md:col-start-6/);
+    }
+    expect(html).not.toContain('md:aspect-[7/8]');
+  });
+
   it('renders compact cards without summary or tools', async () => {
     const html = await render(three);
     expect(html).not.toContain('A summary that compact cards never show.');

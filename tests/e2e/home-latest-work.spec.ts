@@ -37,6 +37,24 @@ test.describe('latest work', () => {
         expect(await precedes(section, tools)).toBe(true);
       });
 
+      test('shows the selection as one even row from md', async ({ page }) => {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        const tiles = page.locator('section[aria-labelledby="work-title"] li');
+        const boxes = [];
+        for (let index = 0; index < (await tiles.count()); index++) {
+          const box = await tiles.nth(index).locator('article > div').first().boundingBox();
+          expect(box).not.toBeNull();
+          if (box) boxes.push(box);
+        }
+        expect(boxes).toHaveLength(expectedHome(locale).length);
+        const [first] = boxes;
+        for (const box of boxes) {
+          expect(Math.abs(box.y - (first?.y ?? 0))).toBeLessThanOrEqual(1);
+          expect(Math.abs(box.width - (first?.width ?? 0))).toBeLessThanOrEqual(1);
+          expect(Math.abs(box.height - (first?.height ?? 0))).toBeLessThanOrEqual(1);
+        }
+      });
+
       test('lists the Home selection in order with compact cards', async ({ page }) => {
         const section = page.locator('section[aria-labelledby="work-title"]');
         const expected = expectedHome(locale);

@@ -1,8 +1,9 @@
 /**
  * Projects grid rhythm (D-18). Tile size comes from position only, never from CSS nth-* rules, so
- * DOM order, tab order and visual order stay newest first.
+ * DOM order, tab order and visual order stay newest first. `third` is the even row used where the
+ * count is fixed (Home "Latest work", max 3): every tile spans 4 of the 12 columns.
  */
-export const tileSizes = ['large', 'small', 'large-end'] as const;
+export const tileSizes = ['large', 'small', 'large-end', 'third'] as const;
 export type TileSize = (typeof tileSizes)[number];
 
 const cycle: readonly TileSize[] = ['large', 'small', 'small', 'large'];
