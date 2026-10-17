@@ -1,0 +1,144 @@
+{
+  "version": 1,
+  "origin": "seed",
+  "syncedAt": "2026-10-17T00:00:00.000Z",
+  "profile": {
+    "username": "martifernand7",
+    "url": "https://www.behance.net/martifernand7"
+  },
+  "projects": [
+    {
+      "id": "238078789",
+      "slug": "Cabreras-motos-Posts",
+      "name": "Cabrera´s motos, Posts",
+      "url": "https://www.behance.net/gallery/238078789/Cabreras-motos-Posts",
+      "publishedOn": 1762478100,
+      "modifiedOn": null,
+      "description": "",
+      "tags": [],
+      "tools": [],
+      "fields": [],
+      "canvasWidth": null,
+      "cover": {
+        "file": "238078789-5d4062c2283b.png",
+        "sourceUrl": "https://www.behance.net/gallery/238078789/Cabreras-motos-Posts",
+        "width": 808
+      },
+      "modules": []
+    },
+    {
+      "id": "227934855",
+      "slug": "PuroV",
+      "name": "PuroV",
+      "url": "https://www.behance.net/gallery/227934855/PuroV",
+      "publishedOn": 1749658367,
+      "modifiedOn": null,
+      "description": "",
+      "tags": [],
+      "tools": [],
+      "fields": [],
+      "canvasWidth": null,
+      "cover": {
+        "file": "227934855-b4d958de192b.png",
+        "sourceUrl": "https://www.behance.net/gallery/227934855/PuroV",
+        "width": 808
+      },
+      "modules": []
+    },
+    {
+      "id": "226450035",
+      "slug": "Website-Reciclick",
+      "name": "Website \"Reciclick\"",
+      "url": "https://www.behance.net/gallery/226450035/Website-Reciclick",
+      "publishedOn": 1747886271,
+      "modifiedOn": null,
+      "description": "",
+      "tags": [],
+      "tools": [],
+      "fields": [],
+      "canvasWidth": null,
+      "cover": {
+        "file": "226450035-e462972e1827.png",
+        "sourceUrl": "https://www.behance.net/gallery/226450035/Website-Reciclick",
+        "width": 808
+      },
+      "modules": []
+    },
+    {
+      "id": "202447185",
+      "slug": "Portfolio-web",
+      "name": "Portfolio web",
+      "url": "https://www.behance.net/gallery/202447185/Portfolio-web",
+      "publishedOn": 1720062283,
+      "modifiedOn": null,
+      "description": "",
+      "tags": [],
+      "tools": [],
+      "fields": [],
+      "canvasWidth": null,
+      "cover": {
+        "file": "202447185-5b2f5f35a02e.png",
+        "sourceUrl": "https://www.behance.net/gallery/202447185/Portfolio-web",
+        "width": 808
+      },
+      "modules": []
+    },
+    {
+      "id": "185594991",
+      "slug": "Sistema-visual",
+      "name": "Sistema visual",
+      "url": "https://www.behance.net/gallery/185594991/Sistema-visual",
+      "publishedOn": 1701221351,
+      "modifiedOn": null,
+      "description": "",
+      "tags": [],
+      "tools": [],
+      "fields": [],
+      "canvasWidth": null,
+      "cover": {
+        "file": "185594991-aca98d5d592a.png",
+        "sourceUrl": "https://www.behance.net/gallery/185594991/Sistema-visual",
+        "width": 808
+      },
+      "modules": []
+    },
+    {
+      "id": "176799549",
+      "slug": "Website-InstaBlogs",
+      "name": "Website \"InstaBlogs\"",
+      "url": "https://www.behance.net/gallery/176799549/Website-InstaBlogs",
+      "publishedOn": 1691028099,
+      "modifiedOn": null,
+      "description": "",
+      "tags": [],
+      "tools": [],
+      "fields": [],
+      "canvasWidth": null,
+      "cover": {
+        "file": "176799549-ac775b13606a.png",
+        "sourceUrl": "https://www.behance.net/gallery/176799549/Website-InstaBlogs",
+        "width": 808
+      },
+      "modules": []
+    },
+    {
+      "id": "172473551",
+      "slug": "Mart",
+      "name": "Mart",
+      "url": "https://www.behance.net/gallery/172473551/Mart",
+      "publishedOn": 1686103564,
+      "modifiedOn": null,
+      "description": "",
+      "tags": [],
+      "tools": [],
+      "fields": [],
+      "canvasWidth": null,
+      "cover": {
+        "file": "172473551-327ff07fd2cb.png",
+        "sourceUrl": "https://www.behance.net/gallery/172473551/Mart",
+        "width": 808
+      },
+      "modules": []
+    }
+  ]
+}
