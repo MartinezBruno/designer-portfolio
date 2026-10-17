@@ -19,6 +19,7 @@ A highly visual, motion-rich portfolio website for Martina Fernandez, a graphic 
 - **Dependencies**: Don't add until needed
 - **Quality gates**: No type errors, lint errors, or failing tests; add tests when behavior changes
 - **Design (taste skill required)**: Every design or visual change (new sections, layout, typography, colour, imagery, motion, UI-SPEC work) must use the `taste-skill:taste-skill` skill: apply its house rules and laws, run its `lint.mjs` and `inspect.mjs` on the result, and review its screenshots before the work counts as done. Decided by the user 2026-10-16.
+- **Commits during GSD workflows (pre-approved)**: Overrides the global "confirm every commit message" rule for this project. Commits made by GSD workflows (executors, fixers, orchestrator tracking/docs commits) are pre-approved and need no per-commit confirmation, provided they use Conventional Commits (lowercase, imperative, <50 chars, scope = plan/phase id) and contain no Claude/co-author attribution. The user reviews the phase's commit list once at phase end, and `/security-review` runs once per phase before the phase is marked complete. Ad-hoc commits outside a GSD workflow still need confirmation. Decided by the user 2026-10-16.
 <!-- GSD:project-end -->
 
 <!-- GSD:stack-start source:research/STACK.md -->
