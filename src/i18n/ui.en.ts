@@ -4,6 +4,8 @@ export const en = {
   'a11y.skipToContent': 'Skip to content',
   'a11y.newTab': '(opens in a new tab)',
   'nav.label': 'Main',
+  // TODO(martina): review Phase 3 copy (nav, projects page, Home work section).
+  'nav.projects': 'Projects',
   'nav.contact': 'Contact',
   'lang.label': 'Language',
   'lang.en': 'English',
@@ -35,6 +37,20 @@ export const en = {
   'notFound.cta': 'Back to home',
   'notFound.altLocalePrompt': 'Looking for the English version?',
   'notFound.altLocaleLink': 'Go to home',
+  'work.heading': 'Latest work',
+  'work.seeAll': 'See all projects',
+  'projects.heading': 'Projects',
+  'projects.intro': 'Websites, brand identities and social content, newest first.',
+  'projects.meta.category': 'Category',
+  'projects.meta.year': 'Year',
+  'projects.meta.tools': 'Tools',
+  'projects.coverAlt': '{title} — cover',
+  'projects.empty.heading': 'New work is on the way',
+  'projects.empty.body': "I'm updating this list. Write to me and I'll send you recent work.",
+  'projects.empty.cta': 'Write to me',
+  'meta.projects.title': 'Projects — Martina Fernandez',
+  'meta.projects.description':
+    'Web design, branding and social media projects by Martina Fernandez, newest first.',
 } as const;
 
 export type UIKey = keyof typeof en;

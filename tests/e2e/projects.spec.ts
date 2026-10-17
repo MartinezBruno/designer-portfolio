@@ -76,9 +76,10 @@ for (const { path, lang, dict, canonical, otherHref } of cases) {
         ['x-default', enUrl],
       ] as const;
       for (const [hreflang, href] of alternates) {
-        await expect(
-          page.locator(`link[rel="alternate"][hreflang="${hreflang}"]`),
-        ).toHaveAttribute('href', href);
+        await expect(page.locator(`link[rel="alternate"][hreflang="${hreflang}"]`)).toHaveAttribute(
+          'href',
+          href,
+        );
       }
     });
 
