@@ -12,8 +12,7 @@ export const en = {
   'hero.title': 'Graphic designer for web & social media',
   'hero.description':
     'I design websites, brand visuals and social content that help small businesses look as good as they are.',
-  // TODO(martina): restore the UI-SPEC alt ("Portrait of Martina Fernandez") when the real portrait replaces portrait.jpg
-  'hero.imageAlt': "Placeholder image for Martina Fernandez's portrait",
+  'hero.imageAlt': 'Portrait of Martina Fernandez',
   'hero.cta': "Let's work together",
   // TODO(martina): confirm Phase 2 copy (badge, section headings, pause label).
   'availability.open': 'Open to new projects',

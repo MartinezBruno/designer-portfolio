@@ -5,8 +5,8 @@ import AvailabilityBadge from '../ui/AvailabilityBadge.astro';
 import ButtonLink from '../ui/ButtonLink.astro';
 import { site } from '../../data/site';
 import { useTranslations, type Locale } from '../../i18n/t';
-// TODO(martina): replace with her real 4:5 portrait
-import portrait from '../../assets/hero/portrait.jpg';
+// TODO(martina): supply the original uncropped photo at >=1000px so the hero portrait can grow
+import portrait from '../../assets/hero/portrait.png';
 
 interface Props {
   locale: Locale;
@@ -45,9 +45,9 @@ const t = useTranslations(locale);
         alt={t('hero.imageAlt')}
         loading="eager"
         fetchpriority="high"
-        width={800}
-        height={1000}
-        class="bg-surface-alt aspect-[4/5] w-full rounded-2xl object-cover"
+        width={321}
+        height={324}
+        class="mx-auto aspect-square w-full max-w-64 rounded-full object-contain lg:max-w-80"
       />
     </div>
   </div>
