@@ -10,6 +10,8 @@ export interface SeoInput {
   kind: PageKind;
   title: string;
   description: string;
+  /** Absolute og:image URL. Ignored on 404s. */
+  image?: string;
 }
 
 export interface SeoTags {
@@ -25,6 +27,7 @@ export interface SeoTags {
     localeAlternate: OgLocale;
     type: 'website';
     url?: string;
+    image?: string;
   };
 }
 
@@ -38,7 +41,7 @@ export function buildSeo(
   input: SeoInput,
   absolute: (pathname: string, target: Locale) => string,
 ): SeoTags {
-  const { locale, pathname, kind, title, description } = input;
+  const { locale, pathname, kind, title, description, image } = input;
   const alternateLocale: Locale = locale === 'en' ? 'es' : 'en';
   const ogBase = {
     title,
@@ -61,6 +64,7 @@ export function buildSeo(
       ...locales.map((target) => ({ hreflang: target, href: absolute(pathname, target) })),
       { hreflang: 'x-default', href: absolute(pathname, 'en') },
     ],
-    og: { ...ogBase, url: canonical },
+    // Spread so pages without an image carry no image key (exactOptionalPropertyTypes).
+    og: { ...ogBase, url: canonical, ...(image ? { image } : {}) },
   };
 }

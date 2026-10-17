@@ -14,9 +14,13 @@ interface Props {
   title: string;
   description: string;
   kind?: PageKind;
+  /** Absolute og:image URL (detail pages). */
+  ogImage?: string;
 }
 
-const { locale, title, description, kind = 'page' } = Astro.props;
+const { locale, title, description, kind = 'page', ogImage } = Astro.props;
+// Spread so pages without an ogImage pass no image prop at all (exactOptionalPropertyTypes).
+const ogImageProp = ogImage ? { image: ogImage } : {};
 const pathname = Astro.url.pathname;
 ---
 
@@ -33,6 +37,7 @@ const pathname = Astro.url.pathname;
       kind={kind}
       title={title}
       description={description}
+      {...ogImageProp}
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <Font cssVariable="--font-inter" preload />
