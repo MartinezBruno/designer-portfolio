@@ -54,6 +54,41 @@ for (const { path, lang, dict, canonical, otherHref } of cases) {
       }
     });
 
+    test('cards show the override titles, categories and summaries', async ({ page }) => {
+      await page.goto(path);
+      const cards = page.locator('main article');
+      await expect(cards).toHaveCount(expected.length);
+      for (const [index, project] of expected.entries()) {
+        const card = cards.nth(index);
+        await expect(card.locator('h2 a')).toHaveText(project.title);
+        const categoryItem = card.locator('dl > div', {
+          has: page.locator('dt', { hasText: dict['projects.meta.category'] }),
+        });
+        if (project.category === null) {
+          await expect(categoryItem).toHaveCount(0);
+        } else {
+          await expect(categoryItem.locator('dd')).toHaveText(project.category);
+        }
+        if (project.summary !== null) {
+          await expect(card.locator('p', { hasText: project.summary })).toHaveText(project.summary);
+        }
+      }
+    });
+
+    test('the override file is wired (SC5)', async ({ page }) => {
+      await page.goto(path);
+      expect(expected.some((project) => project.category !== null)).toBe(true);
+      expect(expected.some((project) => project.summary !== null)).toBe(true);
+      const withCategory = expected.find((project) => project.category !== null);
+      const withSummary = expected.find((project) => project.summary !== null);
+      await expect(
+        page.locator('main article dd', { hasText: withCategory?.category ?? '' }).first(),
+      ).toBeVisible();
+      await expect(
+        page.locator('main article p', { hasText: withSummary?.summary ?? '' }),
+      ).toHaveCount(1);
+    });
+
     test('covers have localized alt text', async ({ page }) => {
       await page.goto(path);
       const images = page.locator('main article img');
