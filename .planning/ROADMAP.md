@@ -172,9 +172,9 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 04-04-PLAN.md — Contact band, next/previous teaser with wrap, D-09 link skips removed, axe/line/overflow checks
-- [ ] 04-05-PLAN.md — Per-page SEO with og:image from the cover
-- [ ] 04-06-PLAN.md — Module image variant-chain download, WebP storage, modules-dir commit and GC
+- [x] 04-04-PLAN.md — Contact band, next/previous teaser with wrap, D-09 link skips removed, axe/line/overflow checks
+- [x] 04-05-PLAN.md — Per-page SEO with og:image from the cover
+- [x] 04-06-PLAN.md — Module image variant-chain download, WebP storage, modules-dir commit and GC
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -273,7 +273,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 1. Bilingual Walking Skeleton | 5/5 | Complete   | 2026-10-16 |
 | 2. Homepage Story | 8/8 | Complete   | 2026-10-17 |
 | 3. Real Behance Work | 10/10 | Complete   | 2026-10-17 |
-| 4. Project Detail & Discovery | 3/11 | In Progress|  |
+| 4. Project Detail & Discovery | 6/11 | In Progress|  |
 | 5. Contact | 0/TBD | Not started | - |
 | 6. Scroll & Interaction Motion | 0/TBD | Not started | - |
 | 7. Page Transitions & Smooth Scroll | 0/TBD | Not started | - |
