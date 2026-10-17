@@ -5,6 +5,7 @@
  * Phase 4 (D-09); until then the links 404 by design.
  */
 import { Picture } from 'astro:assets';
+import type { TileSize } from '../../lib/projects/layout';
 import type { ProjectCardView } from '../../lib/projects/model';
 import { useTranslations, type Locale } from '../../i18n/t';
 
@@ -13,28 +14,50 @@ interface Props {
   variant: 'compact' | 'full';
   headingLevel: 2 | 3;
   locale: Locale;
-  eager?: boolean;
+  /** Grid position size from tileSize() (D-18). */
+  size: TileSize;
+  /** Loads the cover eagerly with high fetch priority (the first Projects tile only). */
+  eager: boolean;
 }
 
-const { project, variant, headingLevel, locale, eager = false } = Astro.props;
+const { project, variant, headingLevel, locale, size, eager } = Astro.props;
 const t = useTranslations(locale);
 const Heading = headingLevel === 2 ? 'h2' : 'h3';
 const full = variant === 'full';
+
+// Literal class strings so Tailwind can see them (UI-SPEC ProjectGrid table).
+const sizeClasses: Record<TileSize, string> = {
+  large: 'md:col-span-7',
+  small: 'md:col-span-5',
+  'large-end': 'md:col-span-7 md:col-start-6',
+};
+const aspectClasses: Record<TileSize, string> = {
+  large: 'aspect-[5/4]',
+  small: 'aspect-[5/4] md:aspect-[7/8]',
+  'large-end': 'aspect-[5/4]',
+};
+const sizesFor: Record<TileSize, string> = {
+  large: '(min-width: 1152px) 625px, (min-width: 768px) 57vw, 100vw',
+  small: '(min-width: 1152px) 440px, (min-width: 768px) 40vw, 100vw',
+  'large-end': '(min-width: 1152px) 625px, (min-width: 768px) 57vw, 100vw',
+};
+// Spread so lazy covers carry no fetchpriority attribute at all (exactOptionalPropertyTypes).
+const priority = eager ? { fetchpriority: 'high' as const } : {};
 ---
 
-<li class="md:col-span-12">
+<li class={sizeClasses[size]}>
   <article class="group/card relative flex flex-col gap-4">
-    <div class="bg-surface-alt aspect-[5/4] overflow-hidden">
+    <div class:list={['bg-surface-alt overflow-hidden', aspectClasses[size]]}>
       <Picture
         src={project.cover}
         alt={project.coverAlt}
         formats={['avif', 'webp']}
         widths={[404, 640, 808]}
-        sizes="100vw"
+        sizes={sizesFor[size]}
         width={project.cover.width}
         height={project.cover.height}
         loading={eager ? 'eager' : 'lazy'}
-        fetchpriority={eager ? 'high' : undefined}
+        {...priority}
         decoding="async"
         class="size-full object-cover object-center"
       />
