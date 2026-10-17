@@ -8,6 +8,7 @@ import {
   keywordsMeta,
   parseProfileStore,
   parseProjectStore,
+  suggestCategory,
 } from '../../scripts/behance/parse.ts';
 import type { RawCover } from '../../scripts/behance/raw-schemas.ts';
 
@@ -216,5 +217,34 @@ describe('coverFileName', () => {
 
   it.each(['../etc', '1001a', '', 'project-1'])('rejects the non-digit id %j', (id) => {
     expect(() => coverFileName(id, bytes, 'png')).toThrow(SyncError);
+  });
+});
+
+describe('suggestCategory', () => {
+  it.each([
+    [['Graphic Design'], 'graphic-design'],
+    [['Web Design'], 'web-design'],
+    [['Interaction Design'], 'web-design'],
+    [['UI/UX'], 'web-design'],
+    [['Branding'], 'branding'],
+    [['Visual Identity'], 'branding'],
+    [['Advertising'], 'social-media'],
+    [['Social Media'], 'social-media'],
+  ])('maps %j to %s', (fields, expected) => {
+    expect(suggestCategory(fields)).toBe(expected);
+  });
+
+  it('returns null when no field maps to a category', () => {
+    expect(suggestCategory(['Illustration'])).toBeNull();
+    expect(suggestCategory([])).toBeNull();
+  });
+
+  it('lets the first matching field win, in field order', () => {
+    expect(suggestCategory(['Illustration', 'Web Design', 'Graphic Design'])).toBe('web-design');
+    expect(suggestCategory(['Branding', 'Web Design'])).toBe('branding');
+  });
+
+  it('is case-insensitive and trims', () => {
+    expect(suggestCategory(['  graphic DESIGN '])).toBe('graphic-design');
   });
 });
