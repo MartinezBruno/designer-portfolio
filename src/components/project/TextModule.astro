@@ -1,0 +1,25 @@
+---
+/**
+ * Behance prose in the site's fonts and ink (D-02). Alignment comes from the sanitized HTML.
+ * The root is a div: the HTML holds block elements, which a p cannot contain (Astro 7 compiler).
+ */
+import type { Locale } from '../../i18n/t';
+
+interface Props {
+  html: string;
+  /** The content language when it differs from the page locale, else null. */
+  lang: Locale | null;
+}
+
+const { html, lang } = Astro.props;
+// Spread so text in the page language carries no lang attribute at all.
+const langAttr = lang === null ? {} : { lang };
+// set:html below: sanitized at sync by scripts/behance/sanitize.ts (fixed-point tested in
+// projects-snapshot.test.ts); new-tab hint escaped in detail-view.ts — never raw Behance HTML.
+---
+
+<div
+  {...langAttr}
+  class="text-ink [&_a:hover]:decoration-accent [&_a:focus-visible]:decoration-accent [&_a:focus-visible]:outline-accent mx-auto w-full max-w-[65ch] px-4 py-12 text-base sm:px-6 [&_a]:break-words [&_a]:underline [&_a]:decoration-1 [&_a]:underline-offset-4 [&_a:focus-visible]:decoration-2 [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-offset-2 [&_a:hover]:decoration-2"
+  set:html={html}
+/>

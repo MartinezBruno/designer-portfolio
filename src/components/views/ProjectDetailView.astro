@@ -2,10 +2,11 @@
 import NextProjectTeaser from '../project/NextProjectTeaser.astro';
 import ProjectContactBand from '../project/ProjectContactBand.astro';
 import ProjectIntro from '../project/ProjectIntro.astro';
+import ProjectModule from '../project/ProjectModule.astro';
 import type { Locale } from '../../i18n/t';
 import type { ProjectDetailView } from '../../lib/projects/model';
 
-// Detail page body. The module stack (04-09) slots in after the intro band. The page ends with
+// Detail page body. The module stack follows the intro band inside the article. The page ends with
 // the contact band, then the next-project teaser (omitted with 1 visible project). No motion (D-04).
 interface Props {
   detail: ProjectDetailView;
@@ -17,6 +18,12 @@ const { detail, locale } = Astro.props;
 
 <article aria-labelledby="project-title">
   <ProjectIntro detail={detail} locale={locale} />
+  {/* Edge-to-edge module stack (D-01): no gap, no padding, no lang wrapper (text roots carry lang). */}
+  <div class="mx-auto flex w-full max-w-[1400px] flex-col">
+    {detail.modules.map((module) => (
+      <ProjectModule module={module} behanceUrl={detail.behanceUrl} locale={locale} />
+    ))}
+  </div>
 </article>
 <ProjectContactBand locale={locale} />
 {detail.next !== null && (

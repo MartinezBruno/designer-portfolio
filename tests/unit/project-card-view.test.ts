@@ -14,6 +14,7 @@ function project(overrides: Partial<Project> = {}): Project {
     tools: ['Figma', 'Adobe Photoshop'],
     cover: portrait,
     imageIds: [],
+    modules: [],
     slug: 'cabreras-motos-posts',
     title: null,
     summary: null,
@@ -23,6 +24,7 @@ function project(overrides: Partial<Project> = {}): Project {
     featured: false,
     hidden: false,
     contentLang: 'es',
+    moduleAlt: {},
     ...overrides,
   };
 }

@@ -1,0 +1,39 @@
+---
+/**
+ * A Behance MediaCollection as justified rows (D-10). Below sm every image stacks full width;
+ * from sm each row is flex with basis 0 and flex-grow equal to the image aspect ratio, so every
+ * item in a row has the same height and nothing is cropped. Zero gaps, square corners.
+ */
+import { Picture } from 'astro:assets';
+import type { ModuleView } from '../../lib/projects/model';
+
+type Props = Omit<Extract<ModuleView, { kind: 'collection' }>, 'kind'>;
+
+const { rows } = Astro.props;
+---
+
+<div class="flex flex-col">
+  {rows.map((row) => (
+    <div class="flex flex-col sm:flex-row">
+      {row.map((item) => (
+        // The aspect ratio is data, so it is the one UI-SPEC-sanctioned inline custom property.
+        <div class="min-w-0 sm:grow-(--ar) sm:basis-0" style={{ '--ar': item.ratio }}>
+          <Picture
+            src={item.image}
+            alt={item.alt}
+            formats={['avif', 'webp']}
+            widths={[...item.widths]}
+            sizes={item.sizes}
+            width={item.image.width}
+            height={item.image.height}
+            loading={item.eager ? 'eager' : 'lazy'}
+            {...(item.eager ? { fetchpriority: 'high' as const } : {})}
+            decoding="async"
+            pictureAttributes={{ class: 'block' }}
+            class="bg-surface-alt block h-auto w-full"
+          />
+        </div>
+      ))}
+    </div>
+  ))}
+</div>

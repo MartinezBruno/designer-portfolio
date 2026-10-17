@@ -272,6 +272,33 @@ describe('behance snapshot adapter', () => {
     expect(getSourceProjects().map((project) => [...project.tools])).toEqual(titles);
   });
 
+  it('maps content to source modules with local images whose dimensions match the snapshot', () => {
+    const snapshotProjects = parseSnapshot(committed).projects;
+    for (const [index, project] of getSourceProjects().entries()) {
+      const content = snapshotProjects[index]?.content ?? [];
+      expect(project.modules.map((module) => module.kind)).toEqual(
+        content.map((entry) => entry.kind),
+      );
+      const refs = content.flatMap((entry): ImageRef[] => {
+        if (entry.kind === 'image') return [entry.image];
+        if (entry.kind === 'collection') return entry.images;
+        return [];
+      });
+      const images = project.modules.flatMap((module) => {
+        if (module.kind === 'image') return [module.image];
+        if (module.kind === 'collection') return [...module.images];
+        return [];
+      });
+      expect(images.map((image) => image.id)).toEqual(refs.map((ref) => ref.id));
+      for (const [position, image] of images.entries()) {
+        expect(image.image.width).toBe(refs[position]?.width);
+        expect(image.image.height).toBe(refs[position]?.height);
+        expect(image.image.src).not.toContain('behance.net');
+      }
+      for (const module of project.modules) expect(module).not.toHaveProperty('type');
+    }
+  });
+
   it('reports the behance-sync origin', () => {
     expect(getSnapshotOrigin()).toBe('behance-sync');
   });
@@ -301,6 +328,31 @@ describe('behance snapshot adapter failures', () => {
     };
     await expect(importWith({ ...validSnapshot(), projects: [missing] })).rejects.toThrow(
       `snapshot: missing cover file 999-000000000000.png in src/assets/projects/${SUFFIX.slice(1)}`,
+    );
+  });
+
+  it('throws an actionable message when a module image file is missing', async () => {
+    const real = parseSnapshot(committed).projects[0];
+    if (real === undefined) throw new Error('committed snapshot has no projects');
+    const missing: SnapshotProject = {
+      ...real,
+      content: [
+        {
+          kind: 'image',
+          image: {
+            id: '1',
+            file: '999-000000000000.webp',
+            width: 1400,
+            height: 700,
+            sourceUrl: 'https://mir-s3-cdn-cf.behance.net/project_modules/1400/999.png',
+          },
+          fullBleed: true,
+          caption: '',
+        },
+      ],
+    };
+    await expect(importWith({ ...validSnapshot(), projects: [missing] })).rejects.toThrow(
+      `snapshot: missing module image 999-000000000000.webp in src/assets/projects/modules/${SUFFIX.slice(1)}`,
     );
   });
 

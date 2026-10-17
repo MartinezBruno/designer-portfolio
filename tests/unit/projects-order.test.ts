@@ -13,6 +13,7 @@ function source(id: string, sourceSlug: string, publishedOn: number): SourceProj
     tools: ['Figma'],
     cover: portrait,
     imageIds: [],
+    modules: [],
   };
 }
 
@@ -42,6 +43,7 @@ describe('applyOverrides with no overrides', () => {
       hidden: false,
       order: null,
       contentLang: 'es',
+      moduleAlt: {},
     });
   });
 

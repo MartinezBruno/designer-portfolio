@@ -65,6 +65,18 @@ export function validateOverrides(sources: readonly SourceRef[], overrides: Over
   );
 }
 
+/** A fresh moduleAlt map built entry by entry; `{}` when nothing is curated. */
+function copyModuleAlt(
+  value: Readonly<Record<string, Localized<string>>> | undefined,
+): Record<string, Localized<string>> {
+  const result: Record<string, Localized<string>> = {};
+  if (value === undefined) return result;
+  for (const [id, alt] of Object.entries(value)) {
+    result[id] = { en: alt.en, es: alt.es };
+  }
+  return result;
+}
+
 function copyLocalized(value: Localized<string> | undefined): Localized<string> | null {
   return value === undefined ? null : { en: value.en, es: value.es };
 }
@@ -86,6 +98,7 @@ export function applyOverrides(sources: readonly SourceProject[], overrides: Ove
       tools: [...source.tools],
       cover: source.cover,
       imageIds: [...source.imageIds],
+      modules: source.modules,
       slug: finalSlug(source, overrides),
       title: copyLocalized(override?.title),
       summary: copyLocalized(override?.summary),
@@ -96,6 +109,7 @@ export function applyOverrides(sources: readonly SourceProject[], overrides: Ove
       hidden: override?.hidden ?? false,
       // Her Behance copy is written in Spanish.
       contentLang: override?.contentLang ?? 'es',
+      moduleAlt: copyModuleAlt(override?.moduleAlt),
     };
   });
 }

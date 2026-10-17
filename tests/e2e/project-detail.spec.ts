@@ -4,6 +4,8 @@ import { es } from '../../src/i18n/ui.es';
 import { expectedDetails } from './helpers/projects';
 
 const WIDTHS = [320, 390, 768, 1440] as const;
+/** The seamless module stack inside the article (D-01). */
+const STACK = 'article[aria-labelledby="project-title"] > div.max-w-\\[1400px\\]';
 
 /** Headings that must hold the two-line rule: the h1, every h2 in main, and the next-tile h3. */
 async function headingLines(page: Page): Promise<{ text: string; lines: number }[]> {
@@ -254,6 +256,83 @@ for (const { lang, dict } of cases) {
               const teaser = page.locator('main section[aria-labelledby="next-project-title"]');
               await expectVisualOrder(teaser.locator('h2, div > a, article'));
             }
+          }
+        });
+
+        test('mirrors every module image with a curated or numbered alt (D-05, D-09)', async ({
+          page,
+        }) => {
+          await page.goto(detail.href);
+          const images = page.locator(STACK).locator('img');
+          await expect(images).toHaveCount(detail.imageCount);
+          // Module images are the only images in the article: the cover is not repeated.
+          await expect(page.locator('article[aria-labelledby="project-title"] img')).toHaveCount(
+            detail.imageCount,
+          );
+          const attrs = await images.evaluateAll((els) =>
+            els.map((el) => ({
+              alt: el.getAttribute('alt') ?? '',
+              width: el.getAttribute('width'),
+              height: el.getAttribute('height'),
+              loading: el.getAttribute('loading'),
+            })),
+          );
+          expect(attrs.map((attr) => attr.alt)).toEqual(detail.alts);
+          for (const attr of attrs) {
+            expect(attr.alt).not.toBe('');
+            expect(attr.alt).not.toContain('Image may contain');
+            expect(Number(attr.width)).toBeGreaterThan(0);
+            expect(Number(attr.height)).toBeGreaterThan(0);
+          }
+          expect(attrs.map((attr) => attr.loading === 'eager')).toEqual(
+            attrs.map((_, index) => index === 0),
+          );
+          await expect(images.first()).toHaveAttribute('fetchpriority', 'high');
+        });
+
+        test('loads no image from behance.net (D-05)', async ({ page }) => {
+          await page.goto(detail.href);
+          const urls = await page
+            .locator('img, source')
+            .evaluateAll((els) =>
+              els.flatMap((el) => [el.getAttribute('src') ?? '', el.getAttribute('srcset') ?? '']),
+            );
+          for (const url of urls) expect(url).not.toContain('behance.net');
+        });
+
+        test('renders text modules in site style with lang and new-tab hints (D-02)', async ({
+          page,
+        }) => {
+          await page.goto(detail.href);
+          const texts = page.locator(`${STACK} > div.max-w-\\[65ch\\]`);
+          await expect(texts).toHaveCount(detail.textCount);
+          for (const text of await texts.all()) {
+            if (detail.textLang === null) {
+              expect(await text.getAttribute('lang')).toBeNull();
+            } else {
+              await expect(text).toHaveAttribute('lang', detail.textLang);
+            }
+            for (const link of await text.locator('a[target="_blank"]').all()) {
+              await expect(link).toHaveAttribute('rel', /\bnoopener\b/);
+              await expect(link).toHaveAttribute('rel', /\bnoreferrer\b/);
+              await expect(link.locator(`span.sr-only[lang="${lang}"]`)).toHaveText(
+                dict['a11y.newTab'],
+              );
+            }
+          }
+        });
+
+        test('shows the Behance note in place of an embed until the facade (D-08)', async ({
+          page,
+        }) => {
+          await page.goto(detail.href);
+          const note = page.locator(STACK).getByText(dict['detail.unknown.body'], { exact: true });
+          await expect(note).toHaveCount(detail.hasEmbed ? 1 : 0);
+          await expect(page.locator('iframe')).toHaveCount(0);
+          if (detail.hasEmbed) {
+            const link = page.locator(STACK).locator('a', { hasText: dict['detail.unknown.link'] });
+            await expect(link).toHaveAttribute('href', detail.behanceUrl);
+            await expect(link).toHaveAttribute('rel', /\bnoopener\b/);
           }
         });
 
