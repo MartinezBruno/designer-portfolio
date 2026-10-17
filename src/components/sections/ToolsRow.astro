@@ -17,6 +17,12 @@ const t = useTranslations(locale);
 const tooltipBase =
   'pointer-events-auto invisible absolute bottom-full z-10 pb-2 opacity-0 group-hover/tool:visible group-hover/tool:opacity-100 group-focus-visible/tool:visible group-focus-visible/tool:opacity-100 group-data-open/tool:visible group-data-open/tool:opacity-100 group-data-dismissed/tool:invisible! group-data-dismissed/tool:opacity-0! motion-safe:transition-[opacity,visibility] motion-safe:duration-150';
 
+const tileBase =
+  'group/tool border-ink/10 bg-surface text-ink focus-visible:outline-accent relative grid size-12 place-items-center rounded-2xl border focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-150';
+// Colors invert whenever the tooltip shows (hover, keyboard focus, tap); Esc dismissal reverts.
+const tileInverted =
+  'hover:border-ink hover:bg-ink hover:text-surface focus-visible:border-ink focus-visible:bg-ink focus-visible:text-surface data-open:border-ink data-open:bg-ink data-open:text-surface data-dismissed:border-ink/10! data-dismissed:bg-surface! data-dismissed:text-ink!';
+
 // Edge tiles anchor to their own side so the tooltip never overflows a 320px viewport.
 const anchor = (index: number): string => {
   if (index === 0) return 'left-0';
@@ -40,7 +46,7 @@ const anchor = (index: number): string => {
           tabindex="0"
           aria-labelledby={`tool-${tool.id}-name`}
           data-tool
-          class="group/tool border-ink/10 bg-surface text-ink focus-visible:outline-accent relative grid size-12 place-items-center rounded-2xl border focus-visible:outline-2 focus-visible:outline-offset-2"
+          class:list={[tileBase, tileInverted]}
         >
           <ToolIcon name={tool.icon} />
           <span id={`tool-${tool.id}-name`} class="sr-only">

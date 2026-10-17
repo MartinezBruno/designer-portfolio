@@ -79,6 +79,25 @@ describe('ToolsRow', () => {
     for (const block of tooltipBlocks) expect(block).not.toContain('accent');
   });
 
+  it('inverts tile colors on hover, keyboard focus and tap, reverting on Esc dismissal', async () => {
+    const html = await render('en');
+    const tiles = html.match(/<span[^>]*\bdata-tool\b(?!tip)[^>]*>/g) ?? [];
+    expect(tiles).toHaveLength(5);
+    for (const tile of tiles) {
+      const tokens = (/class="([^"]*)"/.exec(tile)?.[1] ?? '').split(/\s+/);
+      expect(tokens).toEqual(expect.arrayContaining(['bg-surface', 'text-ink']));
+      for (const state of ['hover', 'focus-visible', 'data-open']) {
+        expect(tokens).toContain(`${state}:bg-ink`);
+        expect(tokens).toContain(`${state}:text-surface`);
+      }
+      expect(tokens).toContain('data-dismissed:bg-surface!');
+      expect(tokens).toContain('data-dismissed:text-ink!');
+      expect(tokens).toContain('motion-safe:transition-colors');
+      expect(tokens).not.toContain('transition-colors');
+      expect(tokens).toContain('focus-visible:outline-accent');
+    }
+  });
+
   it('renders the Spanish heading with untranslated brand names', async () => {
     const html = await render('es');
     expect(html).toMatch(/<h2[^>]*>\s*Herramientas con las que trabajo\s*<\/h2>/);
