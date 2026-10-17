@@ -1,4 +1,5 @@
 ---
+import { getImage } from 'astro:assets';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import ProjectDetailView from '../../../components/views/ProjectDetailView.astro';
 import { getProjectPaths } from '../../../lib/content/queries';
@@ -13,8 +14,20 @@ interface Props {
 }
 
 const { detail } = Astro.props;
+
+// JPG for crawler support. The URL comes only from getImage output and astro.config `site`.
+if (Astro.site === undefined) {
+  throw new Error('seo: astro.config site is not set. Set it in astro.config.mjs');
+}
+const og = await getImage({ src: detail.cover, width: 1200, format: 'jpg' });
+const ogImage = new URL(og.src, Astro.site).href;
 ---
 
-<BaseLayout locale="es" title={detail.seo.title} description={detail.seo.description}>
+<BaseLayout
+  locale="es"
+  title={detail.seo.title}
+  description={detail.seo.description}
+  ogImage={ogImage}
+>
   <ProjectDetailView locale="es" detail={detail} />
 </BaseLayout>

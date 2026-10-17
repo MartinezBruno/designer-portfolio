@@ -21,3 +21,4 @@ const seo = buildSeo(Astro.props, absoluteFor);
 <meta property="og:locale:alternate" content={seo.og.localeAlternate} />
 <meta property="og:type" content={seo.og.type} />
 {seo.og.url && <meta property="og:url" content={seo.og.url} />}
+{seo.og.image && <meta property="og:image" content={seo.og.image} />}

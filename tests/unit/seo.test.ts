@@ -63,4 +63,36 @@ describe('buildSeo', () => {
     );
     expect(seo.title).toBe(title);
   });
+
+  it('sets og.image when an image is passed on a page', () => {
+    const image = 'https://example.com/_astro/x.jpg';
+    const seo = buildSeo(
+      { locale: 'en', pathname: '/projects/a/', kind: 'page', title: 'T', description: 'D', image },
+      fakeAbsolute,
+    );
+    expect(seo.og.image).toBe(image);
+  });
+
+  it('omits the image key from og when no image is passed', () => {
+    const seo = buildSeo(
+      { locale: 'en', pathname: '/', kind: 'page', title: 'T', description: 'D' },
+      fakeAbsolute,
+    );
+    expect('image' in seo.og).toBe(false);
+  });
+
+  it('never returns og.image on a notFound page', () => {
+    const seo = buildSeo(
+      {
+        locale: 'en',
+        pathname: '/404/',
+        kind: 'notFound',
+        title: 'NF',
+        description: 'ND',
+        image: 'https://example.com/_astro/x.jpg',
+      },
+      fakeAbsolute,
+    );
+    expect('image' in seo.og).toBe(false);
+  });
 });
