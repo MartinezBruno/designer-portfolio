@@ -226,19 +226,25 @@ for (const [path, dict, locale] of cases) {
         return;
       }
       await expect(badge).toBeVisible();
-      const badgeFirst = await hero.evaluate(
-        (root, [badgeText, greetingText]) => {
-          const paragraphs = [...root.querySelectorAll('p')];
-          const badgeEl = paragraphs.find((p) => p.textContent.trim() === badgeText);
-          const greetingEl = paragraphs.find((p) => p.textContent.trim() === greetingText);
-          if (!badgeEl || !greetingEl) return false;
-          return Boolean(
-            badgeEl.compareDocumentPosition(greetingEl) & Node.DOCUMENT_POSITION_FOLLOWING,
-          );
-        },
-        [dict['availability.open'], dict['hero.greeting']] as const,
-      );
-      expect(badgeFirst).toBe(true);
+      // The badge is a plain line in the action row, after the CTA: no pill, no eyebrow.
+      const cta = hero.getByRole('link', { name: dict['hero.cta'] });
+      const badgeAfterCta = await cta.evaluate((link, badgeText) => {
+        const badgeEl = [...document.querySelectorAll('#main p')].find(
+          (p) => p.textContent.trim() === badgeText,
+        );
+        if (!badgeEl) return false;
+        return Boolean(link.compareDocumentPosition(badgeEl) & Node.DOCUMENT_POSITION_FOLLOWING);
+      }, dict['availability.open']);
+      expect(badgeAfterCta).toBe(true);
+      const look = await badge.evaluate((el) => {
+        const style = getComputedStyle(el);
+        return {
+          bg: style.backgroundColor,
+          radius: style.borderTopLeftRadius,
+          pad: style.paddingLeft,
+        };
+      });
+      expect(look).toEqual({ bg: 'rgba(0, 0, 0, 0)', radius: '0px', pad: '0px' });
     });
 
     test('accent: hero CTA uses the client primary color', async ({ page }) => {

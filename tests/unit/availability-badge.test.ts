@@ -8,7 +8,7 @@ async function render(props: { available: boolean; locale: 'en' | 'es' }): Promi
 }
 
 describe('availability badge', () => {
-  it('renders the English open pill with a decorative success dot', async () => {
+  it('renders the English open line with a decorative success dot', async () => {
     const html = await render({ available: true, locale: 'en' });
     expect(html).toContain('Open to new projects');
     expect(html.match(/<p[\s>]/g) ?? []).toHaveLength(1);
@@ -16,7 +16,17 @@ describe('availability badge', () => {
     expect(html).toMatch(/<span[^>]*class="[^"]*\bbg-success\b[^"]*"/);
   });
 
-  it('renders the Spanish open pill', async () => {
+  it('is a plain line, not a pill: no fill, no rounded chip, no padding, body size', async () => {
+    const html = await render({ available: true, locale: 'en' });
+    const pClass = /<p[^>]*class="([^"]*)"/.exec(html)?.[1] ?? '';
+    expect(pClass).toContain('text-base');
+    expect(pClass).not.toMatch(/\bbg-/);
+    expect(pClass).not.toMatch(/\brounded/);
+    expect(pClass).not.toMatch(/\b(p|px|py)-/);
+    expect(pClass).not.toMatch(/\buppercase\b/);
+  });
+
+  it('renders the Spanish open line', async () => {
     const html = await render({ available: true, locale: 'es' });
     expect(html).toContain('Abierta a nuevos proyectos');
   });

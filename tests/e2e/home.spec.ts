@@ -17,14 +17,22 @@ test.describe('hero without JavaScript', () => {
 
       const hero = page.locator('section[aria-labelledby="hero-title"]');
       await expect(hero).toBeVisible();
-      await expect(page.getByRole('region', { name: site.name })).toBeVisible();
+      const headline = `${dict['hero.greeting']} ${site.firstName}.`;
+      await expect(page.getByRole('region', { name: headline })).toBeVisible();
 
-      await expect(hero.getByText(dict['hero.greeting'], { exact: true })).toBeVisible();
-      const h1 = hero.getByRole('heading', { level: 1 });
-      await expect(h1).toHaveText(site.name);
+      // The greeting is the headline: one h1, no separate label paragraph.
+      const h1 = hero.getByRole('heading', { level: 1, name: headline });
+      await expect(h1).toBeVisible();
+      await expect(h1).toHaveText(headline);
       await expect(h1).toHaveAttribute('id', 'hero-title');
-      await expect(hero.getByText(dict['hero.title'], { exact: true })).toBeVisible();
-      await expect(hero.getByText(dict['hero.description'], { exact: true })).toBeVisible();
+      await expect(hero.locator('p').filter({ hasText: dict['hero.greeting'] })).toHaveCount(0);
+      // Role and description read as one paragraph in full ink.
+      const intro = hero.getByText(`${dict['hero.role']} ${dict['hero.description']}`, {
+        exact: true,
+      });
+      await expect(intro).toBeVisible();
+      expect(await intro.evaluate((el) => el.tagName)).toBe('P');
+      expect(await intro.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(26, 23, 20)');
 
       const img = page.locator('#main picture img');
       await expect(img).toBeVisible();
@@ -69,6 +77,53 @@ test.describe('hero without JavaScript', () => {
         expect(computed.bg).toBe('rgba(0, 0, 0, 0)');
         expect(computed.fit).toBe('contain');
         expect(computed.radius).not.toBe('0px');
+        const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+        expect(scrollWidth).toBeLessThanOrEqual(width);
+      });
+    }
+  }
+});
+
+test.describe('hero headline typography', () => {
+  for (const [path, dict] of cases) {
+    test(`${path} has no uppercase eyebrow above the headline`, async ({ page }) => {
+      await page.goto(path);
+      const hero = page.locator('section[aria-labelledby="hero-title"]');
+      const eyebrows = await hero.evaluate((root) => {
+        const h1 = root.querySelector('h1');
+        if (!h1) return ['missing h1'];
+        return [...root.querySelectorAll('p, span, div')]
+          .filter((el) => el.compareDocumentPosition(h1) & Node.DOCUMENT_POSITION_FOLLOWING)
+          .filter((el) => !h1.contains(el) && !el.contains(h1))
+          .filter((el) => el.textContent.trim() !== '')
+          .map((el) => `${el.tagName}:${getComputedStyle(el).textTransform}`);
+      });
+      expect(eyebrows).toEqual([]);
+    });
+
+    for (const width of [320, 390, 768, 1024, 1280]) {
+      test(`${path} headline sits on exactly two lines at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(path);
+        await page.evaluate(() => document.fonts.ready);
+        const h1 = page.locator('#hero-title');
+        await expect(h1).toHaveText(`${dict['hero.greeting']} ${site.firstName}.`);
+        const metrics = await h1.evaluate((el) => {
+          const style = getComputedStyle(el);
+          const fontSize = Number.parseFloat(style.fontSize);
+          const lineHeight = Number.parseFloat(style.lineHeight);
+          const spans = [...el.querySelectorAll('span')];
+          return {
+            fontSize,
+            lines: Math.round(el.getBoundingClientRect().height / lineHeight),
+            fits: spans.every((span) => span.getClientRects().length === 1),
+            overflow: el.scrollWidth > el.clientWidth + 1,
+          };
+        });
+        expect(metrics.lines).toBe(2);
+        expect(metrics.fits).toBe(true);
+        expect(metrics.overflow).toBe(false);
+        if (width === 1280) expect(metrics.fontSize).toBeGreaterThanOrEqual(96);
         const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
         expect(scrollWidth).toBeLessThanOrEqual(width);
       });
