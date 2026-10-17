@@ -80,6 +80,47 @@ export interface ExpectedDetail {
   /** Wrapping neighbours in the `/projects` order (D-13), from the site's own helper. */
   next: { href: string; title: string } | null;
   previous: { href: string; title: string } | null;
+  /** Module images in DOM order: image modules plus every collection component. */
+  imageCount: number;
+  textCount: number;
+  hasEmbed: boolean;
+  /** Expected alt per module image in DOM order: the moduleAlt override or the numbered fallback. */
+  alts: readonly string[];
+  /** Whether text roots carry a lang (content language differs from the page locale). */
+  textLang: Locale | null;
+}
+
+const IMAGE_ALT: Record<Locale, string> = {
+  en: '{title} — image {n} of {total}',
+  es: '{title} — imagen {n} de {total}',
+};
+
+function contentStats(
+  source: (typeof snapshot.projects)[number],
+  locale: Locale,
+  title: string,
+): Pick<ExpectedDetail, 'imageCount' | 'textCount' | 'hasEmbed' | 'alts'> {
+  const ids: string[] = [];
+  let textCount = 0;
+  let hasEmbed = false;
+  for (const entry of source.content) {
+    if (entry.kind === 'image' && 'image' in entry) ids.push(entry.image.id);
+    if (entry.kind === 'collection' && 'images' in entry) {
+      for (const image of entry.images) ids.push(image.id);
+    }
+    if (entry.kind === 'text') textCount += 1;
+    if (entry.kind === 'embed') hasEmbed = true;
+  }
+  const moduleAlt = overrides[source.id]?.moduleAlt ?? {};
+  const alts = ids.map(
+    (id, index) =>
+      moduleAlt[id]?.[locale] ??
+      IMAGE_ALT[locale]
+        .replace('{title}', title)
+        .replace('{n}', String(index + 1))
+        .replace('{total}', String(ids.length)),
+  );
+  return { imageCount: ids.length, textCount, hasEmbed, alts };
 }
 
 function link(project: ExpectedProject | null): { href: string; title: string } | null {
@@ -87,6 +128,10 @@ function link(project: ExpectedProject | null): { href: string; title: string } 
 }
 
 const toolNames = new Set(tools.map((tool) => tool.name));
+
+function contentLangOf(id: string): Locale {
+  return overrides[id]?.contentLang ?? 'es';
+}
 
 /** Detail pages in `/projects` order (D-13), hidden projects excluded. */
 export function expectedDetails(locale: Locale): ExpectedDetail[] {
@@ -108,6 +153,8 @@ export function expectedDetails(locale: Locale): ExpectedDetail[] {
       coverStem: source.cover.file.replace(/\.[a-z]+$/, ''),
       next: link(pair.next),
       previous: link(pair.previous),
+      ...contentStats(source, locale, project.title),
+      textLang: contentLangOf(project.id) === locale ? null : contentLangOf(project.id),
     };
   });
 }
