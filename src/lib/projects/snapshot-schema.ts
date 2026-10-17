@@ -90,6 +90,11 @@ export const SnapshotProjectSchema = z.strictObject({
   }),
   /** Full module JSON, kept for the mirrored detail pages. */
   modules: z.array(z.looseObject({ __typename: z.string() })),
+  /**
+   * Normalized, sanitized content (D-05, D-08). Optional only until 04-08 re-syncs the committed
+   * snapshot (RESEARCH Pitfall 5).
+   */
+  content: z.array(ContentSchema).optional(),
 });
 
 export const SnapshotSchema = z.strictObject({
