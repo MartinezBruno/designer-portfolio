@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createLifecycle } from '../../src/lib/motion/lifecycle';
 import { initEmbedFacades } from '../../src/lib/ui/embed-facade';
@@ -122,10 +122,8 @@ describe('initEmbedFacades', () => {
   });
 
   it('has no innerHTML in the module source', () => {
-    const source = readFileSync(
-      fileURLToPath(new URL('../../src/lib/ui/embed-facade.ts', import.meta.url)),
-      'utf8',
-    );
+    // happy-dom rewrites import.meta.url to http:, so resolve from the project root.
+    const source = readFileSync(resolve(process.cwd(), 'src/lib/ui/embed-facade.ts'), 'utf8');
     expect(source).not.toContain('innerHTML');
   });
 });
