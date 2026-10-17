@@ -50,6 +50,24 @@ export const en = {
   'meta.projects.title': 'Projects — Martina Fernandez',
   'meta.projects.description':
     'Web design, branding and social media projects by Martina Fernandez, newest first.',
+  // TODO(martina): Phase 4 detail copy
+  'detail.cta.button': "Let's work together",
+  'detail.cta.heading': 'Need something like this?',
+  'detail.cta.body': "Tell me what you need and I'll get back to you.",
+  'detail.viewOnBehance': 'View on Behance',
+  'detail.imageAlt': '{title} — image {n} of {total}',
+  'detail.embed.label': 'Interactive prototype',
+  'detail.embed.note': 'Loading it connects to {provider}.',
+  'detail.embed.load': 'Load interactive prototype',
+  'detail.embed.iframeTitle': '{title} — interactive {provider} prototype',
+  'detail.embed.fallback': 'View the prototype on Behance',
+  'detail.unknown.body': 'This part of the project is best viewed on Behance.',
+  'detail.unknown.link': 'View it on Behance',
+  'detail.next.heading': 'Next project',
+  'detail.next.srPrefix': 'Next project:',
+  'detail.previous': 'Previous:',
+  'meta.project.title': '{title} — Martina Fernandez',
+  'meta.project.description': '{title}, a project by Martina Fernandez, graphic designer.',
 } as const;
 
 export type UIKey = keyof typeof en;

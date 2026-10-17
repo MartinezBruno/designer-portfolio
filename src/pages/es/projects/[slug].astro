@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ProjectDetailView from '../../../components/views/ProjectDetailView.astro';
+import { getProjectPaths } from '../../../lib/content/queries';
+import type { ProjectDetailView as Detail } from '../../../lib/projects/model';
+
+export function getStaticPaths() {
+  return getProjectPaths('es');
+}
+
+interface Props {
+  detail: Detail;
+}
+
+const { detail } = Astro.props;
+---
+
+<BaseLayout locale="es" title={detail.seo.title} description={detail.seo.description}>
+  <ProjectDetailView locale="es" detail={detail} />
+</BaseLayout>

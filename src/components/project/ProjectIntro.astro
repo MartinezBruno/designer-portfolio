@@ -1,0 +1,66 @@
+---
+import ExternalTextLink from '../ui/ExternalTextLink.astro';
+import ToolIcon from '../ui/ToolIcon.astro';
+import { useTranslations, type Locale } from '../../i18n/t';
+import type { ProjectDetailView } from '../../lib/projects/model';
+
+// Title-first intro band (D-11, D-12): title, summary, labelled meta and the Behance link.
+// No cover repeat, no date, no chips or rules. Empty groups are omitted, not reserved.
+interface Props {
+  detail: ProjectDetailView;
+  locale: Locale;
+}
+
+const { detail, locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<header class="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pt-16 pb-12 sm:px-6 lg:px-8">
+  <div class="flex flex-col gap-6">
+    <h1
+      id="project-title"
+      class="font-display text-ink text-4xl font-semibold tracking-tight text-pretty"
+    >
+      {detail.titleLang === null ? (
+        detail.title
+      ) : (
+        <span lang={detail.titleLang}>{detail.title}</span>
+      )}
+    </h1>
+    {detail.summary !== null && (
+      <p class="text-ink max-w-[60ch] text-base text-pretty">{detail.summary}</p>
+    )}
+  </div>
+  <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+    {(detail.category !== null || detail.tools.length > 0) && (
+      <dl class="flex flex-col gap-6 md:flex-row md:gap-x-12">
+        {detail.category !== null && (
+          <div class="flex flex-col gap-1">
+            <dt class="text-ink-muted text-sm">{t('projects.meta.category')}</dt>
+            <dd class="text-ink text-base">{detail.category}</dd>
+          </div>
+        )}
+        {detail.tools.length > 0 && (
+          <div class="flex flex-col gap-1">
+            <dt class="text-ink-muted text-sm">{t('projects.meta.tools')}</dt>
+            <dd>
+              <ul class="flex flex-wrap gap-x-4 gap-y-2">
+                {detail.tools.map((tool) => (
+                  <li class="text-ink inline-flex items-center gap-2 text-base">
+                    {tool.icon !== null && <ToolIcon name={tool.icon} size="sm" />}
+                    {tool.name}
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        )}
+      </dl>
+    )}
+    <p>
+      <ExternalTextLink href={detail.behanceUrl} locale={locale}>
+        {t('detail.viewOnBehance')}
+      </ExternalTextLink>
+    </p>
+  </div>
+</header>

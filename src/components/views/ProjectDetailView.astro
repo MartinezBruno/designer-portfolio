@@ -1,0 +1,18 @@
+---
+import ProjectIntro from '../project/ProjectIntro.astro';
+import type { Locale } from '../../i18n/t';
+import type { ProjectDetailView } from '../../lib/projects/model';
+
+// Detail page body. The module stack (04-09) and the contact band and teaser (04-04) slot in
+// after the intro band. No motion here (D-04).
+interface Props {
+  detail: ProjectDetailView;
+  locale: Locale;
+}
+
+const { detail, locale } = Astro.props;
+---
+
+<article aria-labelledby="project-title">
+  <ProjectIntro detail={detail} locale={locale} />
+</article>

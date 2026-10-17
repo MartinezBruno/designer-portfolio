@@ -54,4 +54,22 @@ export const es = {
   'meta.projects.title': 'Proyectos — Martina Fernandez',
   'meta.projects.description':
     'Proyectos de diseño web, branding y redes sociales de Martina Fernandez, del más reciente al más antiguo.',
+  // TODO(martina): Phase 4 detail copy
+  'detail.cta.button': 'Trabajemos juntos',
+  'detail.cta.heading': '¿Necesitas algo así?',
+  'detail.cta.body': 'Cuéntame qué necesitas y te respondo.',
+  'detail.viewOnBehance': 'Ver en Behance',
+  'detail.imageAlt': '{title} — imagen {n} de {total}',
+  'detail.embed.label': 'Prototipo interactivo',
+  'detail.embed.note': 'Al cargarlo te conectas a {provider}.',
+  'detail.embed.load': 'Cargar prototipo interactivo',
+  'detail.embed.iframeTitle': '{title} — prototipo interactivo de {provider}',
+  'detail.embed.fallback': 'Ver el prototipo en Behance',
+  'detail.unknown.body': 'Esta parte del proyecto se ve mejor en Behance.',
+  'detail.unknown.link': 'Verla en Behance',
+  'detail.next.heading': 'Siguiente proyecto',
+  'detail.next.srPrefix': 'Siguiente proyecto:',
+  'detail.previous': 'Anterior:',
+  'meta.project.title': '{title} — Martina Fernandez',
+  'meta.project.description': '{title}, un proyecto de Martina Fernandez, diseñadora gráfica.',
 } as const satisfies Dictionary;

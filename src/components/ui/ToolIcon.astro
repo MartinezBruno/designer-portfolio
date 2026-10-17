@@ -9,7 +9,11 @@ import type { ToolIconKey } from '../../lib/content/icons';
 
 interface Props {
   name: ToolIconKey;
+  /** lg (32px) for the Home tools row; sm (20px) for the detail meta row. */
+  size?: 'lg' | 'sm';
 }
+
+const sizes = { lg: 'size-8', sm: 'size-5' } as const satisfies Record<'lg' | 'sm', string>;
 
 const icons = {
   illustrator: IconBrandAdobeIllustrator,
@@ -19,8 +23,9 @@ const icons = {
   lightroom: IconBrandAdobe,
 } as const satisfies Record<ToolIconKey, typeof IconBrandFigma>;
 
-const Icon = icons[Astro.props.name];
+const { name, size = 'lg' } = Astro.props;
+const Icon = icons[name];
 ---
 
 <!-- currentColor only: never brand colors or accent (D-13). -->
-<Icon aria-hidden="true" focusable="false" class="size-8" />
+<Icon aria-hidden="true" focusable="false" class={sizes[size]} />

@@ -4,6 +4,7 @@
 import overridesRaw from '../../../src/data/project-overrides.json' with { type: 'json' };
 import services from '../../../src/data/services.json' with { type: 'json' };
 import snapshot from '../../../src/data/behance/snapshot.json' with { type: 'json' };
+import tools from '../../../src/data/tools.json' with { type: 'json' };
 import { parseOverrides } from '../../../src/lib/projects/overrides-schema.ts';
 import { selectHomeProjects, sortProjects } from '../../../src/lib/projects/projects.ts';
 import { toSlug } from '../../../src/lib/projects/slug.ts';
@@ -61,4 +62,40 @@ export function expectedProjects(locale: Locale): ExpectedProject[] {
 
 export function expectedHome(locale: Locale): ExpectedProject[] {
   return selectHomeProjects(rows(locale), 3);
+}
+
+export interface ExpectedDetail {
+  slug: string;
+  href: string;
+  title: string;
+  titleLang: Locale | null;
+  summary: string | null;
+  category: string | null;
+  tools: readonly { name: string; hasIcon: boolean }[];
+  behanceUrl: string;
+  year: string;
+  /** Cover file name without extension; astro:assets keeps it in the optimized file name. */
+  coverStem: string;
+}
+
+const toolNames = new Set(tools.map((tool) => tool.name));
+
+/** Detail pages in `/projects` order (D-13), hidden projects excluded. */
+export function expectedDetails(locale: Locale): ExpectedDetail[] {
+  return expectedProjects(locale).map((project) => {
+    const source = snapshot.projects.find((entry) => entry.id === project.id);
+    if (source === undefined) throw new Error(`helpers: no snapshot project ${project.id}`);
+    return {
+      slug: project.slug,
+      href: project.href,
+      title: project.title,
+      titleLang: project.titleLang,
+      summary: project.summary,
+      category: project.category,
+      tools: source.tools.map((tool) => ({ name: tool.title, hasIcon: toolNames.has(tool.title) })),
+      behanceUrl: source.url,
+      year: String(new Date(source.publishedOn * 1000).getUTCFullYear()),
+      coverStem: source.cover.file.replace(/\.[a-z]+$/, ''),
+    };
+  });
 }

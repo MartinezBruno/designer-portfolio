@@ -1,8 +1,9 @@
 import { getCollection, getEntry } from 'astro:content';
 import type { Locale } from '../../i18n/config';
 import { buildCategoryTitles, toCardView } from '../projects/card-view';
+import { buildToolIcons, toDetailView } from '../projects/detail-view-site';
 import { overrides } from '../projects/local-overrides';
-import type { Project, ProjectCardView } from '../projects/model';
+import type { Project, ProjectCardView, ProjectDetailView } from '../projects/model';
 import { applyOverrides, selectHomeProjects, sortProjects } from '../projects/projects';
 import { getSnapshotOrigin, getSourceProjects } from '../projects/sources/behance-snapshot';
 import {
@@ -68,4 +69,41 @@ export async function getLatestProjects(locale: Locale): Promise<ProjectCardView
     );
   }
   return latest.map((project) => toCardView(project, locale, categoryTitles));
+}
+
+async function loadDetails(locale: Locale): Promise<ProjectDetailView[]> {
+  const [services, tools] = await Promise.all([getCollection('services'), getCollection('tools')]);
+  const categoryTitles = buildCategoryTitles(services, locale);
+  const toolIcons = buildToolIcons(tools);
+  return sortProjects(loadProjects()).map((project) =>
+    toDetailView(project, locale, categoryTitles, toolIcons),
+  );
+}
+
+/**
+ * Static paths for the detail routes (D-13): one per visible project, in the `/projects` order.
+ * Hidden projects get no page. The slug is the same in both locales (Phase 3 D-08).
+ */
+export async function getProjectPaths(
+  locale: Locale,
+): Promise<{ params: { slug: string }; props: { detail: ProjectDetailView } }[]> {
+  const details = await loadDetails(locale);
+  return details.map((detail) => ({ params: { slug: detail.slug }, props: { detail } }));
+}
+
+/** One visible project's detail view. Throws on an unknown or hidden slug. */
+export async function getProjectDetail(locale: Locale, slug: string): Promise<ProjectDetailView> {
+  const project = sortProjects(loadProjects()).find((entry) => entry.slug === slug);
+  if (project === undefined) {
+    throw new Error(
+      `projects: no visible project with slug "${slug}". Check src/data/project-overrides.json`,
+    );
+  }
+  const [services, tools] = await Promise.all([getCollection('services'), getCollection('tools')]);
+  return toDetailView(
+    project,
+    locale,
+    buildCategoryTitles(services, locale),
+    buildToolIcons(tools),
+  );
 }
