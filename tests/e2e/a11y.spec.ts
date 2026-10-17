@@ -135,3 +135,32 @@ for (const [path] of keyboardCases) {
     expect(violations).toEqual([]);
   });
 }
+
+// WCAG 1.4.13 persistent: pointer movement over a neighbour must not hide the focused tooltip.
+for (const [path] of keyboardCases) {
+  test(`focused tool tooltip persists while another tile is hovered on ${path}`, async ({
+    page,
+  }) => {
+    await page.goto(path);
+    await page.mouse.move(0, 0);
+
+    let onTool = false;
+    for (let i = 0; i < 30 && !onTool; i++) {
+      await page.keyboard.press('Tab');
+      onTool = await page.evaluate(() => document.activeElement?.matches('[data-tool]') ?? false);
+    }
+    expect(onTool, 'Tab should reach a [data-tool] tile').toBe(true);
+
+    const tiles = page.locator('[data-tool]');
+    const focusedTooltip = page.locator('[data-tool]:focus [data-tooltip]');
+    await expect(focusedTooltip).toBeVisible();
+
+    await tiles.nth(2).hover();
+    await expect(tiles.nth(2).locator('[data-tooltip]')).toBeVisible();
+    await expect(focusedTooltip).toBeVisible();
+
+    await page.mouse.move(0, 0);
+    await expect(focusedTooltip).toBeVisible();
+    await expect(tiles.nth(2).locator('[data-tooltip]')).toBeHidden();
+  });
+}

@@ -14,11 +14,14 @@ export function initToolTooltips(doc: Document): Cleanup | undefined {
   const ac = new AbortController();
   const { signal } = ac;
 
-  const focusOn = (tile: HTMLElement): void => {
+  // `keepFocused`: pointer movement over a neighbour is not a dismissal, so the tile that holds
+  // focus keeps its tooltip (WCAG 1.4.13 persistent, WR-04). Only Esc or moving focus hides it.
+  const focusOn = (tile: HTMLElement, keepFocused = false): void => {
     tile.removeAttribute('data-dismissed');
     for (const other of tiles) {
       if (other === tile) continue;
       other.removeAttribute('data-open');
+      if (keepFocused && other === doc.activeElement) continue;
       other.setAttribute('data-dismissed', '');
     }
   };
@@ -27,7 +30,7 @@ export function initToolTooltips(doc: Document): Cleanup | undefined {
     tile.addEventListener(
       'pointerenter',
       () => {
-        focusOn(tile);
+        focusOn(tile, true);
       },
       { signal },
     );

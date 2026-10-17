@@ -83,6 +83,34 @@ describe('initToolTooltips', () => {
     cleanup?.();
   });
 
+  it('hovering another tile keeps the focused tile tooltip (WCAG 1.4.13 persistent)', () => {
+    const cleanup = initToolTooltips(document);
+    tile('a').focus();
+    tile('a').dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    expect(document.activeElement).toBe(tile('a'));
+
+    tile('b').dispatchEvent(new PointerEvent('pointerenter'));
+    expect(isDismissed('a')).toBe(false);
+    expect(isDismissed('b')).toBe(false);
+    expect(isDismissed('c')).toBe(true);
+
+    tile('b').dispatchEvent(new PointerEvent('pointerleave'));
+    tile('c').dispatchEvent(new PointerEvent('pointerenter'));
+    expect(isDismissed('a')).toBe(false);
+    expect(isDismissed('b')).toBe(true);
+    cleanup?.();
+  });
+
+  it('a focused tile dismissed with Escape stays dismissed when another tile is hovered', () => {
+    const cleanup = initToolTooltips(document);
+    tile('a').focus();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    tile('b').dispatchEvent(new PointerEvent('pointerenter'));
+    expect(isDismissed('a')).toBe(true);
+    expect(isDismissed('b')).toBe(false);
+    cleanup?.();
+  });
+
   it('Escape closes and dismisses every tooltip', () => {
     const cleanup = initToolTooltips(document);
     tap(tile('a'), 'touch');
