@@ -2,11 +2,47 @@
 
 export const CDN_HOSTS = ['mir-s3-cdn-cf.behance.net', 'mir-cdn.behance.net'] as const;
 
-const CDN_URL = /(?:https?:)?\/\/(?:mir-s3-cdn-cf|mir-cdn)\.behance\.net[^\s"'<>)]*/g;
+// The host names themselves, with an optional scheme and `//` in front: a reference without a
+// literal `//` (protocol-relative after escaping, or a bare host in a srcset) still counts.
+const CDN_URL = /(?:(?:https?:)?\/\/)?(?:mir-s3-cdn-cf|mir-cdn)\.behance\.net[^\s"'<>)\\&]*/gi;
 
-/** Every Behance image CDN URL found in an HTML document, in document order. */
-export function findCdnReferences(html: string): string[] {
-  return html.match(CDN_URL) ?? [];
+/** dist/ files the gate scans as text: everything a browser or crawler may read a URL from. */
+export const TEXT_EXTENSIONS: readonly string[] = [
+  '.html',
+  '.css',
+  '.js',
+  '.mjs',
+  '.cjs',
+  '.json',
+  '.webmanifest',
+  '.xml',
+  '.svg',
+  '.txt',
+  '.map',
+];
+
+/** Decodes %XX escapes one by one, so a malformed sequence never throws (decodeURIComponent does). */
+function percentDecoded(text: string): string {
+  return text.replace(/%([0-9a-f]{2})/gi, (_match, hex: string) =>
+    String.fromCharCode(Number.parseInt(hex, 16)),
+  );
+}
+
+/**
+ * Every Behance image CDN reference found in a text file (HTML, CSS, JS, JSON, XML...), raw first,
+ * then the ones only visible once `\/` (JSON) and `%2F` (URL-encoded, as in `/_image?href=`)
+ * escapes are undone. Each distinct reference is listed once.
+ */
+export function findCdnReferences(text: string): string[] {
+  const unescape = (value: string): string => percentDecoded(value.replaceAll('\\/', '/'));
+  const found = new Set<string>();
+  for (const variant of [text, unescape(text)]) {
+    for (const match of variant.match(CDN_URL) ?? []) found.add(unescape(match));
+  }
+  // A raw match cut short by an escape (`mir-cdn.behance.net` out of `\/\/mir-cdn.behance.net\/a`)
+  // is part of the unescaped one: keep the longest form only.
+  const all = [...found];
+  return all.filter((match) => !all.some((other) => other !== match && other.includes(match)));
 }
 
 /** Recorded network attempts: one non-empty trimmed line per attempt; `#` marker lines skipped. */

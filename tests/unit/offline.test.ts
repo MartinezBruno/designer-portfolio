@@ -31,6 +31,41 @@ describe('findCdnReferences', () => {
   });
 
   it.each([
+    [
+      'a CSS bundle',
+      '.hero{background-image:url(https://mir-s3-cdn-cf.behance.net/projects/a.png)}',
+      ['https://mir-s3-cdn-cf.behance.net/projects/a.png'],
+    ],
+    [
+      'a URL-encoded image endpoint',
+      '<img src="/_image?href=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fprojects%2Fb.png&w=800">',
+      ['https://mir-s3-cdn-cf.behance.net/projects/b.png'],
+    ],
+    [
+      'a JSON-escaped URL',
+      '{"src":"https:\\/\\/mir-cdn.behance.net\\/c.png"}',
+      ['https://mir-cdn.behance.net/c.png'],
+    ],
+    [
+      'a bare host in a JS bundle',
+      'const h="mir-s3-cdn-cf.behance.net";',
+      ['mir-s3-cdn-cf.behance.net'],
+    ],
+    [
+      'an upper-case host',
+      '<img src="https://MIR-CDN.Behance.net/d.png">',
+      ['https://MIR-CDN.Behance.net/d.png'],
+    ],
+    [
+      'a malformed escape',
+      'x%ZZ https://mir-cdn.behance.net/e.png',
+      ['https://mir-cdn.behance.net/e.png'],
+    ],
+  ])('finds the CDN reference in %s', (_label, text, expected) => {
+    expect(findCdnReferences(text)).toEqual(expected);
+  });
+
+  it.each([
     '<a href="https://www.behance.net/martifernand7">Behance</a>',
     '<img src="/_astro/cover.abc123.webp">',
     '',

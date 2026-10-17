@@ -1,9 +1,16 @@
 // Offline build gate (DATA-04): run after the guarded `astro build`. Fails when the offline guard
 // recorded any network attempt, when the guard log does not come from the build that produced
-// dist/, or when dist/ HTML references the Behance image CDNs.
+// dist/, or when any text file in dist/ (HTML, CSS, JS, JSON, XML, SVG...) references the Behance
+// image CDNs, including URL-encoded and JSON-escaped references.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { DEFAULT_GUARD_LOG, findCdnReferences, readAttempts, staleGuardLog } from './offline.ts';
+import {
+  DEFAULT_GUARD_LOG,
+  TEXT_EXTENSIONS,
+  findCdnReferences,
+  readAttempts,
+  staleGuardLog,
+} from './offline.ts';
 
 const DIST = 'dist';
 const LOG = resolve(process.env['OFFLINE_GUARD_LOG'] ?? DEFAULT_GUARD_LOG);
@@ -42,8 +49,11 @@ if (stale !== null) {
   process.exit(1);
 }
 
-const htmlFiles = distFiles.filter((file) => file.endsWith('.html'));
-const problems = htmlFiles.flatMap((file) =>
+const textFiles = distFiles.filter((file) =>
+  TEXT_EXTENSIONS.some((extension) => file.toLowerCase().endsWith(extension)),
+);
+const htmlCount = textFiles.filter((file) => file.endsWith('.html')).length;
+const problems = textFiles.flatMap((file) =>
   findCdnReferences(readFileSync(file, 'utf8')).map((url) => `${file}: ${url}`),
 );
 
@@ -52,4 +62,6 @@ if (problems.length > 0) {
   process.exit(1);
 }
 
-console.log(`offline build ok (0 network attempts, ${htmlFiles.length} html files scanned)`);
+console.log(
+  `offline build ok (0 network attempts, ${textFiles.length} text files scanned, ${htmlCount} html)`,
+);
