@@ -9,6 +9,7 @@ import {
   writeStagedCover,
   writeStagedSnapshot,
 } from '../../scripts/behance/fs-commit.ts';
+import { SyncError } from '../../scripts/behance/errors.ts';
 
 const REPO_TMP = fileURLToPath(new URL('../../tmp/', import.meta.url));
 
@@ -127,6 +128,27 @@ describe('commitSync', () => {
     expect((await readdir(join(root, COVERS))).sort()).toEqual(
       ['.gitkeep', OLD_A, OLD_B, 'notes.txt'].sort(),
     );
+  });
+
+  it('reports a GC failure after the rename as a committed SyncError', async () => {
+    await mkdir(join(root, COVERS, '9003-dddddddddddd.png'));
+    await createStaging(root, STAGING);
+    await writeStagedSnapshot(root, STAGING, { next: true });
+
+    const error = await commitSync({
+      root,
+      stagingDir: STAGING,
+      snapshot: SNAPSHOT,
+      coversDir: COVERS,
+      referenced: new Set([OLD_A]),
+    }).then(
+      () => null,
+      (caught: Error) => caught,
+    );
+
+    expect(error).toBeInstanceOf(SyncError);
+    expect(error instanceof SyncError && error.committed).toBe(true);
+    expect(JSON.parse(await readFile(join(root, SNAPSHOT), 'utf8'))).toEqual({ next: true });
   });
 
   it('fails before touching the snapshot when a referenced cover is in neither place', async () => {

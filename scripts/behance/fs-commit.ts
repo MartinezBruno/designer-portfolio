@@ -18,6 +18,7 @@ import { constants } from 'node:fs';
 import { access, copyFile, mkdir, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { COVER_FILE } from '../../src/lib/projects/snapshot-schema.ts';
+import { postCommitError } from './errors.ts';
 
 const STAGED_SNAPSHOT = 'snapshot.json';
 
@@ -109,12 +110,17 @@ export async function commitSync(input: CommitInput): Promise<CommitResult> {
   await mkdir(dirname(target), { recursive: true });
   await rename(join(staging, STAGED_SNAPSHOT), target);
 
-  // (3) GC: only COVER_FILE names the new snapshot no longer references.
+  // (3) GC: only COVER_FILE names the new snapshot no longer references. The new snapshot is
+  // live from here on, so a failure is reported as a post-commit error.
   const removed: string[] = [];
-  for (const name of (await readdir(covers)).sort()) {
-    if (!COVER_FILE.test(name) || input.referenced.has(name)) continue;
-    await rm(join(covers, name));
-    removed.push(name);
+  try {
+    for (const name of (await readdir(covers)).sort()) {
+      if (!COVER_FILE.test(name) || input.referenced.has(name)) continue;
+      await rm(join(covers, name));
+      removed.push(name);
+    }
+  } catch (error) {
+    throw postCommitError(error instanceof Error ? error : String(error));
   }
 
   return { added, removed };

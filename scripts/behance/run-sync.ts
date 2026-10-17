@@ -3,6 +3,7 @@
 //
 // Gates, in order. Any failure throws a SyncError and leaves the previous snapshot.json and every
 // existing cover untouched: nothing under paths.snapshot or paths.coversDir is written before G7.
+// A failure after G7's snapshot rename (cover GC, G9) throws a SyncError with `committed: true`.
 //   G1   profile page: store present, list valid, at least 1 project, hasMore false
 //   G1b  shrink guard: fewer projects than the previous snapshot fails unless allowFewer
 //   G2   challenge: a page that never yields the store (status, repeated challenge)
@@ -26,7 +27,7 @@ import { missingOverrides, validateOverrides } from '../../src/lib/projects/proj
 import { parseSnapshot } from '../../src/lib/projects/snapshot-schema.ts';
 import type { Snapshot, SnapshotProject } from '../../src/lib/projects/snapshot-schema.ts';
 import { coverFileName, pickCover } from './covers.ts';
-import { SyncError } from './errors.ts';
+import { postCommitError, SyncError } from './errors.ts';
 import { fetchCover, fetchStorePage } from './fetch-page.ts';
 import type { FetchDeps } from './fetch-page.ts';
 import {
@@ -153,6 +154,9 @@ export async function runSync(deps: SyncDeps): Promise<SyncReport> {
     },
   };
 
+  // Set once commitSync's atomic rename has replaced the snapshot: any later failure is reported
+  // as a post-commit error, never as "the previous snapshot was left untouched".
+  let committed = false;
   try {
     const before = await previousCount(deps);
 
@@ -221,6 +225,7 @@ export async function runSync(deps: SyncDeps): Promise<SyncReport> {
       coversDir: deps.paths.coversDir,
       referenced: new Set(snapshot.projects.map((project) => project.cover.file)),
     });
+    committed = true;
 
     // G9
     const notices: string[] = [];
@@ -254,6 +259,9 @@ export async function runSync(deps: SyncDeps): Promise<SyncReport> {
     for (const line of [...notices, ...checklist]) deps.log(line);
 
     return { count, coversAdded: added, coversRemoved: removed, checklist, notices };
+  } catch (error) {
+    if (committed) throw postCommitError(error instanceof Error ? error : String(error));
+    throw error;
   } finally {
     await removeStaging(root, stagingDir);
   }

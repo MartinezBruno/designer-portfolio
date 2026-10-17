@@ -5,9 +5,9 @@
 //   is set. The developer reviews and commits the resulting diff.
 // - Reads public pages and the image CDN only, with no account access or credentials (D-03).
 // - If Behance hardens its JS challenge, plan B is Playwright (.planning/research/STACK.md §1.3).
+import { failureMessage, UNTOUCHED } from './behance/errors.ts';
 import { runSync } from './behance/run-sync.ts';
 
-const UNTOUCHED = 'The previous snapshot was left untouched.';
 const USAGE = [
   'usage: pnpm sync:behance [--allow-fewer]',
   '  --allow-fewer  accept fewer projects than the current snapshot (projects removed on Behance)',
@@ -55,7 +55,6 @@ try {
     'sync:behance: done. Review the diff (src/data/behance, src/assets/projects) and commit it.',
   );
 } catch (error) {
-  const message = error instanceof Error ? error.message : String(error);
-  console.error(`sync:behance: ${message}. ${UNTOUCHED}`);
+  console.error(failureMessage(error instanceof Error ? error : String(error)));
   process.exit(1);
 }

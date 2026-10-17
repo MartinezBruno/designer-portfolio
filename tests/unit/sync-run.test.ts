@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { SyncError } from '../../scripts/behance/errors.ts';
+import { COMMITTED, failureMessage, SyncError, UNTOUCHED } from '../../scripts/behance/errors.ts';
 import { runSync, type SyncDeps, type SyncReport } from '../../scripts/behance/run-sync.ts';
 import { COVER_FILE, parseSnapshot } from '../../src/lib/projects/snapshot-schema.ts';
 import type { Snapshot, SnapshotProject } from '../../src/lib/projects/snapshot-schema.ts';
@@ -467,5 +467,56 @@ describe('runSync', () => {
         html(projectPage(id).replace('"publishedOn":1691000000', '"publishedOn":"1691000000"'));
       await expectRefused({ project }, 'G3', /publishedOn/);
     });
+  });
+
+  describe('fails after the commit point', () => {
+    async function expectCommittedFailure(deps: SyncDeps, text: RegExp): Promise<void> {
+      const error = await runSync(deps).then(
+        () => null,
+        (caught: Error) => caught,
+      );
+      expect(error).toBeInstanceOf(SyncError);
+      if (error instanceof SyncError) {
+        expect(error.gate).toBe('G7');
+        expect(error.committed).toBe(true);
+        expect(error.message).toMatch(/snapshot was written, but a post-commit step failed/);
+        expect(error.message).toMatch(text);
+        expect(failureMessage(error)).toContain(COMMITTED);
+        expect(failureMessage(error)).not.toContain(UNTOUCHED);
+      }
+      // The new snapshot is live.
+      expect((await readSnapshot()).origin).toBe('behance-sync');
+      expect(await stagingExists()).toBe(false);
+    }
+
+    it('reports a cover GC failure after the rename as committed', async () => {
+      await seed(3);
+      // A directory with a cover name: GC's rm (not recursive) cannot remove it.
+      await mkdir(join(root, PATHS.coversDir, '9999-ffffffffffff.png'));
+      await expectCommittedFailure(harness().deps, /9999-ffffffffffff\.png/);
+    });
+
+    it('reports a G9 report failure as committed', async () => {
+      await seed(3);
+      const { deps } = harness();
+      deps.log = () => {
+        throw new Error('stdout closed');
+      };
+      await expectCommittedFailure(deps, /stdout closed/);
+    });
+  });
+});
+
+describe('failureMessage', () => {
+  it('says the previous snapshot is untouched for a failure before the commit point', () => {
+    expect(failureMessage(new SyncError('G2', 'challenge repeated'))).toBe(
+      `sync:behance: [G2] challenge repeated. ${UNTOUCHED}`,
+    );
+    expect(failureMessage('boom')).toBe(`sync:behance: boom. ${UNTOUCHED}`);
+  });
+
+  it('says the new snapshot was written for a committed failure', () => {
+    const error = new SyncError('G7', 'gc failed', { committed: true });
+    expect(failureMessage(error)).toBe(`sync:behance: [G7] gc failed. ${COMMITTED}`);
   });
 });
