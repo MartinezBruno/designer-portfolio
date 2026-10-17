@@ -34,7 +34,7 @@ test.describe('hero without JavaScript', () => {
       expect(await intro.evaluate((el) => el.tagName)).toBe('P');
       expect(await intro.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(26, 23, 20)');
 
-      const img = page.locator('#main picture img');
+      const img = page.locator('#main section[aria-labelledby="hero-title"] picture img');
       await expect(img).toBeVisible();
       await expect(img).toHaveAttribute('alt', dict['hero.imageAlt']);
       await expect(img).toHaveAttribute('loading', 'eager');
@@ -49,7 +49,7 @@ test.describe('hero without JavaScript', () => {
 
     test(`${path} hero picture offers avif and webp sources`, async ({ page }) => {
       await page.goto(path);
-      const picture = page.locator('#main picture');
+      const picture = page.locator('#main section[aria-labelledby="hero-title"] picture');
       await expect(picture.locator('source[type="image/avif"]')).toHaveCount(1);
       await expect(picture.locator('source[type="image/webp"]')).toHaveCount(1);
     });
@@ -61,7 +61,7 @@ test.describe('hero without JavaScript', () => {
       test(`${path} hero portrait is a capped circle at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 900 });
         await page.goto(path);
-        const img = page.locator('#main picture img');
+        const img = page.locator('#main section[aria-labelledby="hero-title"] picture img');
         await expect(img).toHaveAttribute('width', '321');
         await expect(img).toHaveAttribute('height', '324');
         const box = await img.boundingBox();
