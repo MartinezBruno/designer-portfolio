@@ -1,0 +1,31 @@
+---
+/**
+ * One featured service card. Intentionally non-interactive until Phase 5 (HOME-08) adds a real
+ * destination: no links, no pointer cursor, no hover change. Cards are keyed by stable service
+ * ids upstream so Phase 5 can attach filters without reshaping content.
+ */
+import ServiceIcon from './ServiceIcon.astro';
+import type { ServiceIconKey } from '../../lib/content/icons';
+
+interface Props {
+  title: string;
+  items: readonly string[];
+  icon: ServiceIconKey;
+}
+
+const { title, items, icon } = Astro.props;
+---
+
+<li class="bg-surface-alt flex h-full flex-col gap-4 rounded-2xl p-6">
+  <span class="bg-surface grid size-12 place-items-center rounded-full">
+    <ServiceIcon name={icon} />
+  </span>
+  <div class="flex flex-col gap-2">
+    <h3 class="text-ink text-base font-semibold">{title}</h3>
+    <ul class="text-ink-muted marker:text-ink-muted list-disc space-y-1 pl-6 text-base">
+      {items.map((item) => (
+        <li>{item}</li>
+      ))}
+    </ul>
+  </div>
+</li>
