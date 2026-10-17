@@ -32,3 +32,6 @@ playwright-report/
 
 # taste-skill inspect output (screenshots, reports)
 .taste-skill/
+
+# scratch: offline-guard log, behance sync staging
+tmp/
