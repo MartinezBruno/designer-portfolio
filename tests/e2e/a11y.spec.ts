@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import snapshot from '../../src/data/behance/snapshot.json' with { type: 'json' };
 import { site } from '../../src/data/site';
 import tools from '../../src/data/tools.json' with { type: 'json' };
 import { en, type Dictionary } from '../../src/i18n/ui.en';
@@ -8,6 +9,7 @@ import {
   expectedDetails,
   expectedHome,
   expectedProjects,
+  type ExpectedDetail,
   type ExpectedProject,
 } from './helpers/projects';
 
@@ -191,8 +193,136 @@ for (const [path, dict, homeHref] of projectsKeyboardCases) {
   });
 }
 
+// Detail-page keyboard order (UI-SPEC): header, View on Behance, then the module stack in module
+// order (prose links, facade button, facade fallback link, unknown-module links), the contact
+// button, Previous, the next tile, footer. One page with an embed, one with a prose link.
+const KEYBOARD_DETAIL_SLUGS = ['portfolio-web', 'website-instablogs'] as const;
+
+function detailFor(locale: 'en' | 'es', slug: string): ExpectedDetail {
+  const detail = expectedDetails(locale).find((entry) => entry.slug === slug);
+  if (detail === undefined) throw new Error(`a11y: no visible project with slug "${slug}"`);
+  return detail;
+}
+
+const decodeEntities = (text: string): string =>
+  text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+
+/** Focus stops inside the module stack, derived from the snapshot's module order. */
+function moduleSteps(dict: Dictionary, detail: ExpectedDetail): Step[] {
+  const source = snapshot.projects.find((project) => project.url === detail.behanceUrl);
+  if (source === undefined) throw new Error(`a11y: no snapshot project for ${detail.href}`);
+  return source.content.flatMap((entry): Step[] => {
+    if (entry.kind === 'text' && 'html' in entry) {
+      return [...entry.html.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([\s\S]*?)<\/a>/g)].map(
+        (match) => ({
+          name: decodeEntities((match[2] ?? '').replace(/<[^>]+>/g, '')).trim(),
+          href: decodeEntities(match[1] ?? ''),
+        }),
+      );
+    }
+    if (entry.kind === 'embed') {
+      return [
+        { name: dict['detail.embed.load'], tag: 'BUTTON' },
+        { name: dict['detail.embed.fallback'], href: detail.behanceUrl },
+      ];
+    }
+    if (entry.kind === 'unknown') {
+      return [{ name: dict['detail.unknown.link'], href: detail.behanceUrl }];
+    }
+    return [];
+  });
+}
+
+function expectedDetailOrderFor(dict: Dictionary, locale: 'en' | 'es', slug: string): Step[] {
+  const homeHref = locale === 'en' ? '/' : '/es/';
+  const detail = detailFor(locale, slug);
+  const steps: Step[] = [
+    ...headerSteps(dict, homeHref, detailFor('en', slug).href, detailFor('es', slug).href),
+    { name: dict['detail.viewOnBehance'], href: detail.behanceUrl },
+    ...moduleSteps(dict, detail),
+    { name: dict['detail.cta.button'], href: `${homeHref}#contact` },
+  ];
+  if (detail.previous !== null) {
+    steps.push({ name: dict['detail.previous'], href: detail.previous.href });
+  }
+  if (detail.next !== null) {
+    steps.push({ name: detail.next.title, href: detail.next.href, ringOnAfter: true });
+  }
+  return [...steps, ...footerSteps(dict)];
+}
+
+const detailKeyboardCases = (['en', 'es'] as const).flatMap((locale) =>
+  KEYBOARD_DETAIL_SLUGS.map((slug) => ({
+    locale,
+    slug,
+    dict: locale === 'en' ? en : es,
+    href: detailFor(locale, slug).href,
+  })),
+);
+
+for (const { locale, slug, dict, href } of detailKeyboardCases) {
+  test(`keyboard Tab order on ${href} matches the UI-SPEC with visible focus`, async ({ page }) => {
+    await page.goto(href);
+
+    for (const step of expectedDetailOrderFor(dict, locale, slug)) {
+      await tabAndExpect(page, step);
+    }
+  });
+}
+
+// axe after the facade swaps in the iframe. Figma is stubbed locally: no real network.
+const FIGMA_STUB =
+  '<!doctype html><html lang="en"><head><title>Prototype stub</title></head><body><main><p>stub</p></main></body></html>';
+
+async function activateFacade(page: Page, dict: Dictionary): Promise<void> {
+  await page.route('https://embed.figma.com/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/html', body: FIGMA_STUB }),
+  );
+  await page.getByRole('button', { name: dict['detail.embed.load'] }).click();
+  await expect(page.locator('[data-embed-facade] iframe')).toHaveCount(1);
+  await expect.poll(() => page.evaluate(() => document.activeElement?.tagName)).toBe('IFRAME');
+}
+
+const embedAxeCases = (['en', 'es'] as const).flatMap((locale) =>
+  expectedDetails(locale)
+    .filter((detail) => detail.hasEmbed)
+    .map((detail) => ({ href: detail.href, dict: locale === 'en' ? en : es })),
+);
+
+test('at least one detail page carries an embed for the activation axe run', () => {
+  expect(embedAxeCases.length).toBeGreaterThanOrEqual(2);
+});
+
+for (const { href, dict } of embedAxeCases) {
+  test(`${href} has zero WCAG 2.2 AA axe violations after loading the prototype`, async ({
+    page,
+  }) => {
+    await page.goto(href);
+    await activateFacade(page, dict);
+    const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+    expect(violations).toEqual([]);
+  });
+}
+
 test.describe('with prefers-reduced-motion: reduce', () => {
   test.use({ reducedMotion: 'reduce' });
+
+  for (const { href, dict } of embedAxeCases) {
+    test(`${href} has zero axe violations after loading the prototype under reduced motion`, async ({
+      page,
+    }) => {
+      await page.goto(href);
+      await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
+      await activateFacade(page, dict);
+      const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+      expect(violations).toEqual([]);
+    });
+  }
 
   for (const [path, dict, homeHref] of keyboardCases) {
     test(`${path} has zero WCAG 2.2 AA axe violations under reduced motion`, async ({ page }) => {
