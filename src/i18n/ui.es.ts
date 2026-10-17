@@ -10,7 +10,7 @@ export const es = {
   'lang.en': 'English',
   'lang.es': 'Español',
   'hero.greeting': 'Hola, soy',
-  'hero.title': 'Diseñadora gráfica para web y redes sociales',
+  'hero.role': 'Diseñadora gráfica para web y redes sociales.',
   'hero.description':
     'Diseño webs, piezas de marca y contenido para redes que ayudan a pequeños negocios a verse tan bien como son.',
   'hero.imageAlt': 'Retrato de Martina Fernandez',

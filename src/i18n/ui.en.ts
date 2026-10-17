@@ -9,7 +9,7 @@ export const en = {
   'lang.en': 'English',
   'lang.es': 'Español',
   'hero.greeting': "Hi, I'm",
-  'hero.title': 'Graphic designer for web & social media',
+  'hero.role': 'Graphic designer for web & social media.',
   'hero.description':
     'I design websites, brand visuals and social content that help small businesses look as good as they are.',
   'hero.imageAlt': 'Portrait of Martina Fernandez',

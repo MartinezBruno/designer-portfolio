@@ -1,5 +1,5 @@
 ---
-// Availability pill (HOME-07). Renders nothing when available is false (D-08): no closed state.
+// Availability line (HOME-07): a plain status line beside the hero CTA, no pill. Renders nothing when available is false (D-08): no closed state.
 import { useTranslations, type Locale } from '../../i18n/t';
 
 interface Props {
@@ -12,7 +12,7 @@ const t = useTranslations(locale);
 ---
 
 {available && (
-  <p class="bg-surface-alt text-ink inline-flex items-center gap-2 self-start rounded-full px-4 py-2 text-sm font-semibold">
+  <p class="text-ink-muted inline-flex items-center gap-2 text-base">
     <span aria-hidden="true" class="bg-success size-2 rounded-full" />
     {t('availability.open')}
   </p>

@@ -19,23 +19,22 @@ const t = useTranslations(locale);
 
 <section aria-labelledby="hero-title" class="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
   <div class="grid gap-8 lg:grid-cols-12 lg:items-center">
-    <div class="flex flex-col gap-6 lg:col-span-7">
-      <AvailabilityBadge available={available} locale={locale} />
-      <p class="text-ink-muted text-sm font-semibold tracking-wider uppercase">
-        {t('hero.greeting')}
-      </p>
-      <h1 id="hero-title" class="font-display text-5xl font-semibold tracking-tight">
-        {site.name}
+    <div class="flex flex-col gap-8 lg:col-span-7">
+      <!-- Greeting is the headline: always exactly two lines, never an eyebrow above it. -->
+      <h1 id="hero-title" class="font-display text-display -ml-[0.04em] font-semibold">
+        <span class="block">{t('hero.greeting')}</span> <span class="block">{site.firstName}.</span>
       </h1>
-      <p class="font-display text-2xl">{t('hero.title')}</p>
-      <p class="max-w-prose text-base">{t('hero.description')}</p>
-      <div class="mt-8">
+      <p class="text-ink text-lead max-w-[55ch] text-pretty">
+        {`${t('hero.role')} ${t('hero.description')}`}
+      </p>
+      <div class="flex flex-col items-start gap-x-6 gap-y-4 sm:flex-row sm:flex-wrap sm:items-center">
         <ButtonLink href="#contact">
           {t('hero.cta')}
           <Fragment slot="icon">
             <IconArrowRight aria-hidden="true" focusable="false" class="size-5" />
           </Fragment>
         </ButtonLink>
+        <AvailabilityBadge available={available} locale={locale} />
       </div>
     </div>
     <div class="lg:col-span-5">

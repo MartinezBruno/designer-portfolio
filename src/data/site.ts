@@ -1,5 +1,7 @@
 export interface SiteConfig {
   name: string;
+  /** Used where the page addresses the visitor personally (hero headline). */
+  firstName: string;
   url: string;
   email: string;
   socials: {
@@ -11,6 +13,7 @@ export interface SiteConfig {
 
 export const site = {
   name: 'Martina Fernandez',
+  firstName: 'Martina',
   // TODO(martina): real domain
   url: 'https://martinafernandez.example',
   // TODO(martina): real address
