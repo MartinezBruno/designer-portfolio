@@ -186,7 +186,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 04-09-PLAN.md — Render image stack, collection rows, sanitized text and unknown fallback on detail pages
+- [x] 04-09-PLAN.md — Render image stack, collection rows, sanitized text and unknown fallback on detail pages
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
@@ -273,7 +273,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 1. Bilingual Walking Skeleton | 5/5 | Complete   | 2026-10-16 |
 | 2. Homepage Story | 8/8 | Complete   | 2026-10-17 |
 | 3. Real Behance Work | 10/10 | Complete   | 2026-10-17 |
-| 4. Project Detail & Discovery | 8/11 | In Progress|  |
+| 4. Project Detail & Discovery | 9/11 | In Progress|  |
 | 5. Contact | 0/TBD | Not started | - |
 | 6. Scroll & Interaction Motion | 0/TBD | Not started | - |
 | 7. Page Transitions & Smooth Scroll | 0/TBD | Not started | - |
