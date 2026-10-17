@@ -1,0 +1,57 @@
+---
+/**
+ * Click-to-load facade for an allowlisted embed (D-07). The markup holds no iframe, preconnect or
+ * provider thumbnail, so the page makes no third-party request before the visitor asks. The
+ * button ships hidden; the registered script reveals it and swaps in the sandboxed iframe on
+ * click. Without JS the label, note and Behance link remain.
+ */
+import IconPlayerPlay from '@tabler/icons/outline/player-play.svg';
+import ExternalTextLink from '../ui/ExternalTextLink.astro';
+import { interpolate, useTranslations, type Locale } from '../../i18n/t';
+import type { ModuleView } from '../../lib/projects/model';
+
+interface Props {
+  module: Extract<ModuleView, { kind: 'embed' }>;
+  behanceUrl: string;
+  locale: Locale;
+}
+
+const { module, behanceUrl, locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<div class="mx-auto w-full max-w-[800px] px-4 py-12 sm:px-6">
+  <div class="flex flex-col gap-4">
+    <div
+      data-embed-facade
+      data-src={module.src}
+      data-title={module.iframeTitle}
+      class="bg-surface-alt flex min-h-64 flex-col items-start justify-end gap-4 p-6 sm:aspect-video sm:min-h-0 sm:p-8"
+    >
+      <p class="font-display text-2xl font-semibold tracking-tight">{t('detail.embed.label')}</p>
+      <p class="text-ink text-base">
+        {interpolate(t('detail.embed.note'), { provider: module.providerName })}
+      </p>
+      <button
+        type="button"
+        hidden
+        data-embed-load
+        class="bg-ink text-surface focus-visible:outline-accent hover:bg-ink/90 inline-flex h-12 items-center gap-2 rounded-full px-6 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-150"
+      >
+        <IconPlayerPlay aria-hidden="true" focusable="false" class="size-5" />
+        {t('detail.embed.load')}
+      </button>
+    </div>
+    <p>
+      <ExternalTextLink href={behanceUrl} locale={locale}>
+        {t('detail.embed.fallback')}
+      </ExternalTextLink>
+    </p>
+  </div>
+</div>
+
+<script>
+  import { lifecycle } from '../../lib/motion';
+  import { initEmbedFacades } from '../../lib/ui/embed-facade';
+  lifecycle.register(initEmbedFacades);
+</script>

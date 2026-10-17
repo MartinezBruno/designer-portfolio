@@ -322,17 +322,41 @@ for (const { lang, dict } of cases) {
           }
         });
 
-        test('shows the Behance note in place of an embed until the facade (D-08)', async ({
+        test('shows the click-to-load facade for an embed, never the unknown note (D-07)', async ({
           page,
         }) => {
           await page.goto(detail.href);
-          const note = page.locator(STACK).getByText(dict['detail.unknown.body'], { exact: true });
-          await expect(note).toHaveCount(detail.hasEmbed ? 1 : 0);
+          const facade = page.locator(`${STACK} [data-embed-facade]`);
+          await expect(facade).toHaveCount(detail.hasEmbed ? 1 : 0);
           await expect(page.locator('iframe')).toHaveCount(0);
-          if (detail.hasEmbed) {
-            const link = page.locator(STACK).locator('a', { hasText: dict['detail.unknown.link'] });
-            await expect(link).toHaveAttribute('href', detail.behanceUrl);
+          if (!detail.hasEmbed) {
+            await expect(page.locator('[data-embed-facade]')).toHaveCount(0);
+            return;
+          }
+          // Every module of this project is mirrored, so the D-08 note must not appear.
+          const note = page.locator(STACK).getByText(dict['detail.unknown.body'], { exact: true });
+          await expect(note).toHaveCount(0);
+          await expect(facade).toContainText(dict['detail.embed.label']);
+          await expect(facade).toContainText(
+            dict['detail.embed.note'].replace('{provider}', 'Figma'),
+          );
+          await expect(facade.locator('[data-embed-load]')).toBeVisible();
+          const link = page.locator(STACK).locator('a', { hasText: dict['detail.embed.fallback'] });
+          await expect(link).toHaveAttribute('href', detail.behanceUrl);
+          await expect(link).toHaveAttribute('rel', /\bnoopener\b/);
+        });
+
+        test('gives every new-tab link rel noopener noreferrer and the hint (T-04-03)', async ({
+          page,
+        }) => {
+          await page.goto(detail.href);
+          const links = page.locator('a[target="_blank"]');
+          expect(await links.count()).toBeGreaterThan(0);
+          const hint = new RegExp(`${dict['a11y.newTab'].replace(/[()]/g, '\\$&')}$`);
+          for (const link of await links.all()) {
             await expect(link).toHaveAttribute('rel', /\bnoopener\b/);
+            await expect(link).toHaveAttribute('rel', /\bnoreferrer\b/);
+            await expect(link).toHaveAccessibleName(hint);
           }
         });
 
@@ -347,5 +371,102 @@ for (const { lang, dict } of cases) {
         });
       });
     }
+  });
+}
+
+// Click-to-load embed facade (D-07, Pitfall 6). Figma is never reached: its embed origin is
+// routed to a local stub, and the request log proves nothing leaves the preview server first.
+const FIGMA_EMBED = 'https://embed.figma.com/**';
+const FIGMA_STUB =
+  '<!doctype html><html lang="en"><head><title>Prototype stub</title></head><body><main><p>stub</p></main></body></html>';
+const SANDBOX = 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox';
+
+async function stubFigma(page: Page): Promise<string[]> {
+  const hits: string[] = [];
+  await page.route(FIGMA_EMBED, (route) => {
+    hits.push(route.request().url());
+    return route.fulfill({ status: 200, contentType: 'text/html', body: FIGMA_STUB });
+  });
+  return hits;
+}
+
+for (const { lang, dict } of cases) {
+  const embedPages = expectedDetails(lang).filter((detail) => detail.hasEmbed);
+
+  test.describe(`embed facade (${lang})`, () => {
+    test('at least one detail page carries an embed', () => {
+      expect(embedPages.length).toBeGreaterThan(0);
+    });
+
+    for (const detail of embedPages) {
+      test(`${detail.href} makes no third-party request before activation`, async ({
+        page,
+        baseURL,
+      }) => {
+        const origin = new URL(baseURL ?? 'http://localhost:4400').host;
+        const hosts = new Set<string>();
+        page.on('request', (request) => {
+          const url = new URL(request.url());
+          if (url.protocol === 'http:' || url.protocol === 'https:') hosts.add(url.host);
+        });
+        const hits = await stubFigma(page);
+        await page.goto(detail.href);
+        await page.evaluate(() => {
+          window.scrollTo(0, document.documentElement.scrollHeight);
+        });
+        await page.waitForLoadState('networkidle');
+        expect([...hosts]).toEqual([origin]);
+        expect(hits).toEqual([]);
+        await expect(page.locator('iframe')).toHaveCount(0);
+        expect(await page.content()).not.toMatch(/rel="preconnect"[^>]*figma/);
+      });
+
+      test(`${detail.href} loads a sandboxed, focused iframe on click`, async ({ page }) => {
+        const hits = await stubFigma(page);
+        await page.goto(detail.href);
+        const facade = page.locator('[data-embed-facade]');
+        const src = await facade.getAttribute('data-src');
+        expect(src).toMatch(/^https:\/\/embed\.figma\.com\//);
+
+        await facade.getByRole('button', { name: dict['detail.embed.load'] }).click();
+
+        const iframe = facade.locator('iframe');
+        await expect(iframe).toHaveCount(1);
+        await expect(facade.locator('> *')).toHaveCount(1);
+        await expect(iframe).toHaveAttribute('src', src ?? '');
+        await expect(iframe).toHaveAttribute('title', /\S/);
+        await expect(iframe).toHaveAttribute('sandbox', SANDBOX);
+        await expect(iframe).toHaveAttribute('allow', 'fullscreen');
+        await expect(iframe).toHaveAttribute('allowfullscreen', '');
+        await expect(iframe).toHaveAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+        await expect(facade).toHaveClass(/\baspect-video\b/);
+        await expect(facade).not.toHaveClass(/\bmin-h-64\b/);
+        expect(await page.evaluate(() => document.activeElement?.tagName)).toBe('IFRAME');
+        await expect.poll(() => hits.length).toBeGreaterThan(0);
+        // The Behance link stays below as the recovery path.
+        await expect(
+          page.locator(STACK).locator('a', { hasText: dict['detail.embed.fallback'] }),
+        ).toBeVisible();
+      });
+    }
+
+    test.describe('without JavaScript', () => {
+      test.use({ javaScriptEnabled: false });
+
+      for (const detail of embedPages) {
+        test(`${detail.href} keeps the label, note and Behance link, button hidden`, async ({
+          page,
+        }) => {
+          await page.goto(detail.href);
+          const facade = page.locator('[data-embed-facade]');
+          await expect(facade).toContainText(dict['detail.embed.label']);
+          await expect(facade.locator('[data-embed-load]')).toBeHidden();
+          const link = page.locator(STACK).locator('a', { hasText: dict['detail.embed.fallback'] });
+          await expect(link).toBeVisible();
+          await expect(link).toHaveAttribute('href', detail.behanceUrl);
+          await expect(page.locator('iframe')).toHaveCount(0);
+        });
+      }
+    });
   });
 }
