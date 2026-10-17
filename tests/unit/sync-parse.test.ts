@@ -110,6 +110,15 @@ describe('parseProfileStore', () => {
     const html = profileHtml.replace(STORE_SCRIPT, '$1{not json$3');
     expectSyncError(() => parseProfileStore(html), 'G1', /JSON/);
   });
+
+  it('fails when the profile lists one id twice, even with another slug', () => {
+    const html = withStore(profileHtml, (store) => {
+      const list = store.profile.activeSection.work.profileProjects;
+      const first = list[0];
+      if (first !== undefined) list.push({ ...first, slug: 'renamed-slug' });
+    });
+    expectSyncError(() => parseProfileStore(html), 'G1', /project id 1001 more than once/);
+  });
 });
 
 describe('parseProjectStore', () => {

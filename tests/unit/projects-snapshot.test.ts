@@ -110,6 +110,13 @@ describe('parseSnapshot', () => {
     },
   );
 
+  it('rejects a duplicate project id, even with another slug', () => {
+    expectInvalid(
+      { ...validSnapshot(), projects: [validProject(), { ...validProject(), slug: 'Other' }] },
+      'projects.1.id',
+    );
+  });
+
   it('rejects an unknown origin', () => {
     expectInvalid({ ...validSnapshot(), origin: 'manual' }, 'origin');
   });

@@ -53,7 +53,23 @@ export const SnapshotSchema = z.strictObject({
   origin: z.enum(['seed', 'behance-sync']),
   syncedAt: z.iso.datetime(),
   profile: z.strictObject({ username: z.string().min(1), url: BehancePageUrl }),
-  projects: z.array(SnapshotProjectSchema).min(1),
+  projects: z
+    .array(SnapshotProjectSchema)
+    .min(1)
+    .superRefine((projects, ctx) => {
+      // Overrides are keyed by id, so two entries with one id would render twice with one override.
+      const seen = new Set<string>();
+      for (const [index, project] of projects.entries()) {
+        if (seen.has(project.id)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: [index, 'id'],
+            message: `duplicate project id ${project.id}`,
+          });
+        }
+        seen.add(project.id);
+      }
+    }),
 });
 
 export type Snapshot = z.infer<typeof SnapshotSchema>;

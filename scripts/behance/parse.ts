@@ -105,6 +105,16 @@ export function parseProfileStore(html: string): ProfileStore {
     modifiedOn: project.modifiedOn ?? null,
     covers: project.covers.allAvailable,
   }));
+  const seen = new Set<string>();
+  for (const project of projects) {
+    if (seen.has(project.id)) {
+      throw new SyncError(
+        'G1',
+        `profile lists project id ${project.id} more than once; re-run the sync once Behance lists each project once`,
+      );
+    }
+    seen.add(project.id);
+  }
   return { projects, hasMore: false };
 }
 
