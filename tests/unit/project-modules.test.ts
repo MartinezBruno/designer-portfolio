@@ -144,21 +144,55 @@ describe('UnknownModule', () => {
 });
 
 describe('ProjectModule', () => {
-  it('renders the unknown note for embeds until the facade lands', async () => {
+  const embed: ModuleView = {
+    kind: 'embed',
+    provider: 'figma',
+    providerName: 'Figma',
+    src: 'https://embed.figma.com/proto/abc',
+    iframeTitle: 'Mart — interactive Figma prototype',
+  };
+
+  it('renders the click-to-load facade for embeds, with no iframe and a hidden button', async () => {
     const c = await container();
-    const embed: ModuleView = {
-      kind: 'embed',
-      provider: 'figma',
-      providerName: 'Figma',
-      src: 'https://embed.figma.com/proto/abc',
-      iframeTitle: 'Mart — interactive Figma prototype',
-    };
     const out = await c.renderToString(ProjectModule, {
       props: { module: embed, behanceUrl: BEHANCE_URL, locale: 'en' },
     });
-    expect(out).toContain('This part of the project is best viewed on Behance.');
+    expect(out).toMatch(/<div\b[^>]*data-embed-facade/);
     expect(out).not.toContain('<iframe');
-    expect(out).not.toContain('embed.figma.com');
+    expect(out).not.toContain('preconnect');
+    expect(out).not.toContain('This part of the project is best viewed on Behance.');
+    const button = /<button\b[^>]*data-embed-load[^>]*>/.exec(out)?.[0] ?? '';
+    expect(button).toMatch(/\shidden[\s>=]/);
+    expect(button).toContain('type="button"');
+    expect(button).toContain('bg-ink');
+    expect(button).not.toContain('bg-accent');
+    expect(out).toContain('Interactive prototype');
+    expect(out).toContain('Loading it connects to Figma.');
+    expect(out).toContain('Load interactive prototype');
+  });
+
+  it('keeps the Figma URL only inside data-src and the iframe title in data-title', async () => {
+    const c = await container();
+    const out = await c.renderToString(ProjectModule, {
+      props: { module: embed, behanceUrl: BEHANCE_URL, locale: 'en' },
+    });
+    expect(out.match(/embed\.figma\.com/g)).toHaveLength(1);
+    expect(out).toContain('data-src="https://embed.figma.com/proto/abc"');
+    expect(out).toContain('data-title="Mart — interactive Figma prototype"');
+  });
+
+  it('links the facade fallback to Behance in a new tab, localized', async () => {
+    const c = await container();
+    const out = await c.renderToString(ProjectModule, {
+      props: { module: embed, behanceUrl: BEHANCE_URL, locale: 'es' },
+    });
+    const link = /<a\b[^>]*>/.exec(out)?.[0] ?? '';
+    expect(link).toContain(`href="${BEHANCE_URL}"`);
+    expect(link).toContain('target="_blank"');
+    expect(link).toContain('rel="noopener noreferrer"');
+    expect(out).toContain('Ver el prototipo en Behance');
+    expect(out).toContain('Al cargarlo te conectas a Figma.');
+    expect(out).toContain('Cargar prototipo interactivo');
   });
 
   it('dispatches image and text modules', async () => {

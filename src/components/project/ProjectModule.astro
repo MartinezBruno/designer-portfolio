@@ -1,6 +1,7 @@
 ---
 /** Renders one ModuleView by kind. Components get props only, never Behance shapes (DATA-06). */
 import CollectionModule from './CollectionModule.astro';
+import EmbedFacade from './EmbedFacade.astro';
 import ImageModule from './ImageModule.astro';
 import TextModule from './TextModule.astro';
 import UnknownModule from './UnknownModule.astro';
@@ -30,8 +31,9 @@ const { module, behanceUrl, locale } = Astro.props;
   <CollectionModule rows={module.rows} />
 ) : module.kind === 'text' ? (
   <TextModule html={module.html} lang={module.lang} />
+) : module.kind === 'embed' ? (
+  <EmbedFacade module={module} behanceUrl={behanceUrl} locale={locale} />
 ) : (
-  // 'unknown', and 'embed' until 04-10 switches that branch to the click-to-load facade: the
-  // D-08 fallback is exactly what a non-allowlisted embed shows.
+  // 'unknown': the D-08 fallback, also what a non-allowlisted embed becomes at view-build time.
   <UnknownModule behanceUrl={behanceUrl} locale={locale} />
 )}
