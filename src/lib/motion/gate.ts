@@ -31,3 +31,15 @@ export function onMotionPreferenceChange(
     mq.removeEventListener('change', handler);
   };
 }
+
+/**
+ * Keeps `html[data-motion]` in sync when the OS reduced-motion setting changes after load, so
+ * every `motion-on:` variant (marquee layout, duplicate list, pause button) re-evaluates live.
+ * Returns an unsubscribe function. No-op without matchMedia (the gate already resolved 'off').
+ */
+export function syncMotionGate(doc: Document, win: Window): () => void {
+  if (typeof win.matchMedia !== 'function') return () => undefined;
+  return onMotionPreferenceChange(win, (state) => {
+    doc.documentElement.dataset['motion'] = state;
+  });
+}

@@ -4,6 +4,7 @@ import {
   applyMotionGate,
   motionGateInline,
   onMotionPreferenceChange,
+  syncMotionGate,
 } from '../../src/lib/motion/gate';
 
 // Typed stand-in for the browser MediaQueryList so tests can flip `matches` and fire 'change'.
@@ -101,5 +102,40 @@ describe('onMotionPreferenceChange', () => {
     expect(removeSpy).toHaveBeenCalledTimes(1);
     mql.fire(true);
     expect(cb).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('syncMotionGate', () => {
+  it('updates html[data-motion] when the preference changes after load, and unsubscribes', () => {
+    const mql = mockMatchMedia(false);
+    applyMotionGate(document, window);
+    const off = syncMotionGate(document, window);
+
+    mql.fire(true);
+    expect(document.documentElement.dataset['motion']).toBe('off');
+    mql.fire(false);
+    expect(document.documentElement.dataset['motion']).toBe('on');
+
+    off();
+    mql.fire(true);
+    expect(document.documentElement.dataset['motion']).toBe('on');
+  });
+
+  it('is a no-op without matchMedia', () => {
+    const own = Object.getOwnPropertyDescriptor(window, 'matchMedia');
+    Object.defineProperty(window, 'matchMedia', {
+      value: undefined,
+      configurable: true,
+      writable: true,
+    });
+    try {
+      const off = syncMotionGate(document, window);
+      expect(off).toBeTypeOf('function');
+      off();
+      expect(document.documentElement.dataset['motion']).toBeUndefined();
+    } finally {
+      Reflect.deleteProperty(window, 'matchMedia');
+      if (own) Object.defineProperty(window, 'matchMedia', own);
+    }
   });
 });
