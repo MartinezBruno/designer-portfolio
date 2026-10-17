@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import seed from '../../src/data/behance/snapshot.json';
 import services from '../../src/data/services.json';
 import { categoryIds } from '../../src/lib/projects/model';
@@ -159,5 +159,38 @@ describe('behance snapshot adapter', () => {
 
   it('reports the seed origin', () => {
     expect(getSnapshotOrigin()).toBe('seed');
+  });
+});
+
+describe('behance snapshot adapter failures', () => {
+  const SNAPSHOT_MODULE = '../../src/data/behance/snapshot.json';
+  const ADAPTER_MODULE = '../../src/lib/projects/sources/behance-snapshot';
+
+  async function importWith(snapshot: object): Promise<void> {
+    vi.resetModules();
+    vi.doMock(SNAPSHOT_MODULE, () => ({ default: snapshot }));
+    try {
+      await import(ADAPTER_MODULE);
+    } finally {
+      vi.doUnmock(SNAPSHOT_MODULE);
+      vi.resetModules();
+    }
+  }
+
+  it('throws an actionable message when a cover file is missing', async () => {
+    const project = validProject();
+    const missing = {
+      ...project,
+      id: '999',
+      cover: { ...project.cover, file: '999-000000000000.png' },
+    };
+    await expect(importWith({ ...validSnapshot(), projects: [missing] })).rejects.toThrow(
+      `snapshot: missing cover file 999-000000000000.png in src/assets/projects/${SUFFIX.slice(1)}`,
+    );
+  });
+
+  it('throws an actionable message when the snapshot is corrupt or empty', async () => {
+    await expect(importWith({})).rejects.toThrow(PREFIX);
+    await expect(importWith({})).rejects.toThrow(SUFFIX);
   });
 });
