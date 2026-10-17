@@ -1,11 +1,12 @@
-// Loads scripts/offline-guard.ts the way build:offline does (`node --import`) in a child process
+// Loads scripts/offline-guard.ts the way build:offline does (NODE_OPTIONS --import) in a child process
 // and checks that each network entry point is blocked and logged. Targets are `.invalid` names and
 // TEST-NET addresses, so even a guard regression sends nothing that can resolve or reach a host.
 import { spawnSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { readAttempts, readGuardRun } from '../../scripts/offline.ts';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const REPO_TMP = join(ROOT, 'tmp');
@@ -25,28 +26,47 @@ interface ProbeResult {
   status: number | null;
   stdout: string;
   stderr: string;
+  /** Recorded attempts, without the `#` marker lines. */
   log: string[];
+  /** The whole log file. */
+  raw: string;
 }
 
-async function probe(source: string): Promise<ProbeResult> {
-  const log = join(dir, 'guard.log');
+const GUARD_URL = new URL('../../scripts/offline-guard.ts', import.meta.url).href;
+
+/**
+ * Runs `source` as an ES module under the guard, preloaded through NODE_OPTIONS as build:offline
+ * does, so Node child processes load it too. `log` is relative to `cwd` when not absolute.
+ */
+async function probe(
+  source: string,
+  options: { cwd?: string; log?: string; env?: Record<string, string> } = {},
+): Promise<ProbeResult> {
+  const cwd = options.cwd ?? ROOT;
+  const log = options.log ?? join(dir, 'guard.log');
   const script = join(dir, 'probe.mjs');
   await writeFile(script, source);
   const base = Object.fromEntries(
     Object.entries(process.env).filter(([name]) => !name.startsWith('OFFLINE_GUARD')),
   );
-  const result = spawnSync(process.execPath, ['--import=./scripts/offline-guard.ts', script], {
-    cwd: ROOT,
+  const result = spawnSync(process.execPath, [script], {
+    cwd,
     encoding: 'utf8',
-    env: { ...base, OFFLINE_GUARD_LOG: log },
+    env: {
+      ...base,
+      NODE_OPTIONS: `--import=${GUARD_URL}`,
+      OFFLINE_GUARD_LOG: log,
+      ...options.env,
+    },
     timeout: 20000,
   });
-  const text = await readFile(log, 'utf8');
+  const raw = await readFile(resolve(cwd, log), 'utf8');
   return {
     status: result.status,
     stdout: result.stdout,
     stderr: result.stderr,
-    log: text.split('\n').filter((line) => line !== '' && !line.startsWith('#')),
+    log: readAttempts(raw),
+    raw,
   };
 }
 
@@ -106,7 +126,7 @@ describe('offline guard: worker threads', () => {
   it('loads the guard in eval, file and custom-env workers and logs their attempts', async () => {
     const result = await probe(`
       import { writeFileSync } from 'node:fs';
-      import { join } from 'node:path';
+      import { join, resolve } from 'node:path';
       import { Worker } from 'node:worker_threads';
       const body = (label) => \`
         import('node:worker_threads').then(({ parentPort }) =>
@@ -137,5 +157,48 @@ describe('offline guard: worker threads', () => {
       'fetch https://file-worker.invalid/',
       'fetch https://env-worker.invalid/',
     ]);
+  });
+});
+
+describe('offline guard: log', () => {
+  it('writes start and end markers for one run', async () => {
+    const result = await probe(`await fetch('https://marker.invalid/').catch(() => {});`);
+    expect(result.status).toBe(0);
+    const run = readGuardRun(result.raw);
+    expect(run).not.toBeNull();
+    expect(run?.end).not.toBeNull();
+    expect(result.raw.trim().split('\n')).toHaveLength(3);
+    expect(result.log).toEqual(['fetch https://marker.invalid/']);
+  });
+
+  it('resolves a relative log path once, so a child in another cwd logs to the same file', async () => {
+    const other = join(dir, 'elsewhere');
+    await mkdir(other);
+    const result = await probe(
+      `
+      import { spawnSync } from 'node:child_process';
+      const child = spawnSync(process.execPath, ['-e', "fetch('https://child.invalid/').catch(() => {})"], {
+        cwd: ${JSON.stringify(other)},
+        encoding: 'utf8',
+      });
+      process.stdout.write(child.stderr);
+    `,
+      { cwd: dir, log: 'guard.log' },
+    );
+    expect(result.stdout).toBe('');
+    expect(result.status).toBe(0);
+    expect(result.log).toEqual(['fetch https://child.invalid/']);
+    expect(readGuardRun(result.raw)?.end).not.toBeNull();
+  });
+
+  it('starts a fresh log when OFFLINE_GUARD_ACTIVE leaked from the shell', async () => {
+    const log = join(dir, 'guard.log');
+    await writeFile(log, 'fetch https://stale.invalid/\n');
+    const result = await probe(`await fetch('https://fresh.invalid/').catch(() => {});`, {
+      log,
+      env: { OFFLINE_GUARD_ACTIVE: '1' },
+    });
+    expect(result.log).toEqual(['fetch https://fresh.invalid/']);
+    expect(readGuardRun(result.raw)).not.toBeNull();
   });
 });

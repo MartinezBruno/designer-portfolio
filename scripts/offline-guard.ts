@@ -8,24 +8,44 @@
 // addons doing their own I/O, and subprocesses that are not Node (for example a shell `curl`).
 import dgram from 'node:dgram';
 import dns from 'node:dns';
-import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
 import net from 'node:net';
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import workerThreads from 'node:worker_threads';
-import { isIpcConnect } from './offline.ts';
+import { DEFAULT_GUARD_LOG, guardMarker, isIpcConnect, readGuardRun } from './offline.ts';
 import type { ConnectTarget } from './offline.ts';
 
-const log = process.env['OFFLINE_GUARD_LOG'] ?? 'tmp/offline-guard.log';
+// Resolved once and exported, so children and workers that run in another cwd still write here.
+const log = resolve(process.env['OFFLINE_GUARD_LOG'] ?? DEFAULT_GUARD_LOG);
+process.env['OFFLINE_GUARD_LOG'] = log;
 const ACTIVE = 'OFFLINE_GUARD_ACTIVE';
 
+function readLog(): string {
+  try {
+    return readFileSync(log, 'utf8');
+  } catch {
+    return '';
+  }
+}
+
 mkdirSync(dirname(log), { recursive: true });
-// Child processes inherit NODE_OPTIONS and load this guard again: only the first one truncates.
-// Workers share the log and never truncate it.
-if (workerThreads.isMainThread && process.env[ACTIVE] !== '1') {
-  writeFileSync(log, '');
-  process.env[ACTIVE] = '1';
+// Child processes inherit NODE_OPTIONS and load this guard again, and workers load it through
+// --require. Only the root process truncates the log and writes the start and end markers that
+// scripts/assert-offline.ts requires. A process is not the root when OFFLINE_GUARD_ACTIVE holds
+// the run id of the log's start marker; a value leaked from the shell does not match and is reset.
+const inherited = process.env[ACTIVE];
+const isRoot =
+  workerThreads.isMainThread &&
+  (inherited === undefined || readGuardRun(readLog())?.runId !== inherited);
+if (isRoot) {
+  const runId = `${String(process.pid)}-${String(Date.now())}`;
+  writeFileSync(log, `${guardMarker('start', runId, new Date())}\n`);
+  process.env[ACTIVE] = runId;
+  process.on('exit', () => {
+    appendFileSync(log, `${guardMarker('end', runId, new Date())}\n`);
+  });
 }
 
 function note(what: string): void {
@@ -152,7 +172,7 @@ class GuardedWorker extends OriginalWorker {
     const execArgv = ['--require', GUARD, ...(options.execArgv ?? process.execArgv)];
     const env =
       typeof options.env === 'object' && options.env !== null
-        ? { ...options.env, OFFLINE_GUARD_LOG: log, [ACTIVE]: '1' }
+        ? { ...options.env, OFFLINE_GUARD_LOG: log, [ACTIVE]: process.env[ACTIVE] }
         : options.env;
     super(filename, { ...options, execArgv, ...(env === undefined ? {} : { env }) });
   }

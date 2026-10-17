@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { findCdnReferences, isIpcConnect, readAttempts } from '../../scripts/offline.ts';
+import {
+  findCdnReferences,
+  guardMarker,
+  isIpcConnect,
+  readAttempts,
+  readGuardRun,
+  staleGuardLog,
+} from '../../scripts/offline.ts';
 
 describe('findCdnReferences', () => {
   it.each([
@@ -50,6 +57,45 @@ describe('readAttempts', () => {
 
   it('returns nothing for an empty log', () => {
     expect(readAttempts('')).toEqual([]);
+  });
+
+  it('skips # marker lines', () => {
+    const start = guardMarker('start', '1-2', new Date('2026-10-17T10:00:00Z'));
+    expect(readAttempts(`${start}\nconnect a.b:443\n# note\n`)).toEqual(['connect a.b:443']);
+  });
+});
+
+describe('guard run markers', () => {
+  const START = new Date('2026-10-17T10:00:00.000Z');
+  const END = new Date('2026-10-17T10:01:00.000Z');
+  const full = `${guardMarker('start', '42-7', START)}\n${guardMarker('end', '42-7', END)}\n`;
+  const inside = Date.parse('2026-10-17T10:00:30.000Z');
+
+  it('reads the run id, start and end of a log', () => {
+    expect(readGuardRun(full)).toEqual({ runId: '42-7', start: START, end: END });
+  });
+
+  it('needs the start marker on the first line', () => {
+    expect(readGuardRun('')).toBeNull();
+    expect(readGuardRun(`fetch x\n${full}`)).toBeNull();
+  });
+
+  it('ignores an end marker from another run', () => {
+    const other = `${guardMarker('start', '42-7', START)}\n${guardMarker('end', '9-9', END)}\n`;
+    expect(readGuardRun(other)?.end).toBeNull();
+  });
+
+  it('accepts a dist/ built inside the guarded run', () => {
+    expect(staleGuardLog(full, inside)).toBeNull();
+  });
+
+  it.each([
+    ['an empty log', '', inside, /no start marker/],
+    ['an unfinished run', `${guardMarker('start', '42-7', START)}\n`, inside, /did not finish/],
+    ['a dist/ built after the run', full, Date.parse('2026-10-17T11:00:00.000Z'), /not produced/],
+    ['a dist/ built before the run', full, Date.parse('2026-10-17T09:00:00.000Z'), /not produced/],
+  ])('rejects %s', (_label, text, newest, message) => {
+    expect(staleGuardLog(text, newest)).toMatch(message);
   });
 });
 

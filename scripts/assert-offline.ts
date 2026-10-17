@@ -1,11 +1,12 @@
 // Offline build gate (DATA-04): run after the guarded `astro build`. Fails when the offline guard
-// recorded any network attempt, or when dist/ HTML references the Behance image CDNs.
+// recorded any network attempt, when the guard log does not come from the build that produced
+// dist/, or when dist/ HTML references the Behance image CDNs.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
-import { findCdnReferences, readAttempts } from './offline.ts';
+import { join, resolve } from 'node:path';
+import { DEFAULT_GUARD_LOG, findCdnReferences, readAttempts, staleGuardLog } from './offline.ts';
 
 const DIST = 'dist';
-const LOG = process.env['OFFLINE_GUARD_LOG'] ?? 'tmp/offline-guard.log';
+const LOG = resolve(process.env['OFFLINE_GUARD_LOG'] ?? DEFAULT_GUARD_LOG);
 
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -19,7 +20,8 @@ if (!existsSync(LOG)) {
   process.exit(1);
 }
 
-const attempts = readAttempts(readFileSync(LOG, 'utf8'));
+const logText = readFileSync(LOG, 'utf8');
+const attempts = readAttempts(logText);
 if (attempts.length > 0) {
   console.error(
     `offline build failed: ${attempts.length} network attempts:\n${attempts.join('\n')}`,
@@ -32,7 +34,15 @@ if (!existsSync(DIST)) {
   process.exit(1);
 }
 
-const htmlFiles = walk(DIST).filter((file) => file.endsWith('.html'));
+const distFiles = walk(DIST);
+const newestDistMs = Math.max(...distFiles.map((file) => statSync(file).mtimeMs));
+const stale = staleGuardLog(logText, newestDistMs);
+if (stale !== null) {
+  console.error(`offline build failed: ${stale} — run pnpm build:offline`);
+  process.exit(1);
+}
+
+const htmlFiles = distFiles.filter((file) => file.endsWith('.html'));
 const problems = htmlFiles.flatMap((file) =>
   findCdnReferences(readFileSync(file, 'utf8')).map((url) => `${file}: ${url}`),
 );
