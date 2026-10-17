@@ -92,15 +92,32 @@ for (const [path, dict, locale] of cases) {
       expect(buttonBox?.height).toBe(bandBox?.height);
       expect(buttonBox?.height ?? 0).toBeGreaterThanOrEqual(44);
       await expect(button).toHaveAttribute('aria-pressed', 'false');
+      // WR-01: the visible play state must match aria-pressed while the pointer is still over
+      // the band and the button still has focus (hover/focus must not contradict the toggle).
+      await button.click();
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('paused');
+      await button.click();
+      await expect(button).toHaveAttribute('aria-pressed', 'false');
+      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('running');
       await button.click();
       await expect(button).toHaveAttribute('aria-pressed', 'true');
       await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('paused');
 
-      await button.focus();
+      // Re-enter with the keyboard so the button has real :focus-visible focus.
+      await page.mouse.move(0, 0);
+      await page.keyboard.press('Shift+Tab');
+      await page.keyboard.press('Tab');
+      expect(await button.evaluate((el) => el.matches(':focus-visible'))).toBe(true);
       await page.keyboard.press('Space');
       await expect(button).toHaveAttribute('aria-pressed', 'false');
+      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('running');
       await page.keyboard.press('Enter');
       await expect(button).toHaveAttribute('aria-pressed', 'true');
+      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('paused');
+      await page.keyboard.press('Enter');
+      await expect(button).toHaveAttribute('aria-pressed', 'false');
+      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('running');
       await expect(button).toHaveAttribute('aria-label', dict['roles.pause']);
 
       // D-16: white role text on the accent band.

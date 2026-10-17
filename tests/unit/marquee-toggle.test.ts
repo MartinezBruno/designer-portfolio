@@ -49,6 +49,23 @@ describe('initMarqueeToggles', () => {
     cleanup?.();
   });
 
+  it('marks an explicit resume with data-playing, exclusive with data-paused', () => {
+    const cleanup = initMarqueeToggles(document);
+    const button = getButton();
+    const section = getSection();
+    expect(section.hasAttribute('data-playing')).toBe(false);
+
+    button.click();
+    expect(section.hasAttribute('data-paused')).toBe(true);
+    expect(section.hasAttribute('data-playing')).toBe(false);
+
+    button.click();
+    expect(section.hasAttribute('data-paused')).toBe(false);
+    expect(section.hasAttribute('data-playing')).toBe(true);
+
+    cleanup?.();
+  });
+
   it('keeps a fixed aria-label across clicks', () => {
     const cleanup = initMarqueeToggles(document);
     const button = getButton();
