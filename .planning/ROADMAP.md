@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Bilingual Walking Skeleton** - Astro site with quality gates, EN/ES routing, shared layout, hero, 404, plus motion gate and lifecycle registry (completed 2026-10-16)
 - [x] **Phase 2: Homepage Story** - Roles marquee, 4 featured services, tools, and availability badge, in both languages (completed 2026-10-17)
-- [ ] **Phase 3: Real Behance Work** - Consent, a typed project model, a fail-loud snapshot sync, latest 3 on Home, and the Projects list page
+- [x] **Phase 3: Real Behance Work** - Consent, a typed project model, a fail-loud snapshot sync, latest 3 on Home, and the Projects list page (completed 2026-10-17)
 - [ ] **Phase 4: Project Detail & Discovery** - Mirrored detail pages with metadata and navigation, plus conditional filter/search
 - [ ] **Phase 5: Contact** - Working spam-protected contact form (logging mailer in v1), service pre-selection, and a mailto fallback
 - [ ] **Phase 6: Scroll & Interaction Motion** - Reveals, text splits, cursor/magnetic buttons, card hover effects, reduced-motion support, and a motion toggle
@@ -115,7 +115,7 @@ Plans:
   4. Visitor sees the 3 latest projects on the homepage, sorted by publish date and linking to their detail-page URLs, and a Projects page listing all projects newest first at `/projects` and `/es/projects` (exact slugs to be decided in planning).
   5. Developer can hide, reorder, feature, recategorize, or add alt text to a project through local overrides, and the change shows up on the site. UI components read only the source-agnostic typed model, never the Behance adapter.
 
-**Plans:** 10/10 plans executed (phase verification pending)
+**Plans**: 10 plans
 
 Plans:
 **Wave 1**
@@ -240,7 +240,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 |-------|----------------|--------|-----------|
 | 1. Bilingual Walking Skeleton | 5/5 | Complete   | 2026-10-16 |
 | 2. Homepage Story | 8/8 | Complete   | 2026-10-17 |
-| 3. Real Behance Work | 10/10 | Verifying  |  |
+| 3. Real Behance Work | 10/10 | Complete   | 2026-10-17 |
 | 4. Project Detail & Discovery | 0/TBD | Not started | - |
 | 5. Contact | 0/TBD | Not started | - |
 | 6. Scroll & Interaction Motion | 0/TBD | Not started | - |
