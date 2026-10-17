@@ -1,5 +1,8 @@
 ---
 import Hero from '../sections/Hero.astro';
+import RolesMarquee from '../sections/RolesMarquee.astro';
+import FeaturedServices from '../sections/FeaturedServices.astro';
+import ToolsRow from '../sections/ToolsRow.astro';
 import { getHomeContent } from '../../lib/content/queries';
 import type { Locale } from '../../i18n/t';
 
@@ -7,8 +10,15 @@ interface Props {
   locale: Locale;
 }
 
+// HomeView is the only content reader for the homepage; sections stay prop-driven.
 const { locale } = Astro.props;
-const content = await getHomeContent(locale);
+const { available, roles, services, tools } = await getHomeContent(locale);
 ---
 
-<Hero locale={locale} available={content.available} />
+<Hero locale={locale} available={available} />
+<RolesMarquee roles={roles} locale={locale} />
+<!-- Phase 3 inserts the latest projects between services and tools. -->
+<div class="flex flex-col gap-16 py-16">
+  <FeaturedServices services={services} locale={locale} />
+  <ToolsRow tools={tools} locale={locale} />
+</div>
