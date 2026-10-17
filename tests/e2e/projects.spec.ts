@@ -136,6 +136,16 @@ for (const { path, lang, dict, canonical, otherHref } of cases) {
       expect(violations).toEqual([]);
     });
 
+    test('has no filter or search UI (PROJ-04..07 N/A, D-16)', async ({ page }) => {
+      // 7 projects < 8: discovery stays off until sync:behance prints the >=8 notice.
+      await page.goto(path);
+      await expect(
+        page
+          .locator('main')
+          .locator('[role="search"], input, select, form, [aria-live], [aria-pressed]'),
+      ).toHaveCount(0);
+    });
+
     test('serves only local covers', async ({ page }) => {
       await page.goto(path);
       const sources = await page
