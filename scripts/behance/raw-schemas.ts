@@ -37,6 +37,45 @@ const RawLabelSchema = z.object({ id: behanceId, title: z.string() });
 
 export const RawModuleSchema = z.looseObject({ __typename: z.string() });
 
+// Module shapes the content normalizer reads (module-content.ts). Raw width/height are the 600px
+// display size and are never trusted; altText is never read (Phase 3 D-15).
+export const RawImageSizesSchema = z.looseObject({
+  allAvailable: z.array(
+    z.looseObject({
+      url: z.string(),
+      width: z.number().nullable().optional(),
+      type: z.string().optional(),
+    }),
+  ),
+});
+
+export const RawImageModuleSchema = z.looseObject({
+  __typename: z.literal('ImageModule'),
+  id: behanceId,
+  fullBleed: z.union([z.literal(0), z.literal(1), z.boolean()]).optional(),
+  caption: z.string().optional(),
+  imageSizes: RawImageSizesSchema,
+});
+
+export const RawCollectionModuleSchema = z.looseObject({
+  __typename: z.literal('MediaCollectionModule'),
+  id: behanceId,
+  components: z.array(z.looseObject({ id: behanceId, imageSizes: RawImageSizesSchema })).min(1),
+});
+
+export const RawTextModuleSchema = z.looseObject({
+  __typename: z.literal('TextModule'),
+  id: behanceId,
+  text: z.string(),
+});
+
+export const RawEmbedModuleSchema = z.looseObject({
+  __typename: z.literal('EmbedModule'),
+  id: behanceId,
+  originalEmbed: z.string().optional(),
+  fluidEmbed: z.string().optional(),
+});
+
 export const RawProjectSchema = z.looseObject({
   id: z.number().int(),
   slug: z.string(),
