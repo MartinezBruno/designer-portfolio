@@ -178,7 +178,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 04-07-PLAN.md — Wire content + module images into sync:behance, image reuse, moduleAlt overrides and checklist
+- [x] 04-07-PLAN.md — Wire content + module images into sync:behance, image reuse, moduleAlt overrides and checklist
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -273,7 +273,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 1. Bilingual Walking Skeleton | 5/5 | Complete   | 2026-10-16 |
 | 2. Homepage Story | 8/8 | Complete   | 2026-10-17 |
 | 3. Real Behance Work | 10/10 | Complete   | 2026-10-17 |
-| 4. Project Detail & Discovery | 6/11 | In Progress|  |
+| 4. Project Detail & Discovery | 7/11 | In Progress|  |
 | 5. Contact | 0/TBD | Not started | - |
 | 6. Scroll & Interaction Motion | 0/TBD | Not started | - |
 | 7. Page Transitions & Smooth Scroll | 0/TBD | Not started | - |
