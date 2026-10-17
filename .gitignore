@@ -35,3 +35,6 @@ playwright-report/
 
 # scratch: offline-guard log, behance sync staging
 tmp/
+
+# claude code local state (agent worktrees, settings)
+.claude/
