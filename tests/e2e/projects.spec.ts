@@ -98,8 +98,13 @@ for (const { path, lang, dict, canonical, otherHref } of cases) {
         expect(alt).toBeTruthy();
         expect(alt).not.toContain('Image may contain');
       }
-      const title = expected[0]?.title ?? '';
-      expect(alts[0]).toBe(interpolate(dict['projects.coverAlt'], { title }));
+      // A curated coverAlt wins; without one the `{title} — cover` fallback applies (D-15).
+      expect(alts).toEqual(
+        expected.map(
+          (project) =>
+            project.coverAlt ?? interpolate(dict['projects.coverAlt'], { title: project.title }),
+        ),
+      );
     });
 
     test('has a self canonical and en/es/x-default alternates', async ({ page }) => {

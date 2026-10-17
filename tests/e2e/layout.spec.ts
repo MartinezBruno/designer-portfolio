@@ -222,11 +222,19 @@ test.describe('phase 3 header and layout', () => {
     }
     expect(onProject, 'Shift+Tab should reach a project link').toBe(true);
 
-    const { tileTop, headerBottom } = await page.evaluate(() => {
+    // WCAG 2.4.11 is about the focused control. At max scroll the last tile's cover may tuck under
+    // the header (real summaries make it taller), but the focused link must be fully visible.
+    const { linkTop, tileBottom, headerBottom } = await page.evaluate(() => {
+      const link = document.activeElement?.getBoundingClientRect();
       const tile = document.activeElement?.closest('article')?.getBoundingClientRect();
       const header = document.querySelector('header')?.getBoundingClientRect();
-      return { tileTop: tile?.top ?? -Infinity, headerBottom: header?.bottom ?? Infinity };
+      return {
+        linkTop: link?.top ?? -Infinity,
+        tileBottom: tile?.bottom ?? -Infinity,
+        headerBottom: header?.bottom ?? Infinity,
+      };
     });
-    expect(tileTop).toBeGreaterThanOrEqual(headerBottom);
+    expect(linkTop).toBeGreaterThanOrEqual(headerBottom);
+    expect(tileBottom).toBeGreaterThan(headerBottom);
   });
 });

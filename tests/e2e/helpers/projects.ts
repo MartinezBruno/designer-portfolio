@@ -22,6 +22,7 @@ export interface ExpectedProject {
   titleLang: Locale | null;
   category: string | null;
   summary: string | null;
+  coverAlt: string | null;
 }
 
 const overrides = parseOverrides(overridesRaw);
@@ -49,6 +50,7 @@ function rows(locale: Locale): ExpectedProject[] {
       titleLang: override.title !== undefined || contentLang === locale ? null : contentLang,
       category: categoryLabel(override.category, locale),
       summary: override.summary?.[locale] ?? null,
+      coverAlt: override.coverAlt?.[locale] ?? null,
     };
   });
 }
