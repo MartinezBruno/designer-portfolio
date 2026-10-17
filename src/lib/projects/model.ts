@@ -52,6 +52,12 @@ export interface ProjectCardView {
   coverAlt: string;
 }
 
+/** The card fields the next-project teaser and the previous link need (D-14). */
+export type TeaserView = Pick<
+  ProjectCardView,
+  'slug' | 'href' | 'title' | 'titleLang' | 'cover' | 'coverAlt'
+>;
+
 /** A tool on the detail page. `icon` is null when the Behance title matches no tools.json name. */
 export interface DetailTool {
   name: string;
@@ -70,4 +76,7 @@ export interface ProjectDetailView {
   cover: ImageMetadata;
   coverAlt: string;
   seo: { title: string; description: string };
+  /** Wrapping neighbours in the /projects order (D-13). Null with 1 project; previous null with 2. */
+  next: TeaserView | null;
+  previous: TeaserView | null;
 }

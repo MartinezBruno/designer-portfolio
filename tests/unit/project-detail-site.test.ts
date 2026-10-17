@@ -37,6 +37,8 @@ function tool(id: string, name: string, icon: ToolEntry['data']['icon']): ToolEn
   return { id, data: { order: 1, name, icon } };
 }
 
+const none = { next: null, previous: null };
+
 const toolIcons = buildToolIcons([
   tool('figma', 'Figma', 'figma'),
   tool('photoshop', 'Adobe Photoshop', 'photoshop'),
@@ -52,20 +54,20 @@ describe('buildToolIcons', () => {
 
 describe('toDetailView', () => {
   it('falls back to the Behance title marked as Spanish on en', () => {
-    const view = toDetailView(project(), 'en', categoryTitles, toolIcons);
+    const view = toDetailView(project(), 'en', categoryTitles, toolIcons, none);
     expect(view.title).toBe('Cabrera´s motos, Posts');
     expect(view.titleLang).toBe('es');
   });
 
   it('does not mark a fallback title rendered in its own language', () => {
-    const view = toDetailView(project(), 'es', categoryTitles, toolIcons);
+    const view = toDetailView(project(), 'es', categoryTitles, toolIcons, none);
     expect(view.titleLang).toBeNull();
   });
 
   it('uses the override title per locale with no lang mark', () => {
     const title = { en: 'Cabrera’s Motos social posts', es: 'Posts para Cabrera’s Motos' };
-    const en = toDetailView(project({ title }), 'en', categoryTitles, toolIcons);
-    const es = toDetailView(project({ title }), 'es', categoryTitles, toolIcons);
+    const en = toDetailView(project({ title }), 'en', categoryTitles, toolIcons, none);
+    const es = toDetailView(project({ title }), 'es', categoryTitles, toolIcons, none);
     expect(en.title).toBe(title.en);
     expect(es.title).toBe(title.es);
     expect(en.titleLang).toBeNull();
@@ -73,7 +75,7 @@ describe('toDetailView', () => {
   });
 
   it('localizes summary and category, or returns null', () => {
-    const empty = toDetailView(project(), 'en', categoryTitles, toolIcons);
+    const empty = toDetailView(project(), 'en', categoryTitles, toolIcons, none);
     expect(empty.summary).toBeNull();
     expect(empty.category).toBeNull();
     const view = toDetailView(
@@ -81,6 +83,7 @@ describe('toDetailView', () => {
       'es',
       { ...categoryTitles, branding: 'Branding ES' },
       toolIcons,
+      none,
     );
     expect(view.summary).toBe('Resumen');
     expect(view.category).toBe('Branding ES');
@@ -92,6 +95,7 @@ describe('toDetailView', () => {
       'en',
       categoryTitles,
       toolIcons,
+      none,
     );
     expect(view.tools).toEqual([
       { name: 'Blender', icon: null },
@@ -101,26 +105,27 @@ describe('toDetailView', () => {
   });
 
   it('links to the Behance source and keeps the cover', () => {
-    const view = toDetailView(project(), 'en', categoryTitles, toolIcons);
+    const view = toDetailView(project(), 'en', categoryTitles, toolIcons, none);
     expect(view.behanceUrl).toBe('https://www.behance.net/gallery/238078789/Cabreras-motos-Posts');
     expect(view.cover).toBe(portrait);
     expect(view.slug).toBe('cabreras-motos-posts');
   });
 
   it('uses the curated cover alt or the localized fallback', () => {
-    const fallback = toDetailView(project(), 'es', categoryTitles, toolIcons);
+    const fallback = toDetailView(project(), 'es', categoryTitles, toolIcons, none);
     expect(fallback.coverAlt).toBe('Cabrera´s motos, Posts — portada');
     const curated = toDetailView(
       project({ coverAlt: { en: 'Motorbike posts', es: 'Posts de motos' } }),
       'en',
       categoryTitles,
       toolIcons,
+      none,
     );
     expect(curated.coverAlt).toBe('Motorbike posts');
   });
 
   it('builds date-free SEO copy from the summary or the fallback', () => {
-    const fallback = toDetailView(project(), 'en', categoryTitles, toolIcons);
+    const fallback = toDetailView(project(), 'en', categoryTitles, toolIcons, none);
     expect(fallback.seo).toEqual({
       title: 'Cabrera´s motos, Posts — Martina Fernandez',
       description: 'Cabrera´s motos, Posts, a project by Martina Fernandez, graphic designer.',
@@ -130,11 +135,46 @@ describe('toDetailView', () => {
       'en',
       categoryTitles,
       toolIcons,
+      none,
     );
     expect(withSummary.seo.description).toBe('English summary');
     const year = String(new Date(1762478100 * 1000).getUTCFullYear());
     for (const text of [fallback.seo.title, fallback.seo.description]) {
       expect(text).not.toContain(year);
     }
+  });
+
+  it('has no neighbours when given none', () => {
+    const view = toDetailView(project(), 'en', categoryTitles, toolIcons, none);
+    expect(view.next).toBeNull();
+    expect(view.previous).toBeNull();
+  });
+
+  it('maps neighbours to localized teaser fields only', () => {
+    const next = project({
+      id: '2',
+      slug: 'portfolio-web',
+      sourceTitle: 'Portfolio web',
+      title: { en: 'Portfolio website', es: 'Sitio portfolio' },
+    });
+    const previous = project({ id: '3', slug: 'sistema-visual', sourceTitle: 'Sistema visual' });
+    const view = toDetailView(project(), 'en', categoryTitles, toolIcons, { next, previous });
+    expect(view.next).toEqual({
+      slug: 'portfolio-web',
+      href: '/projects/portfolio-web/',
+      title: 'Portfolio website',
+      titleLang: null,
+      cover: portrait,
+      coverAlt: 'Portfolio website — cover',
+    });
+    expect(view.previous).toMatchObject({
+      href: '/projects/sistema-visual/',
+      title: 'Sistema visual',
+      titleLang: 'es',
+    });
+    const es = toDetailView(project(), 'es', categoryTitles, toolIcons, { next, previous });
+    expect(es.next?.href).toBe('/es/projects/portfolio-web/');
+    expect(es.next?.title).toBe('Sitio portfolio');
+    expect(es.previous?.titleLang).toBeNull();
   });
 });

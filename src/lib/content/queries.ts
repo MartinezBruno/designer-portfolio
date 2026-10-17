@@ -1,6 +1,7 @@
 import { getCollection, getEntry } from 'astro:content';
 import type { Locale } from '../../i18n/config';
 import { buildCategoryTitles, toCardView } from '../projects/card-view';
+import { neighbours } from '../projects/detail-view';
 import { buildToolIcons, toDetailView } from '../projects/detail-view-site';
 import { overrides } from '../projects/local-overrides';
 import type { Project, ProjectCardView, ProjectDetailView } from '../projects/model';
@@ -75,8 +76,9 @@ async function loadDetails(locale: Locale): Promise<ProjectDetailView[]> {
   const [services, tools] = await Promise.all([getCollection('services'), getCollection('tools')]);
   const categoryTitles = buildCategoryTitles(services, locale);
   const toolIcons = buildToolIcons(tools);
-  return sortProjects(loadProjects()).map((project) =>
-    toDetailView(project, locale, categoryTitles, toolIcons),
+  const sorted = sortProjects(loadProjects());
+  return sorted.map((project) =>
+    toDetailView(project, locale, categoryTitles, toolIcons, neighbours(sorted, project.slug)),
   );
 }
 
@@ -93,7 +95,8 @@ export async function getProjectPaths(
 
 /** One visible project's detail view. Throws on an unknown or hidden slug. */
 export async function getProjectDetail(locale: Locale, slug: string): Promise<ProjectDetailView> {
-  const project = sortProjects(loadProjects()).find((entry) => entry.slug === slug);
+  const sorted = sortProjects(loadProjects());
+  const project = sorted.find((entry) => entry.slug === slug);
   if (project === undefined) {
     throw new Error(
       `projects: no visible project with slug "${slug}". Check src/data/project-overrides.json`,
@@ -105,5 +108,6 @@ export async function getProjectDetail(locale: Locale, slug: string): Promise<Pr
     locale,
     buildCategoryTitles(services, locale),
     buildToolIcons(tools),
+    neighbours(sorted, project.slug),
   );
 }

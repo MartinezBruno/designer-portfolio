@@ -6,11 +6,27 @@ import type { Locale } from '../../i18n/config';
 import { interpolate, useTranslations } from '../../i18n/t';
 import type { ToolIconKey } from '../content/icons';
 import type { ToolEntry } from '../content/home';
-import type { CategoryId, Project, ProjectDetailView } from './model';
+import { toCardView } from './card-view';
+import type { CategoryId, Project, ProjectDetailView, TeaserView } from './model';
 
 /** Tool name → icon key. Behance tool titles match tools.json names exactly (D-12). */
 export function buildToolIcons(entries: readonly ToolEntry[]): ReadonlyMap<string, ToolIconKey> {
   return new Map(entries.map((entry) => [entry.data.name, entry.data.icon]));
+}
+
+/** Teaser fields of a neighbour, localized through the card builder (one localization path). */
+function toTeaserView(
+  project: Project | null,
+  locale: Locale,
+  categoryTitles: Readonly<Record<CategoryId, string>>,
+): TeaserView | null {
+  if (project === null) return null;
+  const { slug, href, title, titleLang, cover, coverAlt } = toCardView(
+    project,
+    locale,
+    categoryTitles,
+  );
+  return { slug, href, title, titleLang, cover, coverAlt };
 }
 
 export function toDetailView(
@@ -18,6 +34,7 @@ export function toDetailView(
   locale: Locale,
   categoryTitles: Readonly<Record<CategoryId, string>>,
   toolIcons: ReadonlyMap<string, ToolIconKey>,
+  neighbours: { next: Project | null; previous: Project | null },
 ): ProjectDetailView {
   const t = useTranslations(locale);
   const title = project.title?.[locale] ?? project.sourceTitle;
@@ -40,5 +57,7 @@ export function toDetailView(
       title: interpolate(t('meta.project.title'), { title }),
       description: summary ?? interpolate(t('meta.project.description'), { title }),
     },
+    next: toTeaserView(neighbours.next, locale, categoryTitles),
+    previous: toTeaserView(neighbours.previous, locale, categoryTitles),
   };
 }
