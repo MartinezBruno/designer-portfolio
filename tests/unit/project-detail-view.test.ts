@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { neighbours } from '../../src/lib/projects/detail-view';
+import {
+  collectionItemSizes,
+  collectionRows,
+  escapeHtml,
+  injectNewTabHint,
+  moduleWidths,
+  neighbours,
+} from '../../src/lib/projects/detail-view';
 import type { OrderFields } from '../../src/lib/projects/model';
 import { sortProjects } from '../../src/lib/projects/projects';
 
@@ -77,5 +84,74 @@ describe('neighbours', () => {
     expect(slugs(neighbours(sorted, 'p4'))).toEqual({ next: 'p1', previous: 'p3' });
     expect(slugs(neighbours(sorted, 'p3'))).toEqual({ next: 'p4', previous: 'p1' });
     expect(() => neighbours(sorted, 'p2')).toThrow(/p2/);
+  });
+});
+
+describe('collectionRows', () => {
+  it.each([
+    [1, [1]],
+    [2, [2]],
+    [3, [3]],
+    [4, [2, 2]],
+    [5, [3, 2]],
+    [6, [3, 3]],
+    [7, [3, 2, 2]],
+    [8, [3, 3, 2]],
+  ])('splits %i components into rows %j', (count, rows) => {
+    expect(collectionRows(count)).toEqual(rows);
+  });
+
+  it('never makes a row of 1 or of 4+ from 2 components up', () => {
+    for (let count = 2; count <= 30; count += 1) {
+      const rows = collectionRows(count);
+      expect(rows.reduce((sum, row) => sum + row, 0)).toBe(count);
+      for (const row of rows) expect([2, 3]).toContain(row);
+    }
+  });
+
+  it.each([0, -1, 2.5])('throws on %d', (count) => {
+    expect(() => collectionRows(count)).toThrow();
+  });
+});
+
+describe('moduleWidths', () => {
+  it('caps the widths at the stored width, never upscaling', () => {
+    expect(moduleWidths(1400)).toEqual([640, 960, 1400]);
+    expect(moduleWidths(900)).toEqual([640]);
+    expect(moduleWidths(500)).toEqual([500]);
+  });
+});
+
+describe('collectionItemSizes', () => {
+  it('builds sizes from the row share', () => {
+    expect(collectionItemSizes(0.5)).toBe(
+      '(min-width: 1400px) 700px, (min-width: 640px) 50vw, 100vw',
+    );
+    expect(collectionItemSizes(1 / 3)).toBe(
+      '(min-width: 1400px) 467px, (min-width: 640px) 33vw, 100vw',
+    );
+  });
+});
+
+describe('injectNewTabHint', () => {
+  it('adds the escaped sr-only hint before every closing anchor', () => {
+    const html = '<p><a href="https://a.test">A</a> and <a href="https://b.test">B</a></p>';
+    const span = '<span class="sr-only" lang="en">&lt;x&gt; &amp; &quot;y&quot;</span>';
+    expect(injectNewTabHint(html, '<x> & "y"', 'en')).toBe(
+      `<p><a href="https://a.test">A${span}</a> and <a href="https://b.test">B${span}</a></p>`,
+    );
+  });
+
+  it('leaves html without links unchanged', () => {
+    const html = '<div style="text-align: center">Plain <strong>text</strong></div>';
+    expect(injectNewTabHint(html, '(opens in a new tab)', 'es')).toBe(html);
+  });
+});
+
+describe('escapeHtml', () => {
+  it('escapes the html special characters', () => {
+    expect(escapeHtml(`<a href="x">'&'</a>`)).toBe(
+      '&lt;a href=&quot;x&quot;&gt;&#39;&amp;&#39;&lt;/a&gt;',
+    );
   });
 });

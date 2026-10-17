@@ -14,6 +14,7 @@ function project(overrides: Partial<Project> = {}): Project {
     tools: ['Figma', 'Adobe Photoshop'],
     cover: portrait,
     imageIds: [],
+    modules: [],
     slug: 'cabreras-motos-posts',
     title: null,
     summary: null,
@@ -23,6 +24,7 @@ function project(overrides: Partial<Project> = {}): Project {
     featured: false,
     hidden: false,
     contentLang: 'es',
+    moduleAlt: {},
     ...overrides,
   };
 }
@@ -177,5 +179,187 @@ describe('toDetailView', () => {
     expect(es.next?.href).toBe('/es/projects/portfolio-web/');
     expect(es.next?.title).toBe('Sitio portfolio');
     expect(es.previous?.titleLang).toBeNull();
+  });
+});
+
+describe('toDetailView modules', () => {
+  const wide = { ...portrait, width: 1400, height: 700 };
+  const tall = { ...portrait, width: 900, height: 1200 };
+  const square = { ...portrait, width: 500, height: 500 };
+  const modules: Project['modules'] = [
+    { kind: 'image', image: { id: '10', image: wide }, fullBleed: true, caption: '' },
+    {
+      kind: 'collection',
+      images: [
+        { id: '20', image: wide },
+        { id: '21', image: tall },
+        { id: '22', image: square },
+      ],
+    },
+    { kind: 'text', html: '<p>Hecho por <a href="https://example.com">Martina</a></p>' },
+    { kind: 'image', image: { id: '30', image: tall }, fullBleed: false, caption: 'Pie' },
+  ];
+
+  type View = ReturnType<typeof toDetailView>;
+  type ImageView = Extract<View['modules'][number], { kind: 'image' }>;
+  type CollectionView = Extract<View['modules'][number], { kind: 'collection' }>;
+
+  function alts(view: View): string[] {
+    return view.modules.flatMap((module) => {
+      if (module.kind === 'image') return [module.alt];
+      if (module.kind === 'collection') return module.rows.flat().map((item) => item.alt);
+      return [];
+    });
+  }
+
+  function eagers(view: View): boolean[] {
+    return view.modules.flatMap((module) => {
+      if (module.kind === 'image') return [module.eager];
+      if (module.kind === 'collection') return module.rows.flat().map((item) => item.eager);
+      return [];
+    });
+  }
+
+  function byKind<K extends View['modules'][number]['kind']>(view: View, kind: K) {
+    return view.modules.filter(
+      (module): module is Extract<View['modules'][number], { kind: K }> => module.kind === kind,
+    );
+  }
+
+  it('numbers fallback alts across images and collection items in DOM order', () => {
+    const en = toDetailView(project({ modules }), 'en', categoryTitles, toolIcons, none);
+    expect(alts(en)).toEqual(
+      [1, 2, 3, 4, 5].map((n) => `Cabrera´s motos, Posts — image ${String(n)} of 5`),
+    );
+    const es = toDetailView(project({ modules }), 'es', categoryTitles, toolIcons, none);
+    expect(alts(es)).toEqual(
+      [1, 2, 3, 4, 5].map((n) => `Cabrera´s motos, Posts — imagen ${String(n)} de 5`),
+    );
+    expect(eagers(en)).toEqual([true, false, false, false, false]);
+  });
+
+  it('makes the first collection item eager when the stack starts with a collection', () => {
+    const view = toDetailView(
+      project({ modules: modules.slice(1) }),
+      'en',
+      categoryTitles,
+      toolIcons,
+      none,
+    );
+    expect(eagers(view)).toEqual([true, false, false, false]);
+  });
+
+  it('replaces only the overridden image alt, in the matching locale', () => {
+    const moduleAlt = { '21': { en: 'A tall poster', es: 'Un póster alto' } };
+    const en = toDetailView(project({ modules, moduleAlt }), 'en', categoryTitles, toolIcons, none);
+    const es = toDetailView(project({ modules, moduleAlt }), 'es', categoryTitles, toolIcons, none);
+    expect(alts(en)[2]).toBe('A tall poster');
+    expect(alts(es)[2]).toBe('Un póster alto');
+    expect(alts(en)[1]).toBe('Cabrera´s motos, Posts — image 2 of 5');
+    expect(alts(en)[3]).toBe('Cabrera´s motos, Posts — image 4 of 5');
+  });
+
+  it('never uses Behance auto alt text', () => {
+    const view = toDetailView(project({ modules }), 'en', categoryTitles, toolIcons, none);
+    for (const alt of alts(view)) expect(alt).not.toContain('Image may contain');
+  });
+
+  it('maps image fields: widths, full bleed, caption and caption lang', () => {
+    const en = toDetailView(project({ modules }), 'en', categoryTitles, toolIcons, none);
+    const [first, last] = byKind(en, 'image') as ImageView[];
+    expect(first).toMatchObject({
+      image: wide,
+      widths: [640, 960, 1400],
+      fullBleed: true,
+      caption: null,
+      captionLang: null,
+    });
+    expect(last).toMatchObject({
+      image: tall,
+      widths: [640],
+      fullBleed: false,
+      caption: 'Pie',
+      captionLang: 'es',
+    });
+    const es = toDetailView(project({ modules }), 'es', categoryTitles, toolIcons, none);
+    expect((byKind(es, 'image') as ImageView[])[1]?.captionLang).toBeNull();
+  });
+
+  it('builds justified collection rows with ratio and share-based sizes', () => {
+    const view = toDetailView(project({ modules }), 'en', categoryTitles, toolIcons, none);
+    const [collection] = byKind(view, 'collection') as CollectionView[];
+    expect(collection?.rows.map((row) => row.length)).toEqual([3]);
+    const row = collection?.rows[0] ?? [];
+    expect(row.map((item) => item.ratio)).toEqual([2, 0.75, 1]);
+    expect(row.map((item) => item.widths)).toEqual([[640, 960, 1400], [640], [500]]);
+    // share = ratio / 3.75
+    expect(row[0]?.sizes).toBe('(min-width: 1400px) 747px, (min-width: 640px) 53vw, 100vw');
+    expect(row[1]?.sizes).toBe('(min-width: 1400px) 280px, (min-width: 640px) 20vw, 100vw');
+  });
+
+  it('splits a collection of 5 into rows of 3 and 2 and rounds ratios to 4 decimals', () => {
+    const odd = { ...portrait, width: 1000, height: 3000 };
+    const images = Array.from({ length: 5 }, (_, index) => ({
+      id: String(40 + index),
+      image: odd,
+    }));
+    const view = toDetailView(
+      project({ modules: [{ kind: 'collection', images }] }),
+      'en',
+      categoryTitles,
+      toolIcons,
+      none,
+    );
+    const [collection] = byKind(view, 'collection') as CollectionView[];
+    expect(collection?.rows.map((row) => row.length)).toEqual([3, 2]);
+    expect(collection?.rows[0]?.[0]?.ratio).toBe(0.3333);
+  });
+
+  it('marks text Spanish on en pages, not on es pages, and injects the localized hint', () => {
+    const en = toDetailView(project({ modules }), 'en', categoryTitles, toolIcons, none);
+    const es = toDetailView(project({ modules }), 'es', categoryTitles, toolIcons, none);
+    const [enText] = byKind(en, 'text');
+    const [esText] = byKind(es, 'text');
+    expect(enText?.lang).toBe('es');
+    expect(esText?.lang).toBeNull();
+    expect(enText?.html).toBe(
+      '<p>Hecho por <a href="https://example.com">Martina<span class="sr-only" lang="en">(opens in a new tab)</span></a></p>',
+    );
+    expect(esText?.html).toContain(
+      '<span class="sr-only" lang="es">(se abre en una pestaña nueva)</span></a>',
+    );
+  });
+
+  it('builds the embed view with the provider name and localized iframe title', () => {
+    const src = 'https://embed.figma.com/proto/abc';
+    const view = toDetailView(
+      project({ modules: [{ kind: 'embed', provider: 'figma', src }] }),
+      'en',
+      categoryTitles,
+      toolIcons,
+      none,
+    );
+    expect(view.modules).toEqual([
+      {
+        kind: 'embed',
+        provider: 'figma',
+        providerName: 'Figma',
+        src,
+        iframeTitle: 'Cabrera´s motos, Posts — interactive Figma prototype',
+      },
+    ]);
+  });
+
+  it('keeps unknown modules and gives a project with zero modules one unknown note', () => {
+    const unknown = toDetailView(
+      project({ modules: [{ kind: 'unknown' }] }),
+      'en',
+      categoryTitles,
+      toolIcons,
+      none,
+    );
+    expect(unknown.modules).toEqual([{ kind: 'unknown' }]);
+    const empty = toDetailView(project(), 'en', categoryTitles, toolIcons, none);
+    expect(empty.modules).toEqual([{ kind: 'unknown' }]);
   });
 });
