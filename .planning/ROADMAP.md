@@ -166,9 +166,9 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — Detail page slice: EN/ES routes, query layer, intro band (title, summary, category, tools, View on Behance)
-- [ ] 04-02-PLAN.md — Record PROJ-04..07 N/A with evidence, amend PROJ-06 (tool only), no-filter regression e2e
-- [ ] 04-03-PLAN.md — Package approval checkpoint, TextModule sanitizer, embed allowlist, module content normalizer
+- [x] 04-01-PLAN.md — Detail page slice: EN/ES routes, query layer, intro band (title, summary, category, tools, View on Behance)
+- [x] 04-02-PLAN.md — Record PROJ-04..07 N/A with evidence, amend PROJ-06 (tool only), no-filter regression e2e
+- [x] 04-03-PLAN.md — Package approval checkpoint, TextModule sanitizer, embed allowlist, module content normalizer
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -273,7 +273,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 1. Bilingual Walking Skeleton | 5/5 | Complete   | 2026-10-16 |
 | 2. Homepage Story | 8/8 | Complete   | 2026-10-17 |
 | 3. Real Behance Work | 10/10 | Complete   | 2026-10-17 |
-| 4. Project Detail & Discovery | 0/TBD | Not started | - |
+| 4. Project Detail & Discovery | 3/11 | In Progress|  |
 | 5. Contact | 0/TBD | Not started | - |
 | 6. Scroll & Interaction Motion | 0/TBD | Not started | - |
 | 7. Page Transitions & Smooth Scroll | 0/TBD | Not started | - |
