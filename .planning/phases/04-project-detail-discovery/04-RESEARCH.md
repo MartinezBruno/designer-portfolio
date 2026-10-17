@@ -537,22 +537,26 @@ moduleAlt: z.record(z.string().regex(/^\d+$/), localized).optional(),
 | A8 | ~6–7 min sync duration at 2 s spacing | Pattern 2 | The run just takes longer. The id + sourceUrl reuse reduces it |
 | A9 | `dist/` grows ~25–30 MB; cold build ~100 s+ | Runtime inventory | CI time. Measure and record (AGENTS.md) |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Spacing for CDN image requests**
    - What we know: D-04 requires 2 s between Behance requests. The CDN is CloudFront/S3 with no challenge.
    - What's unclear: whether the user accepts a shorter interval for `mir-s3-cdn-cf` image GETs.
    - Recommendation: keep 2 s (about 6–7 min per run) and add id + sourceUrl reuse. Ask only if the run time bothers the user.
+   - RESOLVED: keep the 2 s spacing for every Behance and CDN request (D-04) and reuse module images by id + sourceUrl when the file exists (plan 04-07 reuse; spacing through `FetchDeps.sleep` in the 04-06 module downloader).
 2. **Fixed-point test vs. hint-token injection**
    - What we know: the UI-SPEC puts the token in at sync.
    - What's unclear: the planner's preference.
    - Recommendation: inject the hint at render in `TextModule.astro`, and keep the snapshot HTML a pure sanitizer output. That gives a simpler invariant: `sanitize(html) === html`.
+   - RESOLVED: render-time injection via `injectNewTabHint` (HTML-escaped) in the query layer; the snapshot stays a sanitizer fixed point (plans 04-03 sanitizer, 04-08 fixed-point test, 04-09 render-time hint; deviation from UI-SPEC recorded in the 04-03 and 04-09 SUMMARYs).
 3. **`h* → p > strong`**
    - What we know: this is not natively expressible, and no module has headings today.
    - Recommendation: use `h* → p` and record the deviation in the plan SUMMARY.
+   - RESOLVED: sanitizer maps `h*` to `p` (plan 04-03; deviation recorded in the 04-03 SUMMARY and restated in 04-09).
 4. **AVIF for module images**
    - What we know: AVIF is about 80% of the transform time, but about 40% smaller than WebP at 1400w (37 KB vs 60 KB in the sample).
    - Recommendation: keep `['avif','webp']` (UI-SPEC). Measure the cold build. Revisit only if CI time hurts.
+   - RESOLVED: keep `formats={['avif','webp']}` in ImageModule and CollectionModule (plan 04-09); cold and warm build times are measured and recorded in plan 04-11.
 
 ## Environment Availability
 

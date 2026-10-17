@@ -162,7 +162,39 @@ Plans:
   3. *(If ≥8 projects)* Visitor filters by category chips, tool, and year, and runs an accent-insensitive text search (e.g. "diseno" matches "diseño"). Reloading the URL restores the same filters, screen readers hear the result count, and an empty result offers "clear filters".
   4. *(If <8 projects)* PROJ-04..07 are recorded as not applicable, with the confirmed count from Phase 3 as evidence, and the Projects page has no filter UI.
 
-**Plans**: TBD
+**Plans**: 11 plans
+Plans:
+**Wave 1**
+
+- [ ] 04-01-PLAN.md — Detail page slice: EN/ES routes, query layer, intro band (title, summary, category, tools, View on Behance)
+- [ ] 04-02-PLAN.md — Record PROJ-04..07 N/A with evidence, amend PROJ-06 (tool only), no-filter regression e2e
+- [ ] 04-03-PLAN.md — Package approval checkpoint, TextModule sanitizer, embed allowlist, module content normalizer
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 04-04-PLAN.md — Contact band, next/previous teaser with wrap, D-09 link skips removed, axe/line/overflow checks
+- [ ] 04-05-PLAN.md — Per-page SEO with og:image from the cover
+- [ ] 04-06-PLAN.md — Module image variant-chain download, WebP storage, modules-dir commit and GC
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 04-07-PLAN.md — Wire content + module images into sync:behance, image reuse, moduleAlt overrides and checklist
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 04-08-PLAN.md — Live re-sync checkpoint, lock required content, committed-snapshot invariants, measurements
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 04-09-PLAN.md — Render image stack, collection rows, sanitized text and unknown fallback on detail pages
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 04-10-PLAN.md — Click-to-load Figma embed facade, privacy/keyboard/axe e2e
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
+- [ ] 04-11-PLAN.md — Phase gate: pnpm verify, measurements, full taste gate, user sign-off
 **UI hint**: yes
 
 ### Phase 5: Contact
