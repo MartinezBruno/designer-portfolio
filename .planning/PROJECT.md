@@ -21,6 +21,7 @@ Visitors (potential clients) immediately feel her design sensibility through a s
 - [x] Jobs/Projects section on Home with her 3 latest Behance projects (HOME-06), shown as an even row — Validated in Phase 3: Real Behance Work
 - [x] Projects page listing all her Behance projects, newest first, EN/ES (PROJ-01) — Validated in Phase 3: Real Behance Work
 - [x] Consent documented, `pnpm sync:behance` committed snapshot, fail-loud sync, offline build, local overrides, source-agnostic model (DATA-01..06) — Validated in Phase 3: Real Behance Work
+- [x] Project detail pages mirror the Behance content (image stack, collections, sanitized text, click-to-load Figma embed) with tools/category, "View on Behance", next/previous and a contact CTA, EN/ES, with localized share previews (PROJ-02, PROJ-03) — Validated in Phase 4: Project Detail & Discovery
 
 ### Active
 
@@ -28,10 +29,7 @@ Visitors (potential clients) immediately feel her design sensibility through a s
 - [ ] Contact section with a working form that emails her
 
 **Jobs/Projects page**
-- [ ] Search + filtering ("a plus") — filter dimensions depend on what data Behance actually exposes (to be determined in research)
-
-**Job/Project detail page**
-- [ ] Mirrors the Behance project content (images + text) styled within the site
+- [ ] Search + filtering ("a plus") — N/A while the catalog has fewer than 8 projects (Phase 4, D-16; currently 7). Revisit when `pnpm sync:behance` reports ≥8 (`NOTICE_AT`); dimensions would be category and tool (year dropped, D-17)
 
 **Cross-cutting**
 - [ ] Motion: scroll reveals, bold/playful interactions (cursor effects, magnetic buttons, image hover effects), page transitions, smooth/inertial scroll with parallax
@@ -101,4 +99,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-17 after Phase 3 (Real Behance Work) — real Behance snapshot (7 projects), Projects page and Home latest work live in EN/ES; sync, offline build and security review green*
+*Last updated: 2026-10-19 after Phase 4 (Project Detail & Discovery) — mirrored EN/ES detail pages for all 7 projects (154 module images), next/previous + contact CTA, Figma click-to-load facade; filters N/A (<8 projects); verification passed, security review clean*
