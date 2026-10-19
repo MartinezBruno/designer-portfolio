@@ -3,13 +3,16 @@
 //
 // planModuleImages lists the images to download, in DOM order (each ImageModule, then each
 // collection component), with candidate URLs picked by path segment in IMAGE_VARIANTS order, never
-// by array position (the pickCover rule). toContent maps every module to one ContentEntry: text is
+// by array position (the pickCover rule). Only https URLs on an allowlisted CDN host (CDN_HOSTS)
+// are planned, so an off-CDN variant falls through to the next one instead of failing G4m.
+// toContent maps every module to one ContentEntry: text is
 // sanitized (sanitize.ts), embeds are allowlisted (embeds.ts), and anything else becomes an
 // 'unknown' entry plus a sync warning (D-07, D-08). A known type with an unexpected shape fails
 // gate G4m. Behance altText is never read (Phase 3 D-15). The result is validated by ContentSchema.
 import type { ContentEntry, ImageRef } from '../../src/lib/projects/snapshot-schema.ts';
 import { providerForUrl } from '../../src/lib/projects/embeds.ts';
 import { SyncError } from './errors.ts';
+import { CDN_HOSTS } from './fetch-page.ts';
 import {
   RawCollectionModuleSchema,
   RawEmbedModuleSchema,
@@ -53,8 +56,13 @@ interface SizedImage {
 
 const DIGITS = /^\d+$/;
 
-function pathOf(url: string): string {
-  return URL.canParse(url) ? new URL(url).pathname : '';
+/** The path of an https URL on an allowlisted CDN host, else null (never a download candidate). */
+function cdnPathOf(url: string): string | null {
+  if (!URL.canParse(url)) return null;
+  const parsed = new URL(url);
+  return parsed.protocol === 'https:' && CDN_HOSTS.includes(parsed.hostname)
+    ? parsed.pathname
+    : null;
 }
 
 function where(project: ProjectRef | undefined): string {
@@ -85,8 +93,8 @@ function planOf(image: SizedImage, project: ProjectRef | undefined): ImagePlan {
   const candidates: string[] = [];
   for (const variant of IMAGE_VARIANTS) {
     const segment = `/project_modules/${variant}/`;
-    const match = image.imageSizes.allAvailable.find((entry) =>
-      pathOf(entry.url).includes(segment),
+    const match = image.imageSizes.allAvailable.find(
+      (entry) => cdnPathOf(entry.url)?.includes(segment) === true,
     );
     if (match !== undefined) candidates.push(match.url);
   }

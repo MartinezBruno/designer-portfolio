@@ -23,7 +23,8 @@ export interface FetchDeps {
 }
 
 const PAGE_HOSTS: readonly string[] = ['www.behance.net'];
-const CDN_HOSTS: readonly string[] = ['mir-s3-cdn-cf.behance.net'];
+/** Image CDN hosts covers and module images are downloaded from (module-content.ts plans by it). */
+export const CDN_HOSTS: readonly string[] = ['mir-s3-cdn-cf.behance.net'];
 /** The only host a module image may redirect to, and the only path prefix there. */
 const MODULE_REDIRECT_HOSTS: readonly string[] = ['mir-cdn.behance.net'];
 const MODULE_REDIRECT_PATH = '/v1/rendition/project_modules/';

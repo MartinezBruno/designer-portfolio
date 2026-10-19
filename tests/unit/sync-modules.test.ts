@@ -199,6 +199,42 @@ describe('planModuleImages', () => {
     ]);
   });
 
+  it('skips candidates off the allowlisted CDN host and falls through to the next one', () => {
+    const base = 'https://mir-s3-cdn-cf.behance.net/project_modules';
+    const modules: RawModule[] = [
+      {
+        __typename: 'ImageModule',
+        id: 6,
+        imageSizes: {
+          allAvailable: [
+            { url: 'https://mir-cdn.behance.net/project_modules/1400_webp/a.webp', width: 1400 },
+            { url: 'http://mir-s3-cdn-cf.behance.net/project_modules/1400/a.png', width: 1400 },
+            { url: 'https://evil.com/project_modules/max_1200_webp/a.webp', width: 1200 },
+            { url: `${base}/1400_webp/a.webp`, width: 1400 },
+            { url: `${base}/fs/a.png`, width: 1920 },
+          ],
+        },
+      },
+    ];
+    expect(planModuleImages(modules)[0]?.candidates).toEqual([
+      `${base}/1400_webp/a.webp`,
+      `${base}/fs/a.png`,
+    ]);
+  });
+
+  it('fails G4m when no candidate is on the allowlisted CDN host', () => {
+    const modules: RawModule[] = [
+      {
+        __typename: 'ImageModule',
+        id: 7,
+        imageSizes: {
+          allAvailable: [{ url: 'https://evil.com/project_modules/1400_webp/a.webp', width: 1400 }],
+        },
+      },
+    ];
+    expect(() => planModuleImages(modules)).toThrow(/\[G4m\] 7: no usable image variant/);
+  });
+
   it('fails G4m on a known module with an unexpected shape', () => {
     const bad: RawModule[] = [{ __typename: 'ImageModule', id: 1 }];
     expect(() => planModuleImages(bad)).toThrow(SyncError);
