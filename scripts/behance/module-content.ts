@@ -20,7 +20,7 @@ import {
   RawTextModuleSchema,
   type RawModule,
 } from './raw-schemas.ts';
-import { cleanTextHtml, extractEmbedSrc } from './sanitize.ts';
+import { cleanTextHtml, extractEmbedSrc, plainCaption } from './sanitize.ts';
 
 export const KNOWN_MODULES: ReadonlySet<string> = new Set([
   'ImageModule',
@@ -156,12 +156,14 @@ export function toContent(
       case 'ImageModule': {
         const parsed = RawImageModuleSchema.safeParse(module);
         if (!parsed.success) throw shapeError(module, project);
-        const { id, fullBleed, caption } = parsed.data;
+        const { id, fullBleed, caption, captionPlain } = parsed.data;
+        // The site renders the caption as text: prefer Behance's plain form, else strip markup.
+        const plain = plainCaption(captionPlain ?? '');
         content.push({
           kind: 'image',
           image: stored(id, images, project),
           fullBleed: fullBleed === 1 || fullBleed === true,
-          caption: caption ?? '',
+          caption: plain === '' ? plainCaption(caption ?? '') : plain,
         });
         break;
       }

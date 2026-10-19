@@ -48,6 +48,27 @@ export function cleanTextHtml(html: string): string {
   return out;
 }
 
+/** The entities sanitize-html writes when it escapes text (its escapeHtml), and their characters. */
+const ESCAPED: Readonly<Record<string, string>> = {
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+};
+
+/**
+ * A Behance caption as plain text: every tag is dropped (its text kept, `<br>` becomes a space),
+ * entities are decoded by the HTML parser, and whitespace is collapsed. The result is rendered as
+ * an escaped text node, so it must not carry markup or entities a visitor would see literally.
+ */
+export function plainCaption(html: string): string {
+  return sanitizeHtml(html, { allowedTags: ['br'], allowedAttributes: {} })
+    .replace(/<br \/>/g, ' ')
+    .replace(/&(?:amp|lt|gt|quot);/g, (entity) => ESCAPED[entity] ?? entity)
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 /**
  * The first iframe's src, decoded by the HTML parser (no regex parsing of HTML). Null when there
  * is no iframe, no src, or the src does not parse as an absolute URL. The allowlist check is the

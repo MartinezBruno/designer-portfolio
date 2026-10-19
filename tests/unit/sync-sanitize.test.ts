@@ -2,7 +2,12 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import committed from '../../src/data/behance/snapshot.json';
-import { cleanTextHtml, extractEmbedSrc, sanitizeText } from '../../scripts/behance/sanitize';
+import {
+  cleanTextHtml,
+  extractEmbedSrc,
+  plainCaption,
+  sanitizeText,
+} from '../../scripts/behance/sanitize';
 
 interface TextLike {
   __typename: string;
@@ -120,6 +125,19 @@ describe('sanitizeText on XSS fixtures', () => {
     expect(sanitizeText('<a href="mailto:hi@example.com">mail</a>')).toBe(
       '<a href="mailto:hi@example.com" target="_blank" rel="noopener noreferrer">mail</a>',
     );
+  });
+});
+
+describe('plainCaption', () => {
+  it.each([
+    ['<b>Bold</b> &amp; more<br>line two', 'Bold & more line two'],
+    ['Tom & Jerry &lt;3 &gt; "quoted" &#39;single&#39;', 'Tom & Jerry <3 > "quoted" \'single\''],
+    ['<p>First</p><p>second</p>', 'Firstsecond'],
+    ['<script>alert(1)</script><img src=x onerror=alert(1)>safe', 'safe'],
+    ['  spaced \n  out  ', 'spaced out'],
+    ['', ''],
+  ])('%j -> %j', (html, text) => {
+    expect(plainCaption(html)).toBe(text);
   });
 });
 

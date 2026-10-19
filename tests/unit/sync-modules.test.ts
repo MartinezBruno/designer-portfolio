@@ -293,6 +293,31 @@ describe('toContent', () => {
     expect(JSON.stringify(content)).not.toContain('Image may contain');
   });
 
+  it('stores an HTML caption as plain text and prefers captionPlain', () => {
+    const image = (id: number, extra: Record<string, string>): RawModule => ({
+      __typename: 'ImageModule',
+      id,
+      ...extra,
+      imageSizes: { allAvailable: [{ url: CDN, width: 1400, type: 'WEBP' }] },
+    });
+    const modules: RawModule[] = [
+      image(3, { caption: '<b>Brand</b> &amp; web<br>2024' }),
+      image(4, { caption: '<i>rich</i>', captionPlain: 'Plain &amp; simple' }),
+      image(5, { caption: '<i>fallback</i>', captionPlain: '' }),
+    ];
+    const images = new Map([
+      ['3', ref('3')],
+      ['4', ref('4')],
+      ['5', ref('5')],
+    ]);
+    const { content } = toContent(modules, images, { id: '1', slug: 's' });
+    expect(content.map((entry) => entry.kind === 'image' && entry.caption)).toEqual([
+      'Brand & web 2024',
+      'Plain & simple',
+      'fallback',
+    ]);
+  });
+
   it('turns a non-allowlisted embed into unknown with a warning', () => {
     const modules: RawModule[] = [
       {

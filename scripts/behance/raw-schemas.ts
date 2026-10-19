@@ -54,6 +54,7 @@ export const RawImageModuleSchema = z.looseObject({
   id: behanceId,
   fullBleed: z.union([z.literal(0), z.literal(1), z.boolean()]).optional(),
   caption: z.string().optional(),
+  captionPlain: z.string().optional(),
   imageSizes: RawImageSizesSchema,
 });
 
