@@ -52,7 +52,9 @@ describe('pictureFormat policy', () => {
   });
 
   it('is spread on every <Picture> in src and no call site sets formats inline', () => {
-    const users = astroFiles('src').filter((file) => readFileSync(file, 'utf8').includes('<Picture'));
+    const users = astroFiles('src').filter((file) =>
+      readFileSync(file, 'utf8').includes('<Picture'),
+    );
     const rel = users.map((file) => relative('.', file).split('\\').join('/')).sort();
     expect(rel).toEqual([
       'src/components/project/CollectionModule.astro',

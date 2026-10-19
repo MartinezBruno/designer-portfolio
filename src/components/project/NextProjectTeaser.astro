@@ -3,6 +3,7 @@ import { Picture } from 'astro:assets';
 import IconArrowLeft from '@tabler/icons/outline/arrow-left.svg';
 import { useTranslations, type Locale } from '../../i18n/t';
 import type { TeaserView } from '../../lib/projects/model';
+import { pictureFormat } from '../../lib/ui/picture-format';
 
 // Page-end teaser (D-13, D-14): "Next project" heading and the quiet "Previous" link on the left,
 // the next project as a 7/12 tile on the right (same geometry as the Projects `large` tile). The
@@ -49,7 +50,7 @@ const t = useTranslations(locale);
         <Picture
           src={next.cover}
           alt={next.coverAlt}
-          formats={['avif', 'webp']}
+          {...pictureFormat}
           widths={[404, 640, 808]}
           sizes="(min-width: 1152px) 625px, (min-width: 768px) 57vw, 100vw"
           width={next.cover.width}

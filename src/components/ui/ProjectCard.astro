@@ -7,6 +7,7 @@
 import { Picture } from 'astro:assets';
 import type { TileSize } from '../../lib/projects/layout';
 import type { ProjectCardView } from '../../lib/projects/model';
+import { pictureFormat } from '../../lib/ui/picture-format';
 import { useTranslations, type Locale } from '../../i18n/t';
 
 interface Props {
@@ -54,7 +55,7 @@ const priority = eager ? { fetchpriority: 'high' as const } : {};
       <Picture
         src={project.cover}
         alt={project.coverAlt}
-        formats={['avif', 'webp']}
+        {...pictureFormat}
         widths={[404, 640, 808]}
         sizes={sizesFor[size]}
         width={project.cover.width}

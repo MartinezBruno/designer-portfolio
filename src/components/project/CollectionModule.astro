@@ -6,6 +6,7 @@
  */
 import { Picture } from 'astro:assets';
 import type { ModuleView } from '../../lib/projects/model';
+import { pictureFormat } from '../../lib/ui/picture-format';
 
 type Props = Omit<Extract<ModuleView, { kind: 'collection' }>, 'kind'>;
 
@@ -21,7 +22,7 @@ const { rows } = Astro.props;
           <Picture
             src={item.image}
             alt={item.alt}
-            formats={['avif', 'webp']}
+            {...pictureFormat}
             widths={[...item.widths]}
             sizes={item.sizes}
             width={item.image.width}
