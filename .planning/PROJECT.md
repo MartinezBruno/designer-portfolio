@@ -99,4 +99,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-19 after Phase 4 (Project Detail & Discovery) — mirrored EN/ES detail pages for all 7 projects (154 module images), next/previous + contact CTA, Figma click-to-load facade; filters N/A (<8 projects); verification passed, security review clean*
+*Last updated: 2026-10-19 after Phase 4 (Project Detail & Discovery) — mirrored EN/ES detail pages for all 7 projects (154 module images), next/previous + contact CTA, Figma click-to-load facade; filters N/A (<8 projects); verification passed, security review clean; 04-12 gap closure: AVIF + WebP Picture fallback, dist 244 MB → ~35 MB, 0 PNG*
