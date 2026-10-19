@@ -47,8 +47,8 @@ v1 "done" = working local build (deploy is post-v1).
 ### Projects (PROJ)
 
 - [x] **PROJ-01**: Visitor can browse all her Behance projects on a Projects page, newest first, in both languages
-- [ ] **PROJ-02**: Visitor can open a project detail page that mirrors its Behance content (images, text, grids, embeds) in original language, with a safe fallback for unknown content types
-- [ ] **PROJ-03**: Visitor sees project metadata (tools, category; no project date, user decision 2026-10-17), a "View on Behance" link, next/previous project links, and a contact CTA on each detail page
+- [x] **PROJ-02**: Visitor can open a project detail page that mirrors its Behance content (images, text, grids, embeds) in original language, with a safe fallback for unknown content types
+- [x] **PROJ-03**: Visitor sees project metadata (tools, category; no project date, user decision 2026-10-17), a "View on Behance" link, next/previous project links, and a contact CTA on each detail page
 - [ ] **PROJ-04**: *(conditional: only if she has ≥8 projects)* Visitor can filter projects by curated category chips — **N/A (Phase 4, D-16):** 7 projects in the committed snapshot (origin behance-sync), confirmed live 2026-10-16 (Phase 3 D-05); threshold is 8. Revisit when pnpm sync:behance prints the ≥8 notice.
 - [ ] **PROJ-05**: *(conditional: ≥8 projects)* Visitor can text-search projects (accent-insensitive) — **N/A (Phase 4, D-16):** 7 projects in the committed snapshot (origin behance-sync), confirmed live 2026-10-16 (Phase 3 D-05); threshold is 8. Revisit when pnpm sync:behance prints the ≥8 notice.
 - [ ] **PROJ-06**: *(conditional: ≥8 projects)* Visitor can filter projects by tool (year filter dropped: it would expose the project dates the user chose to hide, D-17, 2026-10-17) — **N/A (Phase 4, D-16):** 7 projects in the committed snapshot (origin behance-sync), confirmed live 2026-10-16 (Phase 3 D-05); threshold is 8. Revisit when pnpm sync:behance prints the ≥8 notice.
@@ -141,8 +141,8 @@ Updated during roadmap creation.
 | DATA-05 | Phase 3 | Complete |
 | DATA-06 | Phase 3 | Complete |
 | PROJ-01 | Phase 3 | Complete |
-| PROJ-02 | Phase 4 | Pending |
-| PROJ-03 | Phase 4 | Pending |
+| PROJ-02 | Phase 4 | Complete |
+| PROJ-03 | Phase 4 | Complete |
 | PROJ-04 | Phase 4 | N/A (7 projects < 8) |
 | PROJ-05 | Phase 4 | N/A (7 projects < 8) |
 | PROJ-06 | Phase 4 | N/A (7 projects < 8) |
