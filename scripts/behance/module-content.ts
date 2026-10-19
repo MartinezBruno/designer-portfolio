@@ -183,7 +183,10 @@ export function toContent(
       case 'EmbedModule': {
         const parsed = RawEmbedModuleSchema.safeParse(module);
         if (!parsed.success) throw shapeError(module, project);
-        const src = extractEmbedSrc(parsed.data.originalEmbed ?? parsed.data.fluidEmbed ?? '');
+        // Per-field fallback: an empty or iframe-less originalEmbed must not hide fluidEmbed.
+        const src =
+          extractEmbedSrc(parsed.data.originalEmbed ?? '') ??
+          extractEmbedSrc(parsed.data.fluidEmbed ?? '');
         const provider = src === null ? null : providerForUrl(src);
         if (src !== null && provider !== null) {
           content.push({ kind: 'embed', provider, src });

@@ -308,6 +308,20 @@ describe('toContent', () => {
     ]);
   });
 
+  it('falls back to fluidEmbed when originalEmbed is empty', () => {
+    const modules: RawModule[] = [
+      {
+        __typename: 'EmbedModule',
+        id: 9,
+        originalEmbed: '',
+        fluidEmbed: `<iframe src="${FIGMA}"></iframe>`,
+      },
+    ];
+    const result = toContent(modules, new Map(), { id: '42', slug: 'demo' });
+    expect(result.content).toEqual([{ kind: 'embed', provider: 'figma', src: FIGMA }]);
+    expect(result.warnings).toEqual([]);
+  });
+
   it('turns an embed without a parsable src into unknown with a warning', () => {
     const modules: RawModule[] = [{ __typename: 'EmbedModule', id: 9, fluidEmbed: '<div></div>' }];
     const result = toContent(modules, new Map(), { id: '42', slug: 'demo' });
