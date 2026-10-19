@@ -198,7 +198,7 @@ Plans:
 
 **Wave 8** *(gap closure, blocked on Wave 7 completion)*
 
-- [ ] 04-12-PLAN.md — Gap: WebP Picture fallback instead of PNG (205 MB of dist), measured before/after
+- [x] 04-12-PLAN.md — Gap: WebP Picture fallback instead of PNG (205 MB of dist), measured before/after
 **UI hint**: yes
 
 ### Phase 5: Contact
@@ -277,7 +277,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 1. Bilingual Walking Skeleton | 5/5 | Complete   | 2026-10-16 |
 | 2. Homepage Story | 8/8 | Complete   | 2026-10-17 |
 | 3. Real Behance Work | 10/10 | Complete   | 2026-10-17 |
-| 4. Project Detail & Discovery | 11/11 | Complete   | 2026-10-19 |
+| 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 0/TBD | Not started | - |
 | 6. Scroll & Interaction Motion | 0/TBD | Not started | - |
 | 7. Page Transitions & Smooth Scroll | 0/TBD | Not started | - |
