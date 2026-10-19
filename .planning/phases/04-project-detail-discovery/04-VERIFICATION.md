@@ -1,21 +1,25 @@
 ---
 phase: 04-project-detail-discovery
-verified: 2026-10-19T00:00:00Z
+verified: 2026-10-19T12:00:00Z
 status: passed
 score: 4/4 roadmap success criteria verified (SC3 N/A by design, SC4 applies)
 overrides_applied: 0
 gaps: []
-known_gaps:
-  - item: "PNG <Picture> fallbacks weigh 205 MB of the 244 MB dist"
-    severity: warning (performance/size, not a goal requirement)
-    disposition: "Recorded in 04-11-SUMMARY.md as an open gap for /gsd-plan-phase 4 --gaps; user chose to open a gap plan. Does not block the phase goal; belongs to Phase 8 performance budget if not fixed earlier."
+re_verification:
+  previous_status: passed
+  previous_score: 4/4
+  gaps_closed:
+    - "PNG <Picture> fallbacks weigh 205 MB of the 244 MB dist (closed by 04-12)"
+  gaps_remaining: []
+  regressions: []
+known_gaps: []
 ---
 
 # Phase 4: Project Detail & Discovery Verification Report
 
 **Phase Goal:** A visitor can open any project and see its full Behance content styled inside the site, with context and navigation. If the catalog is big enough, they can also narrow the Projects list by category, tool, year, or text.
 **Status:** passed
-**Re-verification:** No, initial verification
+**Re-verification:** Yes, after gap-closure plan 04-12
 
 ## Observable Truths
 
@@ -39,7 +43,7 @@ known_gaps:
 | PROJ-06 | N/A (accounted) | Same; year filter dropped (D-17). |
 | PROJ-07 | N/A (accounted) | Same. |
 
-All six IDs appear in the ROADMAP and REQUIREMENTS; no orphaned IDs. The checkbox state in REQUIREMENTS.md for PROJ-02/03 (`[ ]`) and the traceability status "Pending" are stale bookkeeping and should be flipped to complete by the orchestrator.
+All six IDs appear in the ROADMAP and REQUIREMENTS; no orphaned IDs. REQUIREMENTS.md now shows PROJ-02/03 complete.
 
 ## Gates and Spot-Checks
 
@@ -47,9 +51,14 @@ All six IDs appear in the ROADMAP and REQUIREMENTS; no orphaned IDs. The checkbo
 - Debt-marker scan (`TBD|FIXME|XXX`) over `src`, `scripts`, `tests`: no matches.
 - Human-verify gate (04-11): user sign-off recorded verbatim as "Approved" (04-11-SUMMARY.md line 89), covering detail pages, PuroV WebP images, and the Figma sandbox.
 
-## Known Gap Item (non-blocking)
+## Known Gap Item: CLOSED by 04-12
 
-PNG fallback weight: 457 PNGs / 205 MB of a 244 MB dist (cold build 72.6 s). The user opted to open a gap plan. No Phase 4 must-have or success criterion sets a size budget, so this does not block the phase goal. It feeds the Phase 8 measured performance budget.
+Re-verified against code and build output on 2026-10-19:
+- `src/lib/ui/picture-format.ts` exports `pictureFormat = { formats: ['avif'], fallbackFormat: 'webp' }`. All 6 `<Picture` sites (ProjectCard, Hero, CollectionModule, NextProjectTeaser, ImageModule x2) spread `{...pictureFormat}`.
+- `dist/` has 0 `.png` files and 0 `.png` references anywhere; 457 AVIF and 457 WebP (AVIF count equals the 457 baseline recorded in 04-12-SUMMARY). `dist/index.html` has an AVIF `<source>` and no WebP `<source>`.
+- `du -sh dist` is now 39M (was 244M). 04-12-SUMMARY records before/after size, PNG/AVIF counts and cold build time (wall time: no measurable change under machine load, stated honestly).
+- Guard test `tests/unit/picture-format.test.ts` exists. Orchestrator post-merge `pnpm verify` exit 0 (astro check 0 errors, vitest 652/652, playwright 459/459, secrets ok). I did not re-run it.
+- No prior verified item regressed (SC1/SC2/SC4 evidence unchanged; PROJ-02/03 now `[x]`/Complete in REQUIREMENTS.md; PROJ-04..07 N/A). 04-12 declares only PROJ-02, which is accounted for.
 
 ## Advisory: 04-REVIEW.md
 
