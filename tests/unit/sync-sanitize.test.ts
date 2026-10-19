@@ -8,6 +8,7 @@ import {
   plainCaption,
   sanitizeText,
 } from '../../scripts/behance/sanitize';
+import { ContentSchema, isStoredTextHtml } from '../../src/lib/projects/snapshot-schema';
 
 interface TextLike {
   __typename: string;
@@ -125,6 +126,42 @@ describe('sanitizeText on XSS fixtures', () => {
     expect(sanitizeText('<a href="mailto:hi@example.com">mail</a>')).toBe(
       '<a href="mailto:hi@example.com" target="_blank" rel="noopener noreferrer">mail</a>',
     );
+  });
+});
+
+describe('isStoredTextHtml (build-time check of the stored grammar)', () => {
+  it.each(XSS_FIXTURES)('accepts the sanitized form of %s', (html) => {
+    expect(isStoredTextHtml(cleanTextHtml(html))).toBe(true);
+  });
+
+  it('accepts every sanitizer output shape', () => {
+    for (const html of [
+      '<h2>Title</h2>',
+      '<p style="color:red;text-align:right">x</p>',
+      '<div style="text-align:center">a<br>b &amp; c &lt;d&gt;</div>',
+      '<a href="https://example.com/?a=1&b=2" title="t">x</a>',
+      '<a target="_self" href="mailto:hi@example.com">mail</a>',
+      '<strong>s</strong><b>b</b><em>e</em><i>i</i>',
+    ]) {
+      expect(isStoredTextHtml(sanitizeText(html))).toBe(true);
+    }
+  });
+
+  it.each([
+    '<script>alert(1)</script>',
+    '<img src=x onerror=alert(1)>',
+    '<iframe src="https://evil.com"></iframe>',
+    '<p onclick="alert(1)">x</p>',
+    '<div style="background:url(javascript:alert(1))">x</div>',
+    '<a href="javascript:alert(1)" target="_blank" rel="noopener noreferrer">x</a>',
+    '<a href="https://example.com" target="_blank" rel="noopener noreferrer" onmouseover="x">x</a>',
+    '<a href="https://example.com">x</a>',
+    '<span>x</span>',
+    'text <script',
+    '<p>a > b</p>',
+  ])('rejects %s, so ContentSchema fails the build', (html) => {
+    expect(isStoredTextHtml(html)).toBe(false);
+    expect(ContentSchema.safeParse({ kind: 'text', html }).success).toBe(false);
   });
 });
 

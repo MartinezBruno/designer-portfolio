@@ -37,6 +37,44 @@ export const ImageRefSchema = z.strictObject({
   sourceUrl: BehanceCdnUrl,
 });
 
+const ALIGN_STYLE = /^ style="text-align:(left|right|center|justify);?"$/;
+const PLAIN_TAG = /^<(\/(p|div|a|strong|b|em|i)|p|div|br \/|strong|b|em|i)>$/;
+const LINK_OPEN = /^<a((?: [a-z]+="[^"<>]*")+)>$/;
+const LINK_ATTR = / ([a-z]+)="([^"<>]*)"/g;
+const LINK_HREF = /^(https?:|mailto:)/i;
+
+/** One tag of the sanitized grammar (scripts/behance/sanitize.ts TEXT_OPTIONS output). */
+function isStoredTag(tag: string): boolean {
+  if (PLAIN_TAG.test(tag)) return true;
+  const block = /^<(p|div)(.*)>$/.exec(tag);
+  if (block !== null) return ALIGN_STYLE.test(block[2] ?? '');
+  const link = LINK_OPEN.exec(tag);
+  if (link === null) return false;
+  const attrs = new Map([...(link[1] ?? '').matchAll(LINK_ATTR)].map((m) => [m[1], m[2] ?? '']));
+  return (
+    attrs.size === 3 &&
+    LINK_HREF.test(attrs.get('href') ?? '') &&
+    attrs.get('target') === '_blank' &&
+    attrs.get('rel') === 'noopener noreferrer'
+  );
+}
+
+/**
+ * True when `html` is in the sanitizer's stored grammar: only TEXT_OPTIONS tags and attributes,
+ * http(s)/mailto links, and no `<` or `>` outside a tag. sanitize-html cannot run on the site (D-02),
+ * so this dependency-free check makes the build fail closed on a hand-edited or badly merged
+ * snapshot. The sanitizer fixed-point test stays the primary guard.
+ */
+export function isStoredTextHtml(html: string): boolean {
+  const tags = html.match(/<[^<>]*>/g) ?? [];
+  return tags.every(isStoredTag) && !/[<>]/.test(html.replace(/<[^<>]*>/g, ''));
+}
+
+/** Text HTML injected unescaped by TextModule.astro: must already be in sanitized form. */
+const StoredTextHtml = z
+  .string()
+  .refine(isStoredTextHtml, 'text html is not in sanitized form; re-run pnpm sync:behance');
+
 /** Source-agnostic project content, normalized at sync time. Text HTML is already sanitized. */
 export const ContentSchema = z.discriminatedUnion('kind', [
   z.strictObject({
@@ -46,7 +84,7 @@ export const ContentSchema = z.discriminatedUnion('kind', [
     caption: z.string(),
   }),
   z.strictObject({ kind: z.literal('collection'), images: z.array(ImageRefSchema).min(1) }),
-  z.strictObject({ kind: z.literal('text'), html: z.string() }),
+  z.strictObject({ kind: z.literal('text'), html: StoredTextHtml }),
   z.strictObject({
     kind: z.literal('embed'),
     provider: z.enum(['figma']),

@@ -15,7 +15,8 @@ const { html, lang } = Astro.props;
 // Spread so text in the page language carries no lang attribute at all.
 const langAttr = lang === null ? {} : { lang };
 // set:html below: sanitized at sync by scripts/behance/sanitize.ts (fixed-point tested in
-// projects-snapshot.test.ts); new-tab hint escaped in detail-view.ts — never raw Behance HTML.
+// projects-snapshot.test.ts), re-checked at build by ContentSchema (isStoredTextHtml in
+// snapshot-schema.ts); new-tab hint escaped in detail-view.ts — never raw Behance HTML.
 ---
 
 <div
