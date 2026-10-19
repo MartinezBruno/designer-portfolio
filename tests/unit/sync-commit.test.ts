@@ -343,6 +343,31 @@ describe('module images', () => {
     );
   });
 
+  it('refuses a modulesDir equal to coversDir before any write', async () => {
+    await createStaging(root, STAGING);
+    await writeStagedCover(root, STAGING, NEW_C, new Uint8Array([1]));
+    await writeStagedSnapshot(root, STAGING, { next: true });
+
+    for (const modulesDir of [COVERS, `${COVERS}/`, `./${COVERS}`]) {
+      await expect(
+        commitSync({
+          root,
+          stagingDir: STAGING,
+          snapshot: SNAPSHOT,
+          coversDir: COVERS,
+          referenced: new Set([NEW_C]),
+          modulesDir,
+          referencedModules: new Set([MOD_OLD]),
+        }),
+      ).rejects.toThrow(SyncError);
+    }
+    expect(await readFile(join(root, SNAPSHOT), 'utf8')).toBe('{"previous":true}\n');
+    expect((await readdir(join(root, COVERS))).sort()).toEqual(
+      ['.gitkeep', OLD_A, OLD_B, 'modules'].sort(),
+    );
+    expect(await listModules()).toEqual(['.gitkeep', MOD_OLD, MOD_GONE].sort());
+  });
+
   it('does not create the modules dir when no module image is staged', async () => {
     await rm(join(root, MODULES), { recursive: true });
     await createStaging(root, STAGING);

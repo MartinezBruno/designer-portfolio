@@ -4,7 +4,8 @@
 // Covers are staged at `<staging>/<name>` and committed to coversDir. Module images are staged at
 // `<staging>/modules/<name>` and committed to modulesDir (a subdirectory of coversDir in the repo,
 // src/assets/projects/modules). Each set has its own name regex and its own GC, so a cover GC can
-// never delete a module image (RESEARCH Pitfall 1).
+// never delete a module image (RESEARCH Pitfall 1). Every MODULE_FILE name also matches COVER_FILE,
+// so that guarantee needs two distinct dirs: commitSync refuses a modulesDir equal to coversDir.
 //
 // Order inside commitSync:
 //   0. Pre-flight: every referenced cover and module image is staged or already present. Nothing
@@ -34,9 +35,9 @@ import {
   rm,
   writeFile,
 } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { COVER_FILE, MODULE_FILE } from '../../src/lib/projects/snapshot-schema.ts';
-import { postCommitError } from './errors.ts';
+import { SyncError, postCommitError } from './errors.ts';
 
 const STAGED_SNAPSHOT = 'snapshot.json';
 const STAGED_MODULES = 'modules';
@@ -185,6 +186,13 @@ async function collect(set: FileSet): Promise<string[]> {
 }
 
 export async function commitSync(input: CommitInput): Promise<CommitResult> {
+  // MODULE_FILE names match COVER_FILE: a shared dir would let the cover GC delete module images.
+  if (resolve(input.root, input.coversDir) === resolve(input.root, input.modulesDir)) {
+    throw new SyncError(
+      'G7',
+      `modulesDir must differ from coversDir (${input.coversDir}): a shared GC would delete module images`,
+    );
+  }
   const staging = join(input.root, input.stagingDir);
   const target = join(input.root, input.snapshot);
   const coverNames = [...input.referenced].sort();
