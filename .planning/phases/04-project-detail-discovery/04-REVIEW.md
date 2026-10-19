@@ -1,8 +1,8 @@
 ---
 phase: 04-project-detail-discovery
-reviewed: 2026-10-19T11:21:47Z
+reviewed: 2026-10-19T13:21:39Z
 depth: standard
-files_reviewed: 63
+files_reviewed: 67
 files_reviewed_list:
   - scripts/behance/errors.ts
   - scripts/behance/fetch-page.ts
@@ -24,6 +24,7 @@ files_reviewed_list:
   - src/components/project/ProjectModule.astro
   - src/components/project/TextModule.astro
   - src/components/project/UnknownModule.astro
+  - src/components/sections/Hero.astro
   - src/components/ui/ExternalTextLink.astro
   - src/components/ui/ProjectCard.astro
   - src/components/ui/ToolIcon.astro
@@ -42,16 +43,19 @@ files_reviewed_list:
   - src/lib/projects/sources/behance-snapshot.ts
   - src/lib/seo.ts
   - src/lib/ui/embed-facade.ts
+  - src/lib/ui/picture-format.ts
   - src/pages/es/projects/[slug].astro
   - src/pages/projects/[slug].astro
   - src/styles/global.css
   - tests/e2e/a11y.spec.ts
   - tests/e2e/helpers/projects.ts
   - tests/e2e/home-latest-work.spec.ts
+  - tests/e2e/home.spec.ts
   - tests/e2e/project-detail.spec.ts
   - tests/e2e/projects.spec.ts
   - tests/e2e/seo.spec.ts
   - tests/unit/embed-facade.test.ts
+  - tests/unit/picture-format.test.ts
   - tests/unit/project-card-view.test.ts
   - tests/unit/project-closing.test.ts
   - tests/unit/project-detail-site.test.ts
@@ -70,16 +74,16 @@ files_reviewed_list:
 findings:
   critical: 0
   warning: 5
-  info: 8
-  total: 13
+  info: 10
+  total: 15
 status: issues_found
 ---
 
 # Phase 4: Code Review Report
 
-**Reviewed:** 2026-10-19T11:21:47Z
+**Reviewed:** 2026-10-19T11:21:47Z (plans 01-11); 2026-10-19T13:21:39Z (incremental, plan 04-12)
 **Depth:** standard
-**Files Reviewed:** 63
+**Files Reviewed:** 67
 **Status:** issues_found
 
 ## Narrative Findings (AI reviewer)
@@ -220,8 +224,48 @@ Then use `html: TextHtml` in `ContentSchema`. The real sanitizer and the fixed-p
 **Issue:** `rows()` re-derives `slug`, `title`, `titleLang` and `contentLang` by hand instead of calling `applyOverrides` (which is Node-safe). If the site's rule changes, both sides can change in step, and the e2e test then confirms the wrong behavior.
 **Fix:** Build the rows from `applyOverrides(...)` output (with a stub cover/modules), or drop the "cannot drift" wording.
 
+## Incremental review: 04-12 (gap closure)
+
+**Scope:** `git diff 0878a28..HEAD` for the 04-12 files only. Depth: standard.
+
+Files reviewed:
+- `src/lib/ui/picture-format.ts` (new)
+- `tests/unit/picture-format.test.ts` (new)
+- `src/components/project/ImageModule.astro`
+- `src/components/project/CollectionModule.astro`
+- `src/components/project/NextProjectTeaser.astro`
+- `src/components/ui/ProjectCard.astro`
+- `src/components/sections/Hero.astro`
+- `tests/e2e/home.spec.ts`
+
+**What was checked:**
+- [Verified by reading `node_modules/astro/components/Picture.astro`] `formats` makes one `<source>` per entry. `fallbackFormat` sets the `<img>` format and replaces the `png` default. So `{ formats: ['avif'], fallbackFormat: 'webp' }` gives one AVIF source plus a WebP `<img>`, with no PNG.
+- [Verified on the existing `dist/index.html`] The hero and the project cards render `<source type="image/avif">` plus an `<img>` whose `src` and `srcset` are `.webp`. `dist/_astro` holds 457 AVIF and 457 WebP files and no PNG. The e2e regex `/\.webp(\?|$)/` matches the hashed build URL (`/_astro/portrait.RtVae4IC_ZT4bSK.webp`), and Playwright runs against `astro preview` of the build, so this assertion holds.
+- In every call site, the spread comes before the explicit props. No later prop or spread sets `formats` or `fallbackFormat`, so nothing overrides the policy.
+- [Verified by running it] `pnpm vitest run tests/unit/picture-format.test.ts` gives 4/4 passing.
+
+No BLOCKER or WARNING was found in 04-12. The two new Info items are below.
+
+### IN-09: Pinning `fallbackFormat` turns off Astro's original-format fallback for GIF/SVG/JPEG sources
+
+**File:** `src/lib/ui/picture-format.ts:4-7`
+**Issue:** `Picture.astro` keeps the original format as the `<img>` fallback for `gif`, `svg`, `jpg` and `jpeg` imports, but only when `fallbackFormat` is unset (`if (!fallbackFormat && ... specialFormatsFallback.includes(...))`). Because the shared policy always sets `fallbackFormat: 'webp'`, an animated GIF would get a static WebP `<img>`, and an SVG would be rasterized. This is latent today. `src/assets` contains only PNG and WebP, module images are always stored as WebP, and the cover GC regex allows only `png|jpg|webp`. (WebP is also a better fallback than JPEG.) But nothing documents or enforces the constraint, so a future GIF or SVG asset would lose animation or vectors with no warning. JPEG is not a problem here.
+**Fix:** Document the constraint next to the constant, for example `// Raster PNG/JPEG/WebP sources only: GIF/SVG must not use this policy (fallbackFormat overrides Astro's original-format fallback).`, or add a unit assertion that every image imported by a `<Picture>` user is png/jpg/webp.
+
+### IN-10: The guard test matches spread and `<Picture>` counts per file, not per element
+
+**File:** `tests/unit/picture-format.test.ts:67-75`
+**Issue:** The test only checks that each file has as many `{...pictureFormat}` spreads as `<Picture` tags. A file where one `<Picture>` has the spread twice and another has none still passes (it would get Astro's `['webp']` + PNG default, which is the regression 04-12 fixes). A `<Picture` inside a comment also counts toward both totals. The rendered-markup tests cover only `ImageModule` (the `caption === null` branch) and `ProjectCard`, so they don't catch this either.
+**Fix:** Split each file on `<Picture\b` and check that every element body, up to its closing `/>`, contains exactly one `{...pictureFormat}`:
+```ts
+for (const body of text.split(/<Picture\b/).slice(1)) {
+  const element = body.slice(0, body.indexOf('/>'));
+  expect(element.match(/\{\.\.\.pictureFormat\}/g)?.length ?? 0, file).toBe(1);
+}
+```
+
 ---
 
-_Reviewed: 2026-10-19T11:21:47Z_
+_Reviewed: 2026-10-19T11:21:47Z (plans 01-11); 2026-10-19T13:21:39Z (incremental 04-12)_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
