@@ -5,6 +5,7 @@
  */
 import { Picture } from 'astro:assets';
 import type { ModuleView } from '../../lib/projects/model';
+import { pictureFormat } from '../../lib/ui/picture-format';
 
 type Props = Omit<Extract<ModuleView, { kind: 'image' }>, 'kind'>;
 
@@ -26,7 +27,7 @@ const captionLangAttr = captionLang === null ? {} : { lang: captionLang };
     <Picture
       src={image}
       alt={alt}
-      formats={['avif', 'webp']}
+      {...pictureFormat}
       widths={[...widths]}
       sizes="(min-width: 1400px) 1400px, 100vw"
       width={image.width}
@@ -44,7 +45,7 @@ const captionLangAttr = captionLang === null ? {} : { lang: captionLang };
       <Picture
         src={image}
         alt={alt}
-        formats={['avif', 'webp']}
+        {...pictureFormat}
         widths={[...widths]}
         sizes="(min-width: 1400px) 1400px, 100vw"
         width={image.width}

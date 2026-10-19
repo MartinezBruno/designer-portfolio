@@ -47,11 +47,12 @@ test.describe('hero without JavaScript', () => {
       await expect(cta).toHaveAttribute('href', '#contact');
     });
 
-    test(`${path} hero picture offers avif and webp sources`, async ({ page }) => {
+    test(`${path} hero picture offers an avif source and a webp img`, async ({ page }) => {
       await page.goto(path);
       const picture = page.locator('#main section[aria-labelledby="hero-title"] picture');
       await expect(picture.locator('source[type="image/avif"]')).toHaveCount(1);
-      await expect(picture.locator('source[type="image/webp"]')).toHaveCount(1);
+      await expect(picture.locator('source[type="image/webp"]')).toHaveCount(0);
+      await expect(picture.locator('img')).toHaveAttribute('src', /\.webp(\?|$)/);
     });
 
     for (const [width, maxSide] of [
