@@ -162,7 +162,7 @@ Plans:
   3. *(If ≥8 projects)* Visitor filters by category chips and tool (no year filter, D-17), and runs an accent-insensitive text search (e.g. "diseno" matches "diseño"). Reloading the URL restores the same filters, screen readers hear the result count, and an empty result offers "clear filters".
   4. *(If <8 projects)* PROJ-04..07 are recorded as not applicable, with the confirmed count from Phase 3 as evidence, and the Projects page has no filter UI.
 
-**Plans**: 11 plans
+**Plans**: 12 plans
 Plans:
 **Wave 1**
 
@@ -195,6 +195,10 @@ Plans:
 **Wave 7** *(blocked on Wave 6 completion)*
 
 - [x] 04-11-PLAN.md — Phase gate: pnpm verify, measurements, full taste gate, user sign-off
+
+**Wave 8** *(gap closure, blocked on Wave 7 completion)*
+
+- [ ] 04-12-PLAN.md — Gap: WebP Picture fallback instead of PNG (205 MB of dist), measured before/after
 **UI hint**: yes
 
 ### Phase 5: Contact
