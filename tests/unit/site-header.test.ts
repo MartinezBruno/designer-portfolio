@@ -51,7 +51,8 @@ describe('SiteHeader', () => {
     const dict = dicts[locale];
     const nav = navHtml(await render(locale, locale === 'en' ? '/' : '/es/'), dict['nav.label']);
     const projectsAt = nav.indexOf(`href="${href}"`);
-    const contactAt = nav.indexOf('href="#contact"');
+    // D-04: Contact points at the Home section of the same locale.
+    const contactAt = nav.indexOf(`href="${locale === 'en' ? '/' : '/es/'}#contact"`);
     expect(projectsAt).toBeGreaterThan(-1);
     expect(contactAt).toBeGreaterThan(projectsAt);
     expect(nav).toContain(dict['nav.projects']);

@@ -18,6 +18,8 @@ const bare = stripLocale(pathname);
 const isHome = bare === '/';
 const isProjects = /^\/projects\/?$/.test(bare);
 const t = useTranslations(locale);
+// Every Contact link lands on the Home section of the same locale (D-04).
+const contactHref = `${getRelativeLocaleUrl(locale, '/')}#contact`;
 // Layout (UI-SPEC Header nav): two rows below sm (wordmark; nav + languages), one 64px row from
 // sm. DOM order stays wordmark, nav, languages, so visual order equals tab order.
 // Shared by both nav links (D-20): same look as the Phase 2 Contact link.
@@ -50,7 +52,7 @@ const navLink =
             </a>
           </li>
           <li>
-            <a href="#contact" class={navLink}>
+            <a href={contactHref} class={navLink}>
               {t('nav.contact')}
             </a>
           </li>
