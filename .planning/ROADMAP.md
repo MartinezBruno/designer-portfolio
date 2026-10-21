@@ -219,23 +219,29 @@ Plans:
 **Wave 1**
 
 - [ ] 05-01-PLAN.md — Package gate, Cloudflare adapter + env schema, Vitest stub, secrets gate, deterministic e2e preview env
-- [ ] 05-02-PLAN.md — Home Contact section with no-JS mailto, all Phase 5 copy, Contact links to /#contact everywhere
-- [ ] 05-03-PLAN.md — Mailer port (console + Resend) and Spanish plain-text email builder (TDD)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 05-04-PLAN.md — contact Action: zod schema, honeypot, Turnstile siteverify, server accept/reject e2e
+- [ ] 05-02-PLAN.md — Home Contact section with no-JS mailto, all Phase 5 copy, Contact links to /#contact everywhere
+- [ ] 05-03-PLAN.md — Mailer port (console + Resend) and Spanish plain-text email builder (TDD)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 05-05-PLAN.md — JS form with chips and Turnstile, sending state, success panel, keyboard order + axe
+- [ ] 05-04-PLAN.md — contact Action: zod schema, honeypot, Turnstile siteverify, server accept/reject e2e
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 05-06-PLAN.md — Localized validation (client mirror + server errors), failure block with prefilled mailto
-- [ ] 05-07-PLAN.md — Service card "Ask about this" links and ?service= pre-selection
+- [ ] 05-05-PLAN.md — JS form with chips and Turnstile, sending state, success panel, keyboard order + axe
 
 **Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 05-06-PLAN.md — Localized validation (client mirror + server errors), failure block with prefilled mailto
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 05-07-PLAN.md — Service card "Ask about this" links and ?service= pre-selection
+
+**Wave 7** *(blocked on Wave 6 completion)*
 
 - [ ] 05-08-PLAN.md — Phase gate: pnpm verify, state screenshots, taste gate, measurements, user sign-off
 **UI hint**: yes
