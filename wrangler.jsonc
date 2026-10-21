@@ -1,0 +1,6 @@
+// Root wrangler config: `astro dev` only reads the root .dev.vars when this file exists.
+// The adapter fills in `main` and `assets` at build time.
+{
+  "name": "designer-portfolio",
+  "compatibility_date": "2026-10-12",
+}

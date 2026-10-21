@@ -1,4 +1,5 @@
-import { defineConfig, fontProviders } from 'astro/config';
+import { defineConfig, envField, fontProviders } from 'astro/config';
+import cloudflare from '@astrojs/cloudflare';
 import tailwindcss from '@tailwindcss/vite';
 import { site } from './src/data/site';
 import { defaultLocale, locales } from './src/i18n/config';
@@ -7,6 +8,59 @@ const fallbacks = ['ui-sans-serif', 'system-ui', 'sans-serif'];
 
 export default defineConfig({
   site: site.url,
+  // Pages stay prerendered (static default); the adapter adds one on-demand Worker for /_actions/*.
+  // Vitest loads this config through getViteConfig(): with the real adapter the Cloudflare Vite plugin
+  // fails ("There is already a server associated with the config"), and with no adapter Actions refuse
+  // to load (ActionsWithoutServerOutputError), so unit tests get a no-op stand-in.
+  // prerenderEnvironment 'node': prerendering in workerd trips the offline guard (DNS lookup of
+  // 0.0.0.0 from the plugin's port check); on-demand code still runs in workerd in dev and preview.
+  adapter: process.env['VITEST']
+    ? {
+        name: 'vitest-adapter-stub',
+        hooks: {
+          'astro:config:done': ({ setAdapter }) => {
+            setAdapter({
+              name: 'vitest-adapter-stub',
+              serverEntrypoint: 'astro/app',
+              supportedAstroFeatures: {
+                staticOutput: 'stable',
+                hybridOutput: 'stable',
+                serverOutput: 'stable',
+              },
+            });
+          },
+        },
+      }
+    : cloudflare({ imageService: 'compile', prerenderEnvironment: 'node' }),
+  // No KV "SESSION" binding: the adapter would otherwise auto-enable sessions.
+  session: false,
+  env: {
+    // Server vars are access 'secret' so they are read at runtime, never inlined into dist (D-20, D-21).
+    // They are optional on purpose: a missing required secret throws at action-module load and turns
+    // every call into a 500; createMailer and verifyTurnstile validate them and fail loudly instead.
+    schema: {
+      MAILER: envField.enum({
+        context: 'server',
+        access: 'secret',
+        values: ['console', 'resend'],
+        default: 'console',
+      }),
+      CONTACT_TO: envField.string({ context: 'server', access: 'secret', optional: true }),
+      RESEND_API_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
+      TURNSTILE_SECRET_KEY: envField.string({
+        context: 'server',
+        access: 'secret',
+        optional: true,
+      }),
+      // Defaults to Cloudflare's always-pass visible test sitekey.
+      // TODO(deploy): real sitekey via build env, never .dev.vars
+      PUBLIC_TURNSTILE_SITE_KEY: envField.string({
+        context: 'client',
+        access: 'public',
+        default: '1x00000000000000000000AA',
+      }),
+    },
+  },
   i18n: {
     locales: [...locales],
     defaultLocale,
