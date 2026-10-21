@@ -3,7 +3,12 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { isSecretPath, parseSecretValues } from './secrets.ts';
+import {
+  isClientSecretPath,
+  isPluginPreviewCopy,
+  isSecretPath,
+  parseSecretValues,
+} from './secrets.ts';
 
 const DIST = 'dist';
 const LOCAL_SECRET_FILES = ['.env', '.dev.vars'];
@@ -25,7 +30,11 @@ const tracked = execFileSync('git', ['ls-files'], { encoding: 'utf8' })
   .filter((file) => file !== '' && isSecretPath(file));
 
 const distFiles = walk(DIST);
-const leakedFiles = distFiles.filter((file) => isSecretPath(file));
+// dist/server/.dev.vars is the Cloudflare plugin's local-preview copy (astro preview needs it);
+// it is skipped by both checks below. Every other dist file, including dist/server/**/*.mjs, is scanned.
+const scannedFiles = distFiles.filter((file) => !isPluginPreviewCopy(file));
+const clientSecretFiles = distFiles.filter((file) => isClientSecretPath(file));
+const leakedFiles = scannedFiles.filter((file) => isSecretPath(file));
 
 const secretValues = LOCAL_SECRET_FILES.filter((file) => existsSync(file)).flatMap((file) =>
   parseSecretValues(readFileSync(file, 'utf8')),
@@ -33,13 +42,14 @@ const secretValues = LOCAL_SECRET_FILES.filter((file) => existsSync(file)).flatM
 const leakedValues =
   secretValues.length === 0
     ? []
-    : distFiles.filter((file) => {
+    : scannedFiles.filter((file) => {
         const content = readFileSync(file, 'utf8');
         return secretValues.some((value) => content.includes(value));
       });
 
 const problems = [
   ...tracked.map((file) => `tracked in git: ${file}`),
+  ...clientSecretFiles.map((file) => `secret file in static assets: ${file}`),
   ...leakedFiles.map((file) => `secret file in dist: ${file}`),
   ...leakedValues.map((file) => `secret value found in: ${file}`),
 ];
