@@ -1,4 +1,6 @@
 ---
+import { primaryButton } from '../../lib/ui/button-classes';
+
 // Accent pill CTA. Reused by the hero and the 404 view. Default slot = label, "icon" slot trails it.
 interface Props {
   href: string;
@@ -7,10 +9,7 @@ interface Props {
 const { href } = Astro.props;
 ---
 
-<a
-  href={href}
-  class="bg-accent text-accent-ink hover:bg-accent/90 focus-visible:outline-accent inline-flex h-12 items-center gap-2 rounded-full px-6 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-150"
->
+<a href={href} class={primaryButton}>
   <slot />
   <slot name="icon" />
 </a>

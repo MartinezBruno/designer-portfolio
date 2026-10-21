@@ -11,7 +11,8 @@ async function render(locale: 'en' | 'es'): Promise<string> {
 describe('SiteFooter', () => {
   it('renders the English contact block with inline decorative icons', async () => {
     const html = await render('en');
-    expect(html).toContain('id="contact"');
+    // The id moved to the Home Contact section (D-03).
+    expect(html).not.toContain('id="contact"');
     expect(html).toMatch(/<h2[^>]*>[^<]*Let(?:'|&#39;)s talk/);
     expect(html).toContain(`href="mailto:${site.email}"`);
     expect(html).toMatch(/<svg[^>]*aria-hidden="true"/);

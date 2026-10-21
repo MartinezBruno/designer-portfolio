@@ -44,7 +44,7 @@ test.describe('hero without JavaScript', () => {
 
       const cta = hero.getByRole('link', { name: dict['hero.cta'] });
       await expect(cta).toBeVisible();
-      await expect(cta).toHaveAttribute('href', '#contact');
+      await expect(cta).toHaveAttribute('href', `${path}#contact`);
     });
 
     test(`${path} hero picture offers an avif source and a webp img`, async ({ page }) => {

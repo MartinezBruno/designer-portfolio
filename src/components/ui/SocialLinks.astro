@@ -1,0 +1,41 @@
+---
+import IconBrandBehance from '@tabler/icons/outline/brand-behance.svg';
+import IconBrandInstagram from '@tabler/icons/outline/brand-instagram.svg';
+import IconBrandLinkedin from '@tabler/icons/outline/brand-linkedin.svg';
+import IconLink from './IconLink.astro';
+import { site } from '../../data/site';
+import type { SiteConfig } from '../../data/site';
+import { useTranslations, type Locale } from '../../i18n/t';
+
+// Socials list shared by the footer and the Home Contact section (one markup, no drift).
+interface Props {
+  locale: Locale;
+}
+
+const t = useTranslations(Astro.props.locale);
+// Widen to the config type so optional socials stay optional until Martina provides them.
+const socials: SiteConfig['socials'] = site.socials;
+const newTab = t('a11y.newTab');
+---
+
+<ul class="flex gap-2">
+  <li>
+    <IconLink href={socials.behance} label={t('footer.behance')} newTabHint={newTab}>
+      <IconBrandBehance aria-hidden="true" focusable="false" class="size-6" />
+    </IconLink>
+  </li>
+  {socials.instagram && (
+    <li>
+      <IconLink href={socials.instagram} label={t('footer.instagram')} newTabHint={newTab}>
+        <IconBrandInstagram aria-hidden="true" focusable="false" class="size-6" />
+      </IconLink>
+    </li>
+  )}
+  {socials.linkedin && (
+    <li>
+      <IconLink href={socials.linkedin} label={t('footer.linkedin')} newTabHint={newTab}>
+        <IconBrandLinkedin aria-hidden="true" focusable="false" class="size-6" />
+      </IconLink>
+    </li>
+  )}
+</ul>

@@ -1,4 +1,5 @@
 ---
+import { getRelativeLocaleUrl } from 'astro:i18n';
 import ProjectGrid from '../ui/ProjectGrid.astro';
 import { getAllProjects } from '../../lib/content/queries';
 import { useTranslations, type Locale } from '../../i18n/t';
@@ -10,6 +11,7 @@ interface Props {
 // ProjectsView is the only project reader for this page; the grid and cards stay prop-driven.
 const { locale } = Astro.props;
 const t = useTranslations(locale);
+const contactHref = `${getRelativeLocaleUrl(locale, '/')}#contact`;
 const all = await getAllProjects(locale);
 ---
 
@@ -33,7 +35,7 @@ const all = await getAllProjects(locale);
       <p class="text-ink text-base">{t('projects.empty.body')}</p>
       <p>
         <a
-          href="#contact"
+          href={contactHref}
           class="text-ink decoration-accent focus-visible:outline-accent inline-flex min-h-11 items-center gap-2 text-base font-semibold decoration-2 underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           {t('projects.empty.cta')}

@@ -1,5 +1,6 @@
 ---
 import { Picture } from 'astro:assets';
+import { getRelativeLocaleUrl } from 'astro:i18n';
 import IconArrowRight from '@tabler/icons/outline/arrow-right.svg';
 import AvailabilityBadge from '../ui/AvailabilityBadge.astro';
 import ButtonLink from '../ui/ButtonLink.astro';
@@ -16,6 +17,7 @@ interface Props {
 
 const { locale, available } = Astro.props;
 const t = useTranslations(locale);
+const contactHref = `${getRelativeLocaleUrl(locale, '/')}#contact`;
 ---
 
 <section aria-labelledby="hero-title" class="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
@@ -29,7 +31,7 @@ const t = useTranslations(locale);
         {`${t('hero.role')} ${t('hero.description')}`}
       </p>
       <div class="flex flex-col items-start gap-x-6 gap-y-4 sm:flex-row sm:flex-wrap sm:items-center">
-        <ButtonLink href="#contact">
+        <ButtonLink href={contactHref}>
           {t('hero.cta')}
           <Fragment slot="icon">
             <IconArrowRight aria-hidden="true" focusable="false" class="size-5" />

@@ -18,7 +18,8 @@ for (const [path, dict] of cases) {
       await page.goto(path);
 
       const footer = page.getByRole('contentinfo');
-      await expect(footer).toHaveAttribute('id', 'contact');
+      // The id moved to the Home Contact section (D-03).
+      await expect(footer).not.toHaveAttribute('id', 'contact');
       await expect(footer.getByRole('heading', { level: 2 })).toHaveText(dict['footer.heading']);
 
       const email = footer.getByRole('link', { name: site.email });
@@ -36,15 +37,15 @@ for (const [path, dict] of cases) {
       await expect(footer.getByText(copyright, { exact: true })).toBeVisible();
     });
 
-    test('header Main nav Contact link jumps to the footer', async ({ page }) => {
+    test('header Main nav Contact link jumps to the Contact section', async ({ page }) => {
       await page.goto(path);
       const nav = page.getByRole('navigation', { name: dict['nav.label'], exact: true });
       const contact = nav.getByRole('link', { name: dict['nav.contact'], exact: true });
-      await expect(contact).toHaveAttribute('href', '#contact');
+      await expect(contact).toHaveAttribute('href', `${path}#contact`);
 
       await contact.click();
       await expect(page).toHaveURL(/#contact$/);
-      await expect(page.getByRole('contentinfo')).toBeInViewport();
+      await expect(page.locator('section#contact')).toBeInViewport();
     });
 
     test('at 320px there is no horizontal overflow and h1 is at most 2 lines', async ({ page }) => {

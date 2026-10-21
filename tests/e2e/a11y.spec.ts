@@ -51,8 +51,8 @@ for (const path of pages) {
 
 // UI-SPEC keyboard order on Home: skip link, wordmark, Projects, Contact, EN, ES, hero CTA,
 // invisible marquee pause toggle (button over the band), 3 project links, See all, 5 tool tiles,
-// footer email, Behance. On the Projects pages: skip link, wordmark, Projects, Contact, EN, ES,
-// 7 project links (newest first), footer email, Behance.
+// Contact section email, Behance and Email me, footer email, Behance. On the Projects pages: skip
+// link, wordmark, Projects, Contact, EN, ES, 7 project links (newest first), footer email, Behance.
 interface Step {
   name: string;
   href?: string;
@@ -87,7 +87,7 @@ function headerSteps(dict: Dictionary, homeHref: string, enHref: string, esHref:
     { name: dict['a11y.skipToContent'], href: '#main' },
     { name: site.name, href: homeHref },
     { name: dict['nav.projects'], href: projectsHrefFor(homeHref) },
-    { name: dict['nav.contact'], href: '#contact' },
+    { name: dict['nav.contact'], href: `${homeHref}#contact` },
     { name: `EN ${dict['lang.en']}`, href: enHref },
     { name: `ES ${dict['lang.es']}`, href: esHref },
   ];
@@ -100,15 +100,28 @@ function footerSteps(dict: Dictionary): Step[] {
   ];
 }
 
+// Home Contact section (D-01, CONT-05): email link, socials, then the no-JS "Email me" button.
+function contactSteps(dict: Dictionary): Step[] {
+  return [
+    { name: site.email, href: `mailto:${site.email}` },
+    { name: dict['footer.behance'], href: site.socials.behance },
+    {
+      name: dict['contact.nojs.button'],
+      href: `mailto:${site.email}?subject=${encodeURIComponent(dict['contact.nojs.subject'])}`,
+    },
+  ];
+}
+
 function expectedOrderFor(dict: Dictionary, homeHref: string): Step[] {
   const locale = homeHref === '/' ? 'en' : 'es';
   return [
     ...headerSteps(dict, homeHref, '/', '/es/'),
-    { name: dict['hero.cta'], href: '#contact' },
+    { name: dict['hero.cta'], href: `${homeHref}#contact` },
     { name: dict['roles.pause'], tag: 'BUTTON' },
     ...projectSteps(expectedHome(locale)),
     { name: dict['work.seeAll'], href: projectsHrefFor(homeHref) },
     ...toolSteps,
+    ...contactSteps(dict),
     ...footerSteps(dict),
   ];
 }
