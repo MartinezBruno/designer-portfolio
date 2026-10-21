@@ -4,6 +4,7 @@ import RolesMarquee from '../sections/RolesMarquee.astro';
 import FeaturedServices from '../sections/FeaturedServices.astro';
 import ToolsRow from '../sections/ToolsRow.astro';
 import LatestWork from '../sections/LatestWork.astro';
+import ContactSection from '../contact/ContactSection.astro';
 import { getHomeContent, getLatestProjects } from '../../lib/content/queries';
 import type { Locale } from '../../i18n/t';
 
@@ -23,4 +24,5 @@ const latest = await getLatestProjects(locale);
   <FeaturedServices services={services} locale={locale} />
   <LatestWork projects={latest} locale={locale} />
   <ToolsRow tools={tools} locale={locale} />
+  <ContactSection locale={locale} />
 </div>

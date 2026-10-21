@@ -1,0 +1,67 @@
+---
+/**
+ * Home Contact section, the last section before the footer and the target of every Contact link
+ * (D-01, D-04). Two columns from lg, stacked below (D-02): the invitation with the direct email
+ * link and socials, then the contact column. The no-JS mailto block ships visible, with no
+ * <noscript>, so a visitor without JavaScript can always email Martina (CONT-05, D-12). The form
+ * that replaces it for JS visitors mounts in [data-contact-column] (05-05).
+ */
+import IconArrowRight from '@tabler/icons/outline/arrow-right.svg';
+import IconMail from '@tabler/icons/outline/mail.svg';
+import ButtonLink from '../ui/ButtonLink.astro';
+import SocialLinks from '../ui/SocialLinks.astro';
+import { site } from '../../data/site';
+import { interpolate, useTranslations, type Locale } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+// The subject is a dictionary constant, encoded; no visitor input reaches this link (T-05-07).
+const nojsHref = `mailto:${site.email}?subject=${encodeURIComponent(t('contact.nojs.subject'))}`;
+---
+
+<section
+  id="contact"
+  aria-labelledby="contact-title"
+  class="mx-auto w-full max-w-6xl scroll-mt-24 px-4 sm:px-6 lg:px-8"
+>
+  <div class="grid gap-y-12 lg:grid-cols-12 lg:gap-x-8">
+    <div class="flex flex-col items-start gap-6 lg:col-span-5">
+      <h2
+        id="contact-title"
+        class="font-display text-ink text-4xl font-semibold tracking-tight text-pretty"
+      >
+        {t('contact.heading')}
+      </h2>
+      <p class="text-ink max-w-[60ch] text-base text-pretty">{t('contact.intro')}</p>
+      <div class="flex flex-col items-start gap-2">
+        <p>
+          <a
+            href={`mailto:${site.email}`}
+            class="decoration-accent focus-visible:outline-accent inline-flex min-h-11 items-center gap-1 text-base underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+          >
+            <IconMail aria-hidden="true" focusable="false" class="size-5" />
+            {site.email}
+          </a>
+        </p>
+        <SocialLinks locale={locale} />
+      </div>
+    </div>
+    <div class="lg:col-span-7" data-contact-column>
+      <div data-contact-nojs class="flex flex-col items-start gap-6">
+        <p class="text-ink max-w-[60ch] text-base">
+          {interpolate(t('contact.nojs.body'), { email: site.email })}
+        </p>
+        <ButtonLink href={nojsHref}>
+          {t('contact.nojs.button')}
+          <Fragment slot="icon">
+            <IconArrowRight aria-hidden="true" focusable="false" class="size-5" />
+          </Fragment>
+        </ButtonLink>
+      </div>
+    </div>
+  </div>
+</section>

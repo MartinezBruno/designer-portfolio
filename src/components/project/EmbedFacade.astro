@@ -7,6 +7,7 @@
  */
 import IconPlayerPlay from '@tabler/icons/outline/player-play.svg';
 import ExternalTextLink from '../ui/ExternalTextLink.astro';
+import { inkButton } from '../../lib/ui/button-classes';
 import { interpolate, useTranslations, type Locale } from '../../i18n/t';
 import type { ModuleView } from '../../lib/projects/model';
 
@@ -32,12 +33,7 @@ const t = useTranslations(locale);
       <p class="text-ink text-base">
         {interpolate(t('detail.embed.note'), { provider: module.providerName })}
       </p>
-      <button
-        type="button"
-        hidden
-        data-embed-load
-        class="bg-ink text-surface focus-visible:outline-accent hover:bg-ink/90 inline-flex h-12 items-center gap-2 rounded-full px-6 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-150"
-      >
+      <button type="button" hidden data-embed-load class={inkButton}>
         <IconPlayerPlay aria-hidden="true" focusable="false" class="size-5" />
         {t('detail.embed.load')}
       </button>
