@@ -214,7 +214,30 @@ Plans:
   3. A submission with the honeypot filled or a failing Turnstile token is rejected by server-side verification.
   4. Visitor clicks a service card and lands on the contact form with that service pre-selected. With JavaScript disabled, a `mailto:` link is still available.
 
-**Plans**: TBD
+**Plans**: 8 plans
+Plans:
+**Wave 1**
+
+- [ ] 05-01-PLAN.md — Package gate, Cloudflare adapter + env schema, Vitest stub, secrets gate, deterministic e2e preview env
+- [ ] 05-02-PLAN.md — Home Contact section with no-JS mailto, all Phase 5 copy, Contact links to /#contact everywhere
+- [ ] 05-03-PLAN.md — Mailer port (console + Resend) and Spanish plain-text email builder (TDD)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 05-04-PLAN.md — contact Action: zod schema, honeypot, Turnstile siteverify, server accept/reject e2e
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 05-05-PLAN.md — JS form with chips and Turnstile, sending state, success panel, keyboard order + axe
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 05-06-PLAN.md — Localized validation (client mirror + server errors), failure block with prefilled mailto
+- [ ] 05-07-PLAN.md — Service card "Ask about this" links and ?service= pre-selection
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 05-08-PLAN.md — Phase gate: pnpm verify, state screenshots, taste gate, measurements, user sign-off
 **UI hint**: yes
 **Research flag**: Needs `/gsd:plan-phase --research-phase`. Topics: Astro Actions under static output with `@astrojs/cloudflare` 14 on workerd dev, Turnstile test-key values, Resend test-sender constraint.
 
@@ -278,7 +301,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 2. Homepage Story | 8/8 | Complete   | 2026-10-17 |
 | 3. Real Behance Work | 10/10 | Complete   | 2026-10-17 |
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
-| 5. Contact | 0/TBD | Not started | - |
+| 5. Contact | 0/8 | Planned | - |
 | 6. Scroll & Interaction Motion | 0/TBD | Not started | - |
 | 7. Page Transitions & Smooth Scroll | 0/TBD | Not started | - |
 | 8. Quality Verification | 0/TBD | Not started | - |
