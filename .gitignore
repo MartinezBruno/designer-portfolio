@@ -20,6 +20,9 @@ pnpm-debug.log*
 .dev.vars
 .dev.vars.*
 
+# cloudflare local state (wrangler/miniflare)
+.wrangler/
+
 # macOS-specific files
 .DS_Store
 

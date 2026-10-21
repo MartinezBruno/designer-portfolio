@@ -2,9 +2,8 @@ import { expect, type Page, test } from '@playwright/test';
 import { en } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
 
-// `astro preview` (and most static hosts) answers every miss with dist/404.html, including /es/*.
-// That is why the root 404 is English with a Spanish cross-link. A real-host dist/es/404.html is a
-// deferred deploy-time item (see 01-04-SUMMARY.md); /es/404/ is still built and tested directly.
+// The Cloudflare adapter's preview serves the Spanish 404 for /es/* misses and the English 404
+// (with a Spanish cross-link) for every other miss. /es/404/ is still built and tested directly.
 
 async function expectNoIndexWithoutCanonical(page: Page): Promise<void> {
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
@@ -35,10 +34,11 @@ test.describe('root 404', () => {
     await expect(toggle.getByRole('link', { name: 'Español' })).toHaveAttribute('href', '/es/');
   });
 
-  test('/es/does-not-exist returns 404 with the Spanish cross-link', async ({ page }) => {
+  test('/es/does-not-exist returns the Spanish 404', async ({ page }) => {
     const response = await page.goto('/es/does-not-exist');
     expect(response?.status()).toBe(404);
-    await expect(page.locator(spanishCrossLink)).toHaveCount(1);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(es['notFound.heading']);
   });
 });
 

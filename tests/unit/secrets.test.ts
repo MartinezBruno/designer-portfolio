@@ -1,5 +1,45 @@
 import { describe, expect, it } from 'vitest';
-import { isSecretPath, parseSecretValues } from '../../scripts/secrets.ts';
+import {
+  isClientSecretPath,
+  isPluginPreviewCopy,
+  isSecretPath,
+  parseSecretValues,
+} from '../../scripts/secrets.ts';
+
+describe('isPluginPreviewCopy', () => {
+  it.each(['dist/server/.dev.vars', 'dist\\server\\.dev.vars'])(
+    'recognizes %s as the Cloudflare plugin preview copy',
+    (path) => {
+      expect(isPluginPreviewCopy(path)).toBe(true);
+    },
+  );
+
+  it.each([
+    'dist/client/.dev.vars',
+    'dist/.dev.vars',
+    'dist/server/.env',
+    'dist/server/nested/.dev.vars',
+    '.dev.vars',
+  ])('does not treat %s as the preview copy', (path) => {
+    expect(isPluginPreviewCopy(path)).toBe(false);
+  });
+});
+
+describe('isClientSecretPath', () => {
+  it.each(['dist/client/.dev.vars', 'dist/client/x/.env.local', 'dist\\client\\.env'])(
+    'flags %s as a secret file in static assets',
+    (path) => {
+      expect(isClientSecretPath(path)).toBe(true);
+    },
+  );
+
+  it.each(['dist/client/.env.example', 'dist/server/.dev.vars', 'dist/client/index.html'])(
+    'does not flag %s',
+    (path) => {
+      expect(isClientSecretPath(path)).toBe(false);
+    },
+  );
+});
 
 describe('isSecretPath', () => {
   it.each(['.env', '.env.local', 'config/.env.production', '.dev.vars', '.dev.vars.staging'])(
