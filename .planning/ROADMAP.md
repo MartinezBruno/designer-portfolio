@@ -222,8 +222,8 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 05-02-PLAN.md — Home Contact section with no-JS mailto, all Phase 5 copy, Contact links to /#contact everywhere
-- [ ] 05-03-PLAN.md — Mailer port (console + Resend) and Spanish plain-text email builder (TDD)
+- [x] 05-02-PLAN.md — Home Contact section with no-JS mailto, all Phase 5 copy, Contact links to /#contact everywhere
+- [x] 05-03-PLAN.md — Mailer port (console + Resend) and Spanish plain-text email builder (TDD)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -307,7 +307,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 2. Homepage Story | 8/8 | Complete   | 2026-10-17 |
 | 3. Real Behance Work | 10/10 | Complete   | 2026-10-17 |
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
-| 5. Contact | 1/8 | In Progress|  |
+| 5. Contact | 3/8 | In Progress|  |
 | 6. Scroll & Interaction Motion | 0/TBD | Not started | - |
 | 7. Page Transitions & Smooth Scroll | 0/TBD | Not started | - |
 | 8. Quality Verification | 0/TBD | Not started | - |
