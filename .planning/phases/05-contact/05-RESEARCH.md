@@ -595,17 +595,17 @@ Dummy token: `XXXX.DUMMY.TOKEN.XXXX`. Test keys work on `localhost`.
 | A6 | Loading `api.js` when the form is revealed (or near viewport) is acceptable for Turnstile's risk scoring | Pattern 4 | Slightly slower first token. Managed mode still works |
 | A7 | Both packages are legitimate (slopcheck unavailable) | Package audit | Mitigated by checkpoint and first-party repos |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Lazy versus eager Turnstile script on Home.**
    - What we know: the no-JS page makes no third-party request (form hidden). Eager load on JS pages adds one request to challenges.cloudflare.com for every Home visitor.
-   - Recommendation: load on reveal, gated by an IntersectionObserver with `rootMargin: '600px'` on `#contact`, plus immediately when the URL hash is `#contact`. Decide in UI-SPEC/plan.
+   - RESOLVED: lazy. `api.js?render=explicit` loads once, on the first of: IntersectionObserver with `rootMargin: '600px'` on `#contact`, URL hash `#contact` or a `service=` param at init, or the first `focusin` inside the form. No load at the top of Home. Implemented in 05-05 (Task 3 `src/lib/ui/contact-form.ts`, e2e "Turnstile loads only near the section"); 05-02 asserts no request without JS; 05-08 measures the request count at the top of Home.
 2. **Minimum time-to-submit check.**
-   - Recommendation: **skip in v1.** The form only exists with JS, Turnstile managed mode already scores behavior, the client sets the timestamp so it's forgeable, and it makes e2e timing-sensitive. Revisit with rate limiting at deploy.
+   - RESOLVED: skipped in this phase, as recommended (the client-set timestamp is forgeable, Turnstile managed mode already scores behavior, and it makes e2e timing-sensitive). Spam defence is the honeypot plus server-side siteverify, implemented in 05-04 (`submitContact`, `verifyTurnstile`). No plan adds a timing check. Revisit with rate limiting at deploy (DEPLOY-02).
 3. **Real Turnstile sitekey injection at deploy.**
-   - The schema default is the test key. For DEPLOY-02, set `PUBLIC_TURNSTILE_SITE_KEY` in the build environment (CI var or wrangler `vars`), never in `.dev.vars`.
+   - RESOLVED: `PUBLIC_TURNSTILE_SITE_KEY` is a `context: 'client', access: 'public'` envField that defaults to the always-pass test sitekey, with a `TODO(deploy)` comment saying the real key comes from the build environment and never from `.dev.vars`. Implemented in 05-01 (Task 2, `astro.config.ts` and `.env.example`). 05-08 lists it as a Known Stub for DEPLOY-02. Setting the real key and secret is DEPLOY-02 work, not this phase.
 4. **E2E dependence on challenges.cloudflare.com.**
-   - Real-widget submit tests need network (D-13 accepts dummy keys in CI). Failure-path tests can be hermetic via `page.route('**/_actions/contact**', r => r.fulfill({ status: 500 }))` or `r.abort()`. Recommendation: keep one real happy-path test per locale and make the rest hermetic.
+   - RESOLVED: as recommended. Happy-path tests use the real test widget and the live siteverify with the always-pass keys (D-13). Failure paths are hermetic (`page.route` fulfill 500, 400 input errors, or abort). Every test or describe that waits for a real Turnstile token or reaches the live siteverify has `@network` in its title, and `E2E_OFFLINE=1 pnpm test:e2e` skips those tests through `grepInvert` in `playwright.config.ts`. Implemented in 05-01 (Task 3 config switch), 05-04 (server accept test), 05-05 (success, sending and axe tests), 05-06 (validation and failure tests that wait for a token) and 05-08 (contact-states).
 
 ## Environment Availability
 
@@ -638,7 +638,7 @@ Dummy token: `XXXX.DUMMY.TOKEN.XXXX`. Test keys work on `localhost`.
 | CONT-01 | Submit empty in `/es/` shows Spanish summary + per-field errors, focus on first invalid, live re-validation | e2e | `pnpm exec playwright test tests/e2e/contact.spec.ts -g "validation"` | ❌ |
 | CONT-02 | Honeypot filled gives generic failure, no verify or send; empty token rejected; verify failure means no send | unit (`submitContact` with fakes) | `pnpm vitest run tests/unit/contact-submit.test.ts` | ❌ |
 | CONT-02 | `verifyTurnstile` maps success, failure, http error, timeout | unit (mock fetch) | `pnpm vitest run tests/unit/contact-turnstile.test.ts` | ❌ |
-| CONT-02 | POST with honeypot or empty token to `/_actions/contact` returns error status | e2e (`request.post`, Origin header) | `pnpm exec playwright test tests/e2e/contact.spec.ts -g "server rejects"` | ❌ |
+| CONT-02 | POST with honeypot or empty token to `/_actions/contact` returns error status | e2e (`request.post`, Origin header) | `pnpm exec playwright test tests/e2e/contact-server.spec.ts -g "server rejects"` | ❌ |
 | CONT-03 | Success: panel replaces form, heading focused, status text; "Send another" restores empty form | e2e (real test widget) | `… -g "success"` | ❌ |
 | CONT-03 | Failure (routed 500 / abort): values kept, generic localized error, Retry, mailto prefilled | e2e (hermetic `page.route`) | `… -g "failure"` | ❌ |
 | CONT-03 | Mailto builder encoding and truncation (surrogates, `%XX`, CRLF, max length) | unit | `pnpm vitest run tests/unit/contact-mailto.test.ts` | ❌ |

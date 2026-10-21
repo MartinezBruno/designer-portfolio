@@ -29,6 +29,9 @@ created: 2026-10-19
 ## Sampling Rate
 
 - **After every task commit:** Run `pnpm vitest run tests/unit/contact-*.test.ts` (only the files that exist so far), plus `pnpm lint` after file moves or import changes
+- **RED e2e tasks:** the `<automated>` gate is `pnpm exec playwright test <spec> --list`. It checks that the new tests compile and are registered, and it needs no build. The executor still builds and runs the spec once to watch it fail, and records that in the SUMMARY.
+- **Plan end (last task of each plan):** `pnpm build && pnpm test:e2e` (or `pnpm verify`). This is the only place the full e2e suite runs, so it is the wave gate.
+- **Offline runs:** tests that need challenges.cloudflare.com (a real Turnstile token or the live siteverify) have `@network` in their title or their describe title. `E2E_OFFLINE=1 pnpm test:e2e` skips them through `grepInvert` (05-01 Task 3). Phase sign-off still needs the full run with network.
 - **After every plan wave:** Run `pnpm test && pnpm test:e2e`
 - **Before `/gsd:verify-work`:** `pnpm verify` and `pnpm build:offline` must both be green
 - **Max feedback latency:** 60 seconds
@@ -49,14 +52,14 @@ Requirement → test targets (from research):
 | CONT-01 | Client mirror agrees with server on shared fixtures; `EMAIL_PATTERN` equals `z.regexes.email` | unit | `pnpm vitest run tests/unit/contact-validate.test.ts` |
 | CONT-01 | Empty submit in `/es/` shows Spanish summary and per-field errors; focus on first invalid | e2e | `pnpm exec playwright test tests/e2e/contact.spec.ts -g "validation"` |
 | CONT-02 | Honeypot filled or empty/failed token → generic failure, no send | unit | `pnpm vitest run tests/unit/contact-submit.test.ts tests/unit/contact-turnstile.test.ts` |
-| CONT-02 | POST to `/_actions/contact` with honeypot or empty token is rejected | e2e | `pnpm exec playwright test tests/e2e/contact.spec.ts -g "server rejects"` |
+| CONT-02 | POST to `/_actions/contact` with honeypot or empty token is rejected | e2e | `pnpm exec playwright test tests/e2e/contact-server.spec.ts -g "server rejects"` |
 | CONT-03 | Success panel, focus and status announcement; "Send another" resets | e2e | `pnpm exec playwright test tests/e2e/contact.spec.ts -g "success"` |
 | CONT-03 | Failure keeps typed values, shows localized error, Retry and prefilled mailto | e2e | `pnpm exec playwright test tests/e2e/contact.spec.ts -g "failure"` |
 | CONT-03 | Mailto builder encoding and truncation | unit | `pnpm vitest run tests/unit/contact-mailto.test.ts` |
 | CONT-04 | `createMailer` selection and errors; Resend request shape; email builder | unit | `pnpm vitest run tests/unit/contact-mailer.test.ts tests/unit/contact-email.test.ts` |
 | CONT-05 | JS disabled: mailto block visible in both locales | e2e | `pnpm exec playwright test tests/e2e/contact.spec.ts -g "without JavaScript"` |
 | HOME-08 | `parseServiceParam`; card link href and accessible name | unit | `pnpm vitest run tests/unit/contact-service-param.test.ts tests/unit/featured-services.test.ts` |
-| HOME-08 | Card click lands on `#contact` with the matching service checked (EN, ES) | e2e | `pnpm exec playwright test tests/e2e/contact.spec.ts -g "pre-select"` |
+| HOME-08 | Card click lands on `#contact` with the matching service checked (EN, ES) | e2e | `pnpm exec playwright test tests/e2e/contact-preselect.spec.ts -g "pre-select"` |
 | a11y | Home EN/ES with form and widget rendered: 0 axe violations | e2e | `pnpm exec playwright test tests/e2e/a11y.spec.ts` |
 | Secrets | `check-secrets` skips only `dist/server/.dev.vars` | unit | `pnpm vitest run tests/unit/secrets.test.ts` |
 | Build | Adapter build stays offline | gate | `pnpm build:offline` |
