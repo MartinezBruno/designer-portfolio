@@ -67,9 +67,10 @@ describe('service card', () => {
     expect(anchors[0]).toContain('href="/?service=branding#contact"');
     // The link is the card's last child, inside a mt-auto paragraph.
     expect(html).toMatch(/<p class="mt-auto">\s*<a[^>]*>[\s\S]*<\/a>\s*<\/p>\s*<\/li>$/);
-    // Visible label, then the service name for assistive tech, then the decorative arrow.
+    // Visible label (hidden from the a11y tree), the full name for assistive tech, then the
+    // decorative arrow.
     expect(html).toMatch(
-      /<a[^>]*>\s*Ask about this<span class="sr-only">: Branding<\/span>\s*<svg[^>]*aria-hidden="true"/,
+      /<a[^>]*>\s*<span aria-hidden="true">Ask about this<\/span>\s*<span class="sr-only">Ask about this: Branding<\/span>\s*<svg[^>]*aria-hidden="true"/,
     );
     const root = /^<li[^>]*>/.exec(html)?.[0] ?? '';
     expect(classTokens(root)).toEqual([
@@ -173,6 +174,6 @@ describe('featured services section', () => {
     expect(html).toMatch(/<h2[^>]*>\s*Qué puedo hacer por ti\s*<\/h2>/);
     const hrefs = [...html.matchAll(/<a[^>]*href="([^"]*)"/g)].map((m) => m[1]);
     expect(hrefs).toEqual(services.map((service) => `/es/?service=${service.id}#contact`));
-    expect(html.match(/Consultar<span class="sr-only">/g)).toHaveLength(4);
+    expect(html.match(/<span class="sr-only">Consultar: /g)).toHaveLength(4);
   });
 });

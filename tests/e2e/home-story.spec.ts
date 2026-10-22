@@ -202,7 +202,8 @@ for (const [path, dict, locale] of cases) {
       await expect(branding.locator('ul > li').first()).toHaveText(
         locale === 'en' ? 'Visual identity' : 'Identidad visual',
       );
-      await expect(section.getByRole('link')).toHaveCount(0);
+      // HOME-08 (05-07): one "Ask about this" link per card, the only interactive element.
+      await expect(section.getByRole('link')).toHaveCount(4);
     });
 
     test('tools: five icon-only tiles named by brand', async ({ page }) => {
