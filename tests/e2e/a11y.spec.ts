@@ -2,7 +2,9 @@ import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import snapshot from '../../src/data/behance/snapshot.json' with { type: 'json' };
 import { site } from '../../src/data/site';
+import services from '../../src/data/services.json' with { type: 'json' };
 import tools from '../../src/data/tools.json' with { type: 'json' };
+import { interpolate } from '../../src/i18n/t';
 import { en, type Dictionary } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
 import {
@@ -68,7 +70,7 @@ for (const path of ['/', '/es/']) {
 }
 
 // UI-SPEC keyboard order on Home: skip link, wordmark, Projects, Contact, EN, ES, hero CTA,
-// invisible marquee pause toggle (button over the band), 3 project links, See all, 5 tool tiles,
+// invisible marquee pause toggle (button over the band), 4 service card links, 3 project links, See all, 5 tool tiles,
 // Contact section email, Behance, service radio, name, email, message (then Send message from the
 // footer with Shift+Tab), footer email, Behance. On the Projects pages: skip
 // link, wordmark, Projects, Contact, EN, ES, 7 project links (newest first), footer email, Behance.
@@ -102,6 +104,17 @@ const projectsHrefFor = (homeHref: string): string => `${homeHref}projects/`;
 const toolSteps: Step[] = [...tools]
   .sort((a, b) => a.order - b.order)
   .map((tool) => ({ name: tool.name, role: 'img' }));
+
+// HOME-08 card links (05-07): one stop per service card, in services.json `order`.
+function serviceSteps(dict: Dictionary, homeHref: string): Step[] {
+  const locale = homeHref === '/' ? 'en' : 'es';
+  return [...services]
+    .sort((a, b) => a.order - b.order)
+    .map((service) => ({
+      name: `${dict['services.ask']}${interpolate(dict['services.askTarget'], { title: service.title[locale] })}`,
+      href: `${homeHref}?service=${service.id}#contact`,
+    }));
+}
 
 function headerSteps(dict: Dictionary, homeHref: string, enHref: string, esHref: string): Step[] {
   return [
@@ -141,6 +154,7 @@ function expectedOrderFor(dict: Dictionary, homeHref: string): Step[] {
     ...headerSteps(dict, homeHref, '/', '/es/'),
     { name: dict['hero.cta'], href: `${homeHref}#contact` },
     { name: dict['roles.pause'], tag: 'BUTTON' },
+    ...serviceSteps(dict, homeHref),
     ...projectSteps(expectedHome(locale)),
     { name: dict['work.seeAll'], href: projectsHrefFor(homeHref) },
     ...toolSteps,
