@@ -1,0 +1,181 @@
+---
+/**
+ * Contact form for JS visitors (CONT-01, D-06..D-15). The form and the success panel ship hidden;
+ * the registered script reveals the form and hides the no-JS block. Without JS the visible mailto
+ * block in ContactSection stays the way to reach Martina, and nobody types a message they cannot
+ * send (D-12). Copy is resolved on the server and handed to the script as JSON in
+ * `data-contact-strings`, so the browser bundle never carries the dictionaries.
+ */
+import IconAlertCircle from '@tabler/icons/outline/alert-circle.svg';
+import IconArrowRight from '@tabler/icons/outline/arrow-right.svg';
+import IconLoader2 from '@tabler/icons/outline/loader-2.svg';
+import ServiceChips from './ServiceChips.astro';
+import { site } from '../../data/site';
+import { useTranslations, type Locale } from '../../i18n/t';
+import type { ServiceView } from '../../lib/content/home';
+import { HONEYPOT, LIMITS } from '../../lib/contact/fields';
+import { resolveContactStrings } from '../../lib/contact/strings';
+import { inkButton, primaryButton } from '../../lib/ui/button-classes';
+
+interface Props {
+  locale: Locale;
+  services: readonly ServiceView[];
+}
+
+const { locale, services } = Astro.props;
+const t = useTranslations(locale);
+const strings = resolveContactStrings(locale, site.email);
+
+// Writable = square: sand fill, 2px bottom border, accent focus ring (UI-SPEC "Text fields").
+const field =
+  'block w-full rounded-none border-0 border-b-2 border-ink-muted bg-surface-alt px-4 py-3 text-base text-ink aria-[invalid=true]:border-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent';
+const label = 'text-base font-semibold text-ink';
+---
+
+<form
+  data-contact-form
+  hidden
+  novalidate
+  aria-labelledby="contact-title"
+  data-locale={locale}
+  data-contact-strings={JSON.stringify(strings)}
+  class="relative flex flex-col gap-8"
+>
+  <ServiceChips locale={locale} services={services} />
+
+  <div class="grid gap-8 sm:grid-cols-2 sm:gap-x-6">
+    <div class="flex flex-col gap-2">
+      <label for="contact-name" class={label}>
+        {t('contact.name.label')}
+      </label>
+      <input
+        type="text"
+        id="contact-name"
+        name="name"
+        required
+        autocomplete="name"
+        maxlength={LIMITS.name}
+        class:list={[field, 'h-12']}
+      />
+    </div>
+    <div class="flex flex-col gap-2">
+      <label for="contact-email" class={label}>
+        {t('contact.email.label')}
+      </label>
+      <input
+        type="email"
+        id="contact-email"
+        name="email"
+        required
+        autocomplete="email"
+        inputmode="email"
+        spellcheck="false"
+        maxlength={LIMITS.email}
+        class:list={[field, 'h-12']}
+      />
+    </div>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="contact-message" class={label}>
+      {t('contact.message.label')}
+    </label>
+    <p id="contact-message-hint" class="text-ink-muted text-sm">
+      {strings['contact.message.hint']}
+    </p>
+    <textarea
+      id="contact-message"
+      name="message"
+      rows="6"
+      required
+      maxlength={LIMITS.messageMax}
+      aria-describedby="contact-message-hint"
+      class:list={[field, 'min-h-40 resize-y']}
+    ></textarea>
+  </div>
+
+  <!-- Honeypot: off-screen (not display:none, which bots skip) and out of the Tab order. -->
+  <div aria-hidden="true" class="absolute -left-[9999px]">
+    <label for="contact-extra">{t('contact.honeypot')}</label>
+    <input id="contact-extra" name={HONEYPOT} type="text" tabindex="-1" autocomplete="off" />
+  </div>
+
+  <input type="hidden" name="locale" value={locale} />
+
+  <div class="flex flex-col items-start gap-6 sm:flex-row sm:items-end">
+    <div data-turnstile class="min-h-[140px] w-[150px]">
+      <p class="text-ink-muted text-sm">{t('contact.turnstile.loading')}</p>
+    </div>
+    <button
+      type="submit"
+      data-contact-submit
+      class:list={[primaryButton, 'aria-disabled:cursor-progress']}
+    >
+      <span data-contact-submit-label>{t('contact.submit')}</span>
+      <IconArrowRight data-icon-ready aria-hidden="true" focusable="false" class="size-5" />
+      <!-- SVG components take no `hidden` attribute; the script toggles the `hidden` class. -->
+      <IconLoader2
+        data-icon-sending
+        aria-hidden="true"
+        focusable="false"
+        class="hidden size-5 motion-safe:animate-spin"
+      />
+    </button>
+  </div>
+
+  <!-- Wait note (muted, no icon) or load error (danger + icon); the script sets tone and text. -->
+  <p data-turnstile-note hidden class="text-ink-muted inline-flex items-start gap-2 text-sm">
+    <IconAlertCircle
+      data-turnstile-note-icon
+      aria-hidden="true"
+      focusable="false"
+      class="mt-0.5 hidden size-4 shrink-0"
+    />
+    <span data-turnstile-note-text></span>
+  </p>
+</form>
+
+<div data-contact-success hidden class="bg-surface-alt flex flex-col items-start gap-6 p-6 sm:p-8">
+  <h3
+    tabindex="-1"
+    data-contact-success-heading
+    class="font-display text-ink focus-visible:outline-accent text-2xl font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-2"
+  >
+    {t('contact.success.heading')}
+  </h3>
+  <p data-contact-success-body class="text-ink max-w-[60ch] text-base break-words"></p>
+  <button type="button" data-contact-again class={inkButton}>
+    {t('contact.success.again')}
+  </button>
+</div>
+
+<script>
+  import { actions, isInputError } from 'astro:actions';
+  import { PUBLIC_TURNSTILE_SITE_KEY } from 'astro:env/client';
+  import { lifecycle } from '../../lib/motion';
+  import {
+    createContactForm,
+    loadTurnstileScript,
+    type ContactFormDeps,
+    type SendResult,
+  } from '../../lib/ui/contact-form';
+
+  // Maps the Action result onto the controller's SendResult. A throw (network) is a failed send.
+  async function send(data: FormData): Promise<SendResult> {
+    try {
+      const { error } = await actions.contact(data);
+      if (error === undefined) return { kind: 'ok' };
+      if (isInputError(error)) return { kind: 'input', fields: error.fields };
+      return { kind: 'failed' };
+    } catch {
+      return { kind: 'failed' };
+    }
+  }
+
+  const deps: ContactFormDeps = {
+    send,
+    siteKey: PUBLIC_TURNSTILE_SITE_KEY,
+    loadTurnstile: loadTurnstileScript,
+  };
+  lifecycle.register(createContactForm(deps));
+</script>

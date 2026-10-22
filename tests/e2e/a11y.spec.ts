@@ -49,9 +49,28 @@ for (const path of pages) {
   });
 }
 
+// Home with the form revealed and the Turnstile test widget rendered (05-05). Needs a real token
+// from challenges.cloudflare.com, hence @network.
+for (const path of ['/', '/es/']) {
+  test(`${path}#contact has zero WCAG 2.2 AA axe violations with the widget rendered @network`, async ({
+    page,
+  }) => {
+    await page.goto(`${path}#contact`);
+    await expect(page.locator('form[data-contact-form]')).toBeVisible();
+    await expect(page.locator('input[name="cf-turnstile-response"]')).toHaveValue(/.+/, {
+      timeout: 15000,
+    });
+    const { violations } = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .analyze();
+    expect(violations).toEqual([]);
+  });
+}
+
 // UI-SPEC keyboard order on Home: skip link, wordmark, Projects, Contact, EN, ES, hero CTA,
 // invisible marquee pause toggle (button over the band), 3 project links, See all, 5 tool tiles,
-// Contact section email, Behance and Email me, footer email, Behance. On the Projects pages: skip
+// Contact section email, Behance, service radio, name, email, message (then Send message from the
+// footer with Shift+Tab), footer email, Behance. On the Projects pages: skip
 // link, wordmark, Projects, Contact, EN, ES, 7 project links (newest first), footer email, Behance.
 interface Step {
   name: string;
@@ -60,8 +79,10 @@ interface Step {
   hrefPattern?: RegExp;
   /** The focus ring is drawn on the stretched link's ::after (project tiles). */
   ringOnAfter?: boolean;
-  tag?: 'BUTTON';
+  tag?: 'BUTTON' | 'INPUT' | 'TEXTAREA';
   role?: 'img';
+  /** The focus ring is drawn on the control's <label> (sr-only radio chips, peer-focus-visible). */
+  ringOnLabel?: boolean;
 }
 
 const PROJECT_HREF = /^\/(es\/)?projects\/[a-z0-9-]+\/$/;
@@ -100,15 +121,17 @@ function footerSteps(dict: Dictionary): Step[] {
   ];
 }
 
-// Home Contact section (D-01, CONT-05): email link, socials, then the no-JS "Email me" button.
+// Home Contact section with JS (05-05): email link, socials, the service radio group (one stop,
+// the checked chip), then name, email and message. The walk stops at the message: the Turnstile
+// iframe's internal stops vary, so "Send message" is asserted from the footer with Shift+Tab.
 function contactSteps(dict: Dictionary): Step[] {
   return [
     { name: site.email, href: `mailto:${site.email}` },
     { name: dict['footer.behance'], href: site.socials.behance },
-    {
-      name: dict['contact.nojs.button'],
-      href: `mailto:${site.email}?subject=${encodeURIComponent(dict['contact.nojs.subject'])}`,
-    },
+    { name: dict['contact.service.other'], tag: 'INPUT', ringOnLabel: true },
+    { name: dict['contact.name.label'], tag: 'INPUT' },
+    { name: dict['contact.email.label'], tag: 'INPUT' },
+    { name: dict['contact.message.label'], tag: 'TEXTAREA' },
   ];
 }
 
@@ -122,8 +145,18 @@ function expectedOrderFor(dict: Dictionary, homeHref: string): Step[] {
     { name: dict['work.seeAll'], href: projectsHrefFor(homeHref) },
     ...toolSteps,
     ...contactSteps(dict),
-    ...footerSteps(dict),
   ];
+}
+
+// Tail of the Home order: Shift+Tab from the footer email reaches "Send message"; Tab, Tab then
+// returns to the footer email and Behance.
+async function expectContactTail(page: Page, dict: Dictionary): Promise<void> {
+  await page.getByRole('contentinfo').getByRole('link', { name: site.email, exact: true }).focus();
+  await page.keyboard.press('Shift+Tab');
+  await expect(page.getByRole('button', { name: dict['contact.submit'] })).toBeFocused();
+  for (const step of footerSteps(dict)) {
+    await tabAndExpect(page, step);
+  }
 }
 
 function expectedProjectsOrderFor(dict: Dictionary, homeHref: string): Step[] {
@@ -153,11 +186,16 @@ async function tabAndExpect(page: Page, step: Step): Promise<void> {
   const focused = await page.evaluate(() => {
     const el = document.activeElement;
     if (!(el instanceof HTMLElement)) return null;
-    // Accessible name: aria-labelledby target, else aria-label, else text content.
+    // Accessible name: aria-labelledby target, else aria-label, else <label for>, else text.
     const labelledBy = el.getAttribute('aria-labelledby');
+    const label =
+      el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement
+        ? (el.labels?.[0] ?? null)
+        : null;
     const raw =
       (labelledBy ? document.getElementById(labelledBy)?.textContent : null) ??
       el.getAttribute('aria-label') ??
+      label?.textContent ??
       el.textContent;
     return {
       tag: el.tagName,
@@ -166,6 +204,7 @@ async function tabAndExpect(page: Page, step: Step): Promise<void> {
       name: raw.replace(/\s+/g, ' ').trim(),
       outline: getComputedStyle(el).outlineStyle,
       afterOutline: getComputedStyle(el, '::after').outlineStyle,
+      labelOutline: label ? getComputedStyle(label).outlineStyle : null,
     };
   });
   expect(focused, `expected focus on ${step.name}`).not.toBeNull();
@@ -179,7 +218,9 @@ async function tabAndExpect(page: Page, step: Step): Promise<void> {
   if (step.tag !== undefined) expect(focused?.tag).toBe(step.tag);
   if (step.role !== undefined) expect(focused?.role).toBe(step.role);
   expect(focused?.name).toContain(step.name);
-  if (step.ringOnAfter === true) {
+  if (step.ringOnLabel === true) {
+    expect(focused?.labelOutline, `visible label ring on ${step.name}`).toBe('solid');
+  } else if (step.ringOnAfter === true) {
     expect(focused?.afterOutline, `visible ::after ring on ${step.name}`).toBe('solid');
   } else {
     expect(focused?.outline).not.toBe('none');
@@ -193,6 +234,9 @@ for (const [path, dict, homeHref] of keyboardCases) {
     for (const step of expectedOrderFor(dict, homeHref)) {
       await tabAndExpect(page, step);
     }
+    // The service radio group is one stop: the next Tab already left the chips.
+    await expect(page.locator('input[name="service"]:focus')).toHaveCount(0);
+    await expectContactTail(page, dict);
   });
 }
 
@@ -357,6 +401,7 @@ test.describe('with prefers-reduced-motion: reduce', () => {
       for (const step of steps) {
         await tabAndExpect(page, step);
       }
+      await expectContactTail(page, dict);
     });
   }
 

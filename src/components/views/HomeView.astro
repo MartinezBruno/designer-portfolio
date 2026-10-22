@@ -24,5 +24,5 @@ const latest = await getLatestProjects(locale);
   <FeaturedServices services={services} locale={locale} />
   <LatestWork projects={latest} locale={locale} />
   <ToolsRow tools={tools} locale={locale} />
-  <ContactSection locale={locale} />
+  <ContactSection locale={locale} services={services} />
 </div>
