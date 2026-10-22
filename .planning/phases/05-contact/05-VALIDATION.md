@@ -3,7 +3,7 @@ phase: 5
 slug: contact
 status: draft
 nyquist_compliant: false
-wave_0_complete: false
+wave_0_complete: true
 created: 2026-10-19
 ---
 
@@ -42,7 +42,30 @@ created: 2026-10-19
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| _TBD by planner_ | | | | | | | | | ⬜ pending |
+| 05-01-01 | 05-01 | 1 | CONT-02, CONT-04 | T-05-01 | Only user-approved packages installed (slopcheck unavailable) | manual checkpoint | user replied "approved" (05-01-SUMMARY) | n/a | ✅ |
+| 05-01-02 | 05-01 | 1 | CONT-02, CONT-04 | T-05-02, T-05-03 | Adapter build stays offline; secrets only via `astro:env/server` | gate + unit | `pnpm lint && pnpm test && pnpm build:offline` | ✅ | ✅ |
+| 05-01-03 | 05-01 | 1 | CONT-02, CONT-04 | T-05-04, T-05-05 | No secret in `dist/`; e2e preview forces console mailer + Turnstile test keys | unit + gate | `pnpm vitest run tests/unit/secrets.test.ts && pnpm verify && pnpm build:offline` | ✅ | ✅ |
+| 05-02-01 | 05-02 | 2 | CONT-05 | T-05-07 | No-JS mailto block, no Cloudflare request without JS | e2e | `pnpm exec playwright test tests/e2e/contact.spec.ts -g "without JavaScript"` | ✅ | ✅ |
+| 05-02-02 | 05-02 | 2 | CONT-05 | T-05-06, T-05-07 | Section markup, mailto subject from dictionary only | unit | `pnpm vitest run tests/unit/contact-section.test.ts tests/unit/site-footer.test.ts` | ✅ | ✅ |
+| 05-02-03 | 05-02 | 2 | CONT-05 | T-05-08 | Every Contact link targets Home `#contact` | e2e + taste lint | `pnpm exec playwright test tests/e2e/contact.spec.ts -g "contact links"` + `lint.mjs` | ✅ | ✅ |
+| 05-03-01 | 05-03 | 2 | CONT-04 | T-05-09, T-05-10 | Email built as text, header-injection safe, Spanish subject | unit | `pnpm vitest run tests/unit/contact-fields.test.ts tests/unit/contact-email.test.ts` | ✅ | ✅ |
+| 05-03-02 | 05-03 | 2 | CONT-04 | T-05-11, T-05-12, T-05-13 | `createMailer` fails loudly on missing config; Resend request shape; key never logged | unit | `pnpm vitest run tests/unit/contact-mailer.test.ts` | ✅ | ✅ |
+| 05-04-01 | 05-04 | 3 | CONT-01, CONT-02 | T-05-14..T-05-17 | Server rejects honeypot, empty/failed token, bad input | e2e | `pnpm exec playwright test tests/e2e/contact-server.spec.ts` | ✅ | ✅ |
+| 05-04-02 | 05-04 | 3 | CONT-01, CONT-02 | T-05-18, T-05-19 | Schema returns dictionary keys; siteverify with secret, timeout, fail-closed | unit | `pnpm vitest run tests/unit/contact-schema.test.ts tests/unit/contact-turnstile.test.ts` | ✅ | ✅ |
+| 05-04-03 | 05-04 | 3 | CONT-01, CONT-02, CONT-04 | T-05-20, T-05-21 | Generic failure, no send on spam; thin Action | unit + e2e | `pnpm vitest run tests/unit/contact-submit.test.ts && pnpm exec playwright test tests/e2e/contact-server.spec.ts && pnpm check:secrets` | ✅ | ✅ |
+| 05-05-01 | 05-05 | 4 | CONT-01, CONT-03 | T-05-22 | Turnstile loads only near the section; keyboard order | e2e | `pnpm exec playwright test tests/e2e/contact.spec.ts tests/e2e/a11y.spec.ts` | ✅ | ✅ |
+| 05-05-02 | 05-05 | 4 | CONT-01, CONT-03 | T-05-23, T-05-24 | Server-resolved strings; no dictionary or zod in the client bundle | unit | `pnpm vitest run tests/unit/contact-strings.test.ts tests/unit/contact-section.test.ts tests/unit/i18n.test.ts` | ✅ | ✅ |
+| 05-05-03 | 05-05 | 4 | CONT-01, CONT-03 | T-05-25, T-05-26 | Success text set via `textContent`; pending guard against double send | unit + e2e | `pnpm vitest run tests/unit/contact-form.test.ts && pnpm exec playwright test tests/e2e/contact.spec.ts -g "success\|sending"` | ✅ | ✅ |
+| 05-06-01 | 05-06 | 5 | CONT-01, CONT-03 | T-05-27 | Localized validation and failure in EN and ES | e2e | `pnpm exec playwright test tests/e2e/contact.spec.ts -g "validation\|failure"` | ✅ | ✅ |
+| 05-06-02 | 05-06 | 5 | CONT-01, CONT-03 | T-05-28, T-05-29 | Client mirror equals server rules; mailto encoded and capped at 1800 | unit | `pnpm vitest run tests/unit/contact-validate.test.ts tests/unit/contact-mailto.test.ts` | ✅ | ✅ |
+| 05-06-03 | 05-06 | 5 | CONT-01, CONT-03 | T-05-30 | Typed text kept on failure; errors text + icon; axe 0 | unit + e2e | `pnpm vitest run tests/unit/contact-form.test.ts && pnpm exec playwright test tests/e2e/contact.spec.ts -g "failure"` | ✅ | ✅ |
+| 05-07-01 | 05-07 | 6 | HOME-08 | T-05-31 | Card links and pre-selection, no focus stolen | e2e | `pnpm exec playwright test tests/e2e/contact-preselect.spec.ts` | ✅ | ✅ |
+| 05-07-02 | 05-07 | 6 | HOME-08 | — | Card link href and accessible name | unit | `pnpm vitest run tests/unit/featured-services.test.ts` | ✅ | ✅ |
+| 05-07-03 | 05-07 | 6 | HOME-08 | T-05-32 | `?service=` allow-listed; unknown value leaves "other" | unit + e2e | `pnpm vitest run tests/unit/contact-service-param.test.ts tests/unit/service-preselect.test.ts` | ✅ | ✅ |
+| 05-08-01 | 05-08 | 7 | CONT-01..05, HOME-08 | T-05-33, T-05-35 | Every state: no overflow at 320, h2 ≤ 2 lines, submit the only accent; no secrets in dist | e2e + gate | `pnpm verify && pnpm build:offline && pnpm exec playwright test tests/e2e/contact-states.spec.ts` | ✅ | ✅ |
+| 05-08-02 | 05-08 | 7 | CONT-01..05, HOME-08 | T-05-34 | User review, VoiceOver, `/security-review` | manual checkpoint | user sign-off | n/a | ⬜ pending sign-off |
+
+Status from the 05-08 Task 1 run (2026-10-22): `pnpm verify` 905 unit + 559 e2e green, `pnpm build:offline` 0 network attempts. `nyquist_compliant` stays `false` until the 05-08-02 sign-off row turns green; flip it then.
 
 Requirement → test targets (from research):
 
@@ -70,10 +93,10 @@ Requirement → test targets (from research):
 
 ## Wave 0 Requirements
 
-- [ ] Adapter and tooling task, then the full existing suite green: `not-found.spec.ts` update (Spanish 404 for `/es/*`), Vitest stand-in adapter, `check-secrets` exclusion, `.gitignore` `.wrangler/`, root `wrangler.jsonc`, `prerenderEnvironment: 'node'`
-- [ ] `scripts/e2e-preview-env.ts` + `playwright.config.ts` webServer command update
-- [ ] `tests/unit/contact-{schema,validate,submit,turnstile,mailer,email,mailto,service-param}.test.ts`
-- [ ] `tests/e2e/contact.spec.ts` with a helper that waits for the Turnstile token
+- [x] Adapter and tooling task, then the full existing suite green: `not-found.spec.ts` update (Spanish 404 for `/es/*`), Vitest stand-in adapter, `check-secrets` exclusion, `.gitignore` `.wrangler/`, root `wrangler.jsonc`, `prerenderEnvironment: 'node'`
+- [x] `scripts/e2e-preview-env.ts` + `playwright.config.ts` webServer command update
+- [x] `tests/unit/contact-{schema,validate,submit,turnstile,mailer,email,mailto,service-param}.test.ts`
+- [x] `tests/e2e/contact.spec.ts` with a helper that waits for the Turnstile token
 
 ---
 
@@ -88,11 +111,11 @@ Requirement → test targets (from research):
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 60s
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 60s
 - [ ] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending
