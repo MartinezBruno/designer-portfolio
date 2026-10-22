@@ -10,6 +10,8 @@ async function renderCard(): Promise<string> {
     props: {
       title: 'Branding',
       icon: 'palette',
+      href: '/?service=branding#contact',
+      locale: 'en',
       items: [
         'Visual identity',
         'Logo',
@@ -51,18 +53,40 @@ describe('service card', () => {
   it('renders one decorative icon inside a round chip', async () => {
     const html = await renderCard();
     const svgs = html.match(/<svg[^>]*>/g) ?? [];
-    expect(svgs).toHaveLength(1);
-    expect(svgs[0]).toContain('aria-hidden="true"');
+    // The service icon plus the link's trailing arrow, both decorative.
+    expect(svgs).toHaveLength(2);
+    for (const svg of svgs) expect(svg).toContain('aria-hidden="true"');
     const chip = /<span[^>]*>\s*<svg/.exec(html)?.[0] ?? '';
     expect(classTokens(chip)).toEqual(expect.arrayContaining(['size-12', 'rounded-full']));
   });
 
-  it('does not look or behave interactive', async () => {
-    const html = await renderCard();
+  it('only the Ask about this link is interactive', async () => {
+    const html = (await renderCard()).trim();
+    const anchors = html.match(/<a[\s>][^>]*>/g) ?? [];
+    expect(anchors).toHaveLength(1);
+    expect(anchors[0]).toContain('href="/?service=branding#contact"');
+    // The link is the card's last child, inside a mt-auto paragraph.
+    expect(html).toMatch(/<p class="mt-auto">\s*<a[^>]*>[\s\S]*<\/a>\s*<\/p>\s*<\/li>$/);
+    // Visible label, then the service name for assistive tech, then the decorative arrow.
+    expect(html).toMatch(
+      /<a[^>]*>\s*Ask about this<span class="sr-only">: Branding<\/span>\s*<svg[^>]*aria-hidden="true"/,
+    );
+    const root = /^<li[^>]*>/.exec(html)?.[0] ?? '';
+    expect(classTokens(root)).toEqual([
+      'bg-surface-alt',
+      'flex',
+      'h-full',
+      'flex-col',
+      'gap-4',
+      'rounded-2xl',
+      'p-6',
+    ]);
+    // hover: lives only on the link's class list.
+    const hoverTags = (html.match(/<[a-z][^>]*>/g) ?? []).filter((tag) => tag.includes('hover:'));
+    expect(hoverTags).toEqual([anchors[0]]);
     for (const forbidden of [
-      '<a ',
       'cursor-pointer',
-      'hover:',
+      'shadow',
       'line-clamp',
       'role="list"',
       'description',
@@ -140,11 +164,15 @@ describe('featured services section', () => {
       expect.arrayContaining(['grid', 'gap-6', 'sm:grid-cols-2', 'lg:grid-cols-4']),
     );
     expect(html.match(/<li[\s>]/g)).toHaveLength(22);
-    expect(html).not.toContain('<a ');
+    const hrefs = [...html.matchAll(/<a[^>]*href="([^"]*)"/g)].map((m) => m[1]);
+    expect(hrefs).toEqual(services.map((service) => `/?service=${service.id}#contact`));
   });
 
-  it('renders the Spanish heading', async () => {
+  it('renders the Spanish heading and Spanish card links', async () => {
     const html = await renderSection('es');
     expect(html).toMatch(/<h2[^>]*>\s*Qué puedo hacer por ti\s*<\/h2>/);
+    const hrefs = [...html.matchAll(/<a[^>]*href="([^"]*)"/g)].map((m) => m[1]);
+    expect(hrefs).toEqual(services.map((service) => `/es/?service=${service.id}#contact`));
+    expect(html.match(/Consultar<span class="sr-only">/g)).toHaveLength(4);
   });
 });
