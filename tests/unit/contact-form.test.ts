@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { interpolate } from '../../src/i18n/interpolate';
+import { buildPrefilledMailto } from '../../src/lib/contact/mailto';
 import { resolveContactStrings } from '../../src/lib/contact/strings';
 import { createLifecycle } from '../../src/lib/motion/lifecycle';
 import {
@@ -22,26 +23,42 @@ function attr(text: string): string {
 }
 
 // Mirrors ContactSection + ContactForm hooks.
+const CHIP_LABELS: Readonly<Record<string, string>> = {
+  'graphic-design': 'Diseño gráfico',
+  'web-design': 'Diseño web',
+  branding: 'Branding & identidad',
+  'social-media': 'Redes sociales',
+  other: 'Otro',
+};
+
+const errorSlot = (field: string): string =>
+  `<p id="contact-${field}-error" hidden><svg aria-hidden="true"></svg><span data-error-text></span></p>`;
+
 function fixture(): string {
-  const radios = ['graphic-design', 'web-design', 'branding', 'social-media', 'other']
+  const radios = Object.entries(CHIP_LABELS)
     .map(
-      (id) =>
-        `<div><input type="radio" name="service" id="contact-service-${id}" value="${id}"${id === 'other' ? ' checked' : ''}><label for="contact-service-${id}">${id}</label></div>`,
+      ([id, label]) =>
+        `<div><input type="radio" name="service" id="contact-service-${id}" value="${id}"${id === 'other' ? ' checked' : ''}><label for="contact-service-${id}">
+          <svg aria-hidden="true"></svg>
+          ${label.replace('&', '&amp;')}
+        </label></div>`,
     )
     .join('');
   return `<section id="contact">
     <div data-contact-column>
       <div data-contact-nojs><a href="mailto:x@y.z">Email me</a></div>
-      <form data-contact-form hidden novalidate data-locale="es" data-contact-strings="${attr(JSON.stringify(strings))}">
+      <form data-contact-form hidden novalidate data-locale="es" data-email="x@y.z" data-contact-strings="${attr(JSON.stringify(strings))}">
+        <div data-contact-summary hidden><p id="contact-summary-title">${strings['contact.summary.title']}</p><ul data-contact-summary-list aria-labelledby="contact-summary-title"></ul></div>
         <fieldset><legend>Service</legend>${radios}</fieldset>
-        <label for="contact-name">Name</label><input id="contact-name" name="name" type="text">
-        <label for="contact-email">Email</label><input id="contact-email" name="email" type="email">
-        <label for="contact-message">Message</label><textarea id="contact-message" name="message"></textarea>
+        <label for="contact-name">Name</label><input id="contact-name" name="name" type="text">${errorSlot('name')}
+        <label for="contact-email">Email</label><input id="contact-email" name="email" type="email">${errorSlot('email')}
+        <label for="contact-message">Message</label><p id="contact-message-hint">hint</p><textarea id="contact-message" name="message" aria-describedby="contact-message-hint"></textarea>${errorSlot('message')}
         <input id="contact-extra" name="extra_info" type="text" tabindex="-1">
         <input type="hidden" name="locale" value="es">
         <div data-turnstile><p>loading</p></div>
         <button type="submit" data-contact-submit><span data-contact-submit-label>${strings['contact.submit']}</span><svg data-icon-ready class="size-5"></svg><svg data-icon-sending class="hidden size-5"></svg></button>
         <p data-turnstile-note hidden class="text-ink-muted"><svg data-turnstile-note-icon class="hidden"></svg><span data-turnstile-note-text></span></p>
+        <div data-contact-failure hidden><p>${strings['contact.failure.title']}</p><p>${strings['contact.failure.body']}</p><p><a data-contact-failure-mailto href="mailto:x@y.z">${strings['contact.failure.mailto']}</a></p></div>
       </form>
       <div data-contact-success hidden>
         <h3 tabindex="-1" data-contact-success-heading>Sent</h3>
@@ -332,7 +349,9 @@ describe('createContactForm', () => {
       'Necesito una identidad visual.',
     );
     expect(el<HTMLInputElement>('#contact-service-branding').checked).toBe(true);
-    expect(el('[data-contact-submit-label]').textContent).toBe(strings['contact.submit']);
+    expect(el('[data-contact-submit-label]').textContent).toBe(
+      strings[result.kind === 'failed' ? 'contact.retry' : 'contact.submit'],
+    );
     expect(submitButton().hasAttribute('aria-disabled')).toBe(false);
     expect(el('[data-icon-sending]').classList.contains('hidden')).toBe(true);
     expect(turnstile.reset).toEqual(['widget-1']);
@@ -404,6 +423,247 @@ describe('createContactForm', () => {
     expect(send).toHaveBeenCalledTimes(1);
     await flush();
     lifecycle.unmount();
+  });
+});
+
+describe('createContactForm validation and failure (05-06)', () => {
+  beforeEach(() => {
+    history.replaceState(null, '', '/#contact');
+    document.body.innerHTML = fixture();
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+    history.replaceState(null, '', '/');
+  });
+
+  const summary = (): HTMLElement => el('[data-contact-summary]');
+  const summaryLinks = (): HTMLAnchorElement[] => [
+    ...document.querySelectorAll<HTMLAnchorElement>('[data-contact-summary-list] a'),
+  ];
+  const errorText = (field: string): string =>
+    el(`#contact-${field}-error [data-error-text]`).textContent;
+  const typeInto = (selector: string, value: string): void => {
+    const control = el<HTMLInputElement | HTMLTextAreaElement>(selector);
+    control.value = value;
+    control.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+
+  async function mounted(result?: SendResult) {
+    const ctx = setup();
+    if (result) ctx.send.mockImplementation(() => Promise.resolve(result));
+    const cleanup = createContactForm(ctx.deps)(document);
+    await flush();
+    return { ...ctx, cleanup };
+  }
+
+  it('shows the summary and field errors on an invalid submit and sends nothing', async () => {
+    const { send, cleanup } = await mounted();
+    el<HTMLInputElement>('#contact-email').value = 'a@b';
+    submit();
+
+    expect(send).not.toHaveBeenCalled();
+    expect(summary().hidden).toBe(false);
+    expect(summaryLinks().map((link) => [link.getAttribute('href'), link.textContent])).toEqual([
+      ['#contact-name', strings['contact.error.nameRequired']],
+      ['#contact-email', strings['contact.error.emailInvalid']],
+      ['#contact-message', strings['contact.error.messageRequired']],
+    ]);
+    for (const field of ['name', 'email', 'message']) {
+      const control = el(`#contact-${field}`);
+      expect(control.getAttribute('aria-invalid')).toBe('true');
+      expect(control.getAttribute('aria-describedby')?.split(' ')).toContain(
+        `contact-${field}-error`,
+      );
+      expect(el(`#contact-${field}-error`).hidden).toBe(false);
+    }
+    expect(el('#contact-message').getAttribute('aria-describedby')).toBe(
+      'contact-message-hint contact-message-error',
+    );
+    expect(errorText('email')).toBe(strings['contact.error.emailInvalid']);
+    expect(document.activeElement).toBe(el('#contact-name'));
+    // Not a live region: focus carries the message.
+    expect(summary().hasAttribute('role')).toBe(false);
+    expect(summary().hasAttribute('aria-live')).toBe(false);
+    expect(status().textContent).toBe('');
+    cleanup?.();
+  });
+
+  it('focuses the first invalid field in form order', async () => {
+    const { cleanup } = await mounted();
+    fill();
+    el<HTMLTextAreaElement>('#contact-message').value = 'corto';
+    submit();
+    expect(summaryLinks()).toHaveLength(1);
+    expect(errorText('message')).toBe(strings['contact.error.messageShort']);
+    expect(document.activeElement).toBe(el('#contact-message'));
+    cleanup?.();
+  });
+
+  it('re-validates a corrected field live without moving focus', async () => {
+    const { cleanup } = await mounted();
+    submit();
+    el<HTMLInputElement>('#contact-email').focus();
+    typeInto('#contact-name', 'Ana');
+
+    expect(el('#contact-name').hasAttribute('aria-invalid')).toBe(false);
+    expect(el('#contact-name').hasAttribute('aria-describedby')).toBe(false);
+    expect(el('#contact-name-error').hidden).toBe(true);
+    expect(summaryLinks().map((link) => link.getAttribute('href'))).toEqual([
+      '#contact-email',
+      '#contact-message',
+    ]);
+    expect(document.activeElement).toBe(el('#contact-email'));
+
+    typeInto('#contact-email', 'ana@example.com');
+    typeInto('#contact-message', 'Necesito una identidad visual.');
+    expect(summary().hidden).toBe(true);
+    expect(el('#contact-message').getAttribute('aria-describedby')).toBe('contact-message-hint');
+    cleanup?.();
+  });
+
+  it('a field that breaks again after the first submit shows its error again', async () => {
+    const { cleanup } = await mounted();
+    fill();
+    el<HTMLInputElement>('#contact-name').value = '';
+    submit();
+    typeInto('#contact-name', 'Ana');
+    expect(summary().hidden).toBe(true);
+    typeInto('#contact-email', 'nope');
+    expect(errorText('email')).toBe(strings['contact.error.emailInvalid']);
+    expect(summaryLinks()).toHaveLength(1);
+    cleanup?.();
+  });
+
+  it('changes nothing on input before the first submit', async () => {
+    const { cleanup } = await mounted();
+    typeInto('#contact-email', 'x');
+    expect(el('#contact-email').hasAttribute('aria-invalid')).toBe(false);
+    expect(el('#contact-email-error').hidden).toBe(true);
+    expect(summary().hidden).toBe(true);
+    cleanup?.();
+  });
+
+  it('a summary link focuses its field', async () => {
+    const { cleanup } = await mounted();
+    submit();
+    const link = summaryLinks()[1];
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+    link?.dispatchEvent(click);
+    expect(click.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(el('#contact-email'));
+    cleanup?.();
+  });
+
+  it('shows the server input errors with the same messages and focuses the field', async () => {
+    const { cleanup } = await mounted({
+      kind: 'input',
+      fields: {
+        email: ['contact.error.emailInvalid'],
+        name: ['<img src=x onerror=alert(1)>'],
+        locale: ['contact.error.nameRequired'],
+      },
+    });
+    fill();
+    submit();
+    await flush();
+
+    expect(errorText('email')).toBe(strings['contact.error.emailInvalid']);
+    expect(el('#contact-email').getAttribute('aria-invalid')).toBe('true');
+    expect(el('#contact-name').hasAttribute('aria-invalid')).toBe(false);
+    expect(summaryLinks()).toHaveLength(1);
+    expect(document.querySelector('img')).toBeNull();
+    expect(document.activeElement).toBe(el('#contact-email'));
+    expect(el('[data-contact-failure]').hidden).toBe(true);
+    cleanup?.();
+  });
+
+  it('shows the failure block when an input error names no known field', async () => {
+    const { cleanup } = await mounted({ kind: 'input', fields: { locale: ['bad'] } });
+    fill();
+    submit();
+    await flush();
+    expect(el('[data-contact-failure]').hidden).toBe(false);
+    expect(summary().hidden).toBe(true);
+    cleanup?.();
+  });
+
+  it('shows the failure block with a prefilled mailto and keeps every value', async () => {
+    const { cleanup } = await mounted({ kind: 'failed' });
+    fill();
+    el<HTMLTextAreaElement>('#contact-message').value = 'Línea uno\nLínea dos';
+    el<HTMLInputElement>('#contact-service-branding').checked = true;
+    el<HTMLInputElement>('#contact-name').focus();
+    submit();
+    await flush();
+
+    expect(el('[data-contact-failure]').hidden).toBe(false);
+    const expected = buildPrefilledMailto({
+      to: 'x@y.z',
+      subject: interpolate(strings['contact.mailto.subject'], {
+        service: 'Branding & identidad',
+        name: 'Ana López',
+      }),
+      body: 'Línea uno\nLínea dos',
+    });
+    expect(el<HTMLAnchorElement>('[data-contact-failure-mailto]').getAttribute('href')).toBe(
+      expected,
+    );
+    expect(el('[data-contact-submit-label]').textContent).toBe(strings['contact.retry']);
+    expect(document.activeElement).toBe(el('#contact-name'));
+    expect(el<HTMLInputElement>('#contact-name').value).toBe('Ana López');
+    expect(el<HTMLTextAreaElement>('#contact-message').value).toBe('Línea uno\nLínea dos');
+    expect(el<HTMLInputElement>('#contact-service-branding').checked).toBe(true);
+    await nextFrame();
+    expect(status().textContent).toBe(
+      `${strings['contact.failure.title']} ${strings['contact.failure.body']}`,
+    );
+    cleanup?.();
+  });
+
+  it('uses the no-service subject when "other" is checked', async () => {
+    const { cleanup } = await mounted({ kind: 'failed' });
+    fill();
+    submit();
+    await flush();
+    const href = el<HTMLAnchorElement>('[data-contact-failure-mailto]').getAttribute('href') ?? '';
+    const subject = interpolate(strings['contact.mailto.subjectNoService'], { name: 'Ana López' });
+    expect(href).toContain(`subject=${encodeURIComponent(subject)}&`);
+    cleanup?.();
+  });
+
+  it('hides the failure block while a new send runs', async () => {
+    const { send, cleanup } = await mounted({ kind: 'failed' });
+    fill();
+    submit();
+    await flush();
+    expect(el('[data-contact-failure]').hidden).toBe(false);
+
+    const pending = deferred<SendResult>();
+    send.mockImplementation(() => pending.promise);
+    submit();
+    expect(el('[data-contact-failure]').hidden).toBe(true);
+    expect(el('[data-contact-submit-label]').textContent).toBe(strings['contact.sending']);
+    pending.resolve({ kind: 'ok' });
+    await flush();
+    cleanup?.();
+  });
+
+  it('"Send another message" clears errors and the failure block', async () => {
+    const { send, cleanup } = await mounted();
+    submit();
+    fill();
+    typeInto('#contact-name', 'Ana');
+    submit();
+    await flush();
+    expect(send).toHaveBeenCalledTimes(1);
+    el<HTMLButtonElement>('[data-contact-again]').click();
+    expect(summary().hidden).toBe(true);
+    expect(el('[data-contact-failure]').hidden).toBe(true);
+    // A fresh form: no errors until the next submit.
+    typeInto('#contact-email', 'x');
+    expect(el('#contact-email').hasAttribute('aria-invalid')).toBe(false);
+    cleanup?.();
   });
 });
 
