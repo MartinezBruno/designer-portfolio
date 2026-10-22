@@ -239,7 +239,7 @@ Plans:
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [ ] 05-07-PLAN.md — Service card "Ask about this" links and ?service= pre-selection
+- [x] 05-07-PLAN.md — Service card "Ask about this" links and ?service= pre-selection
 
 **Wave 7** *(blocked on Wave 6 completion)*
 
@@ -307,7 +307,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 2. Homepage Story | 8/8 | Complete   | 2026-10-17 |
 | 3. Real Behance Work | 10/10 | Complete   | 2026-10-17 |
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
-| 5. Contact | 6/8 | In Progress|  |
+| 5. Contact | 7/8 | In Progress|  |
 | 6. Scroll & Interaction Motion | 0/TBD | Not started | - |
 | 7. Page Transitions & Smooth Scroll | 0/TBD | Not started | - |
 | 8. Quality Verification | 0/TBD | Not started | - |
