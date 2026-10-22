@@ -27,6 +27,7 @@ describe('parseServiceParam', () => {
 
   it('imports no zod, astro:env or dictionaries', () => {
     const source = readFileSync(resolve('src/lib/contact/service-param.ts'), 'utf8');
-    expect(source).not.toMatch(/zod|astro:env|ui\.en|ui\.es|i18n\/t/);
+    const imports = [...source.matchAll(/from '([^']+)'/g)].map((m) => m[1]);
+    expect(imports).toEqual(['./fields']);
   });
 });

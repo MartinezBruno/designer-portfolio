@@ -16,7 +16,7 @@ function fixture(): string {
 }
 
 function setSearch(search: string): void {
-  window.happyDOM.setURL(`http://localhost:4400/${search}#contact`);
+  window.history.replaceState(null, '', `/${search}#contact`);
 }
 
 function byId(id: string): HTMLElement {
@@ -32,7 +32,7 @@ function checkedId(): string | undefined {
 describe('initServicePreselect', () => {
   afterEach(() => {
     document.body.innerHTML = '';
-    window.happyDOM.setURL('http://localhost:4400/');
+    window.history.replaceState(null, '', '/');
   });
 
   it('returns undefined when there are no service radios', () => {
@@ -88,6 +88,8 @@ describe('initServicePreselect', () => {
 
   it('imports no zod, astro:env or dictionaries', () => {
     const source = readFileSync(resolve('src/lib/ui/service-preselect.ts'), 'utf8');
-    expect(source).not.toMatch(/zod|astro:env|ui\.en|ui\.es|i18n\/t/);
+    const imports = [...source.matchAll(/from '([^']+)'/g)].map((m) => m[1]);
+    expect(imports).toEqual(['../motion/lifecycle', '../contact/service-param']);
+    expect(source).not.toContain('focus(');
   });
 });
