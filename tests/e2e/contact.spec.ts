@@ -244,7 +244,9 @@ test.describe('contact form with JavaScript', () => {
       page.on('request', (request) => {
         if (request.url().includes('/_actions/contact')) actions.push(request.url());
       });
-      await page.goto(`${path}#contact`);
+      // The pending script holds the window load event, so wait only for the DOM.
+      await page.goto(`${path}#contact`, { waitUntil: 'domcontentloaded' });
+      await expect(page.locator('form[data-contact-form]')).toBeVisible();
       await fillValid(page, dict);
       await page.getByRole('button', { name: dict['contact.submit'] }).click();
 

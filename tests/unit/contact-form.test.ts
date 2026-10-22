@@ -417,23 +417,67 @@ describe('loadTurnstileScript', () => {
     ...document.querySelectorAll<HTMLScriptElement>(`script[src="${SCRIPT_URL}"]`),
   ];
 
-  it('injects one explicit-render script and resolves after load', async () => {
+  // happy-dom never fetches here (file loading is disabled): it fires `error` synchronously on
+  // insertion, or `load` when handleDisabledFileLoadingAsSuccess is on.
+  const settings = (
+    window as unknown as { happyDOM: { settings: { handleDisabledFileLoadingAsSuccess: boolean } } }
+  ).happyDOM.settings;
+
+  afterEach(() => {
+    settings.handleDisabledFileLoadingAsSuccess = false;
+  });
+
+  // A script already injected by an earlier call and still loading.
+  function pendingScript(): HTMLScriptElement {
+    const script = document.createElement('script');
+    script.id = 'cf-turnstile-api';
+    script.src = SCRIPT_URL;
+    script.dataset['state'] = 'loading';
+    document.head.append(script);
+    return script;
+  }
+
+  it('injects the explicit-render script once and resolves after it loads', async () => {
     const { api } = fakeTurnstile();
+    settings.handleDisabledFileLoadingAsSuccess = true;
+    // Like the real script: window.turnstile exists once the script has run.
+    Object.defineProperty(window, 'turnstile', {
+      configurable: true,
+      get: () => (document.getElementById('cf-turnstile-api') ? api : undefined),
+    });
+
+    await expect(loadTurnstileScript(document)).resolves.toBe(api);
+    await expect(loadTurnstileScript(document)).resolves.toBe(api);
+    expect(scripts()).toHaveLength(1);
+    expect(scripts()[0]?.id).toBe('cf-turnstile-api');
+  });
+
+  it('reuses a script that is still loading; every caller resolves on load', async () => {
+    const { api } = fakeTurnstile();
+    const script = pendingScript();
     const first = loadTurnstileScript(document);
     const second = loadTurnstileScript(document);
     expect(scripts()).toHaveLength(1);
 
     window.turnstile = api;
-    scripts()[0]?.dispatchEvent(new Event('load'));
+    script.dispatchEvent(new Event('load'));
     await expect(first).resolves.toBe(api);
     await expect(second).resolves.toBe(api);
-    expect(scripts()).toHaveLength(1);
   });
 
   it('rejects on the error event', async () => {
+    const script = pendingScript();
     const pending = loadTurnstileScript(document);
-    scripts()[0]?.dispatchEvent(new Event('error'));
+    script.dispatchEvent(new Event('error'));
     await expect(pending).rejects.toThrow();
+  });
+
+  it('rejects when a fresh injection fails to load', async () => {
+    await expect(loadTurnstileScript(document)).rejects.toThrow();
+    expect(scripts()).toHaveLength(1);
+    // A later call settles from the recorded state instead of hanging.
+    await expect(loadTurnstileScript(document)).rejects.toThrow();
+    expect(scripts()).toHaveLength(1);
   });
 
   it('resolves at once when window.turnstile already exists', async () => {

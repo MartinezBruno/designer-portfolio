@@ -6,6 +6,7 @@
  * send (D-12). Copy is resolved on the server and handed to the script as JSON in
  * `data-contact-strings`, so the browser bundle never carries the dictionaries.
  */
+import IconAlertCircle from '@tabler/icons/outline/alert-circle.svg';
 import IconArrowRight from '@tabler/icons/outline/arrow-right.svg';
 import IconLoader2 from '@tabler/icons/outline/loader-2.svg';
 import ServiceChips from './ServiceChips.astro';
@@ -122,7 +123,16 @@ const label = 'text-base font-semibold text-ink';
     </button>
   </div>
 
-  <p data-turnstile-note hidden class="text-ink-muted inline-flex items-start gap-2 text-sm"></p>
+  <!-- Wait note (muted, no icon) or load error (danger + icon); the script sets tone and text. -->
+  <p data-turnstile-note hidden class="text-ink-muted inline-flex items-start gap-2 text-sm">
+    <IconAlertCircle
+      data-turnstile-note-icon
+      aria-hidden="true"
+      focusable="false"
+      class="mt-0.5 hidden size-4 shrink-0"
+    />
+    <span data-turnstile-note-text></span>
+  </p>
 </form>
 
 <div data-contact-success hidden class="bg-surface-alt flex flex-col items-start gap-6 p-6 sm:p-8">
@@ -138,3 +148,34 @@ const label = 'text-base font-semibold text-ink';
     {t('contact.success.again')}
   </button>
 </div>
+
+<script>
+  import { actions, isInputError } from 'astro:actions';
+  import { PUBLIC_TURNSTILE_SITE_KEY } from 'astro:env/client';
+  import { lifecycle } from '../../lib/motion';
+  import {
+    createContactForm,
+    loadTurnstileScript,
+    type ContactFormDeps,
+    type SendResult,
+  } from '../../lib/ui/contact-form';
+
+  // Maps the Action result onto the controller's SendResult. A throw (network) is a failed send.
+  async function send(data: FormData): Promise<SendResult> {
+    try {
+      const { error } = await actions.contact(data);
+      if (error === undefined) return { kind: 'ok' };
+      if (isInputError(error)) return { kind: 'input', fields: error.fields };
+      return { kind: 'failed' };
+    } catch {
+      return { kind: 'failed' };
+    }
+  }
+
+  const deps: ContactFormDeps = {
+    send,
+    siteKey: PUBLIC_TURNSTILE_SITE_KEY,
+    loadTurnstile: loadTurnstileScript,
+  };
+  lifecycle.register(createContactForm(deps));
+</script>

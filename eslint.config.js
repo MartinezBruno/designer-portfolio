@@ -45,5 +45,42 @@ export default defineConfig(
       ],
     },
   },
+  // Client bundle boundary (05-05, T-05-26): modules that ship to the browser must not value-import
+  // zod (about 22.7 KB gzip), server env, or t.ts / the ui.* dictionaries (both languages in every
+  // page). Copy reaches the client pre-resolved as JSON instead. The typescript-eslint rule (not
+  // core no-restricted-imports) so `import type { … }` passes: it is erased at compile and ships
+  // no bytes. Type imports must use the `import type` statement form.
+  {
+    files: [
+      'src/lib/ui/**',
+      'src/i18n/interpolate.ts',
+      'src/lib/contact/fields.ts',
+      'src/lib/contact/errors.ts',
+      'src/lib/contact/validate.ts',
+      'src/lib/contact/mailto.ts',
+      'src/lib/contact/service-param.ts',
+    ],
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['astro/zod', 'astro:env/server'],
+              allowTypeImports: true,
+              message:
+                'client bundle: zod is 22.7 KB gzip and t.ts ships both dictionaries (05-RESEARCH)',
+            },
+            {
+              group: ['**/i18n/t', '**/i18n/ui.*'],
+              allowTypeImports: true,
+              message:
+                'client bundle: zod is 22.7 KB gzip and t.ts ships both dictionaries (05-RESEARCH)',
+            },
+          ],
+        },
+      ],
+    },
+  },
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
 );
