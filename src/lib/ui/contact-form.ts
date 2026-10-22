@@ -1,5 +1,9 @@
 import { interpolate } from '../../i18n/interpolate';
+import { CONTACT_ERRORS, type ContactErrorKey } from '../contact/errors';
+import { FIELD_NAMES, type FieldName } from '../contact/fields';
+import { buildPrefilledMailto } from '../contact/mailto';
 import type { ContactStrings, ContactUIKey } from '../contact/strings';
+import { validateContact, type ContactValues, type FieldErrors } from '../contact/validate';
 import type { Cleanup, PageInit } from '../motion/lifecycle';
 import type { TurnstileApi } from '../../types/turnstile';
 
@@ -94,11 +98,40 @@ function parseStrings(raw: string | undefined): Partial<ContactStrings> {
 const isLocalTrigger = (loc: Location | undefined): boolean =>
   loc !== undefined && (loc.hash === '#contact' || new URLSearchParams(loc.search).has('service'));
 
+// Summary links sit in a list of messages, so they are underlined at rest (UI-SPEC "Error summary").
+// Kept as a literal under src/ so Tailwind's scanner sees every class.
+const SUMMARY_LINK =
+  'text-ink underline underline-offset-4 decoration-1 hover:decoration-accent hover:decoration-2 focus-visible:decoration-accent focus-visible:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent';
+
+const ERROR_KEYS: readonly string[] = Object.values(CONTACT_ERRORS);
+
+const isErrorKey = (value: string): value is ContactErrorKey => ERROR_KEYS.includes(value);
+
+const isFieldName = (value: string): value is FieldName =>
+  FIELD_NAMES.some((field) => field === value);
+
 /**
- * Contact form controller (CONT-01, CONT-03 success half; D-11, D-13, D-15). Reveals the form over
+ * Maps the server's input errors onto the local keys (D-10: the server verdict is final). Only
+ * values that are known CONTACT_ERRORS keys count; anything else from the network is ignored.
+ */
+export function serverFieldErrors(
+  fields: Readonly<Record<string, readonly string[] | undefined>>,
+): FieldErrors {
+  const errors: FieldErrors = {};
+  for (const field of FIELD_NAMES) {
+    const key = fields[field]?.find(isErrorKey);
+    if (key !== undefined) errors[field] = key;
+  }
+  return errors;
+}
+
+/**
+ * Contact form controller (CONT-01, CONT-03; D-10, D-11, D-13, D-14, D-15). Reveals the form over
  * the no-JS block, loads Turnstile lazily (near the section, on #contact or ?service=, or on the
- * first focus inside the form), sends through `deps.send`, and swaps in the success panel. User
- * text only ever reaches the DOM through textContent.
+ * first focus inside the form), validates with the browser mirror of the schema, sends through
+ * `deps.send`, and swaps in the success panel. Input errors (client or server) show the summary and
+ * the per-field errors; any other failure shows the failure block with Retry and a prefilled
+ * mailto, keeping every typed value. User text only ever reaches the DOM through textContent.
  */
 export function createContactForm(deps: ContactFormDeps): PageInit {
   return (doc: Document): Cleanup | undefined => {
@@ -121,7 +154,19 @@ export function createContactForm(deps: ContactFormDeps): PageInit {
     const again = q<HTMLButtonElement>('[data-contact-again]');
     const status = q<HTMLElement>('[data-contact-status]');
     const nameField = form.querySelector<HTMLInputElement>('#contact-name');
+    const emailField = form.querySelector<HTMLInputElement>('#contact-email');
+    const messageField = form.querySelector<HTMLTextAreaElement>('#contact-message');
+    const summary = form.querySelector<HTMLElement>('[data-contact-summary]');
+    const summaryList = form.querySelector<HTMLElement>('[data-contact-summary-list]');
+    const failure = form.querySelector<HTMLElement>('[data-contact-failure]');
+    const failureMailto = form.querySelector<HTMLAnchorElement>('[data-contact-failure-mailto]');
     if (
+      !emailField ||
+      !messageField ||
+      !summary ||
+      !summaryList ||
+      !failure ||
+      !failureMailto ||
       !slot ||
       !submit ||
       !submitLabel ||
@@ -250,12 +295,127 @@ export function createContactForm(deps: ContactFormDeps): PageInit {
       announce(body);
     };
 
-    // Non-success results keep every typed value and the checked chip (D-14): no form.reset().
-    // 05-06 extends this with the field errors (kind 'input') and the failure block.
+    // --- Validation (CONT-01, D-10) -------------------------------------------------------------
+    const controls: Readonly<Record<FieldName, HTMLInputElement | HTMLTextAreaElement>> = {
+      name: nameField,
+      email: emailField,
+      message: messageField,
+    };
+    const errorSlots: Readonly<Record<FieldName, HTMLElement | null>> = {
+      name: form.querySelector<HTMLElement>('#contact-name-error'),
+      email: form.querySelector<HTMLElement>('#contact-email-error'),
+      message: form.querySelector<HTMLElement>('#contact-message-error'),
+    };
+    // Nothing is flagged until the first submit; after it, fields re-validate as they change.
+    let attempted = false;
+    let errors: FieldErrors = {};
+
+    const values = (): ContactValues => ({
+      name: nameField.value,
+      email: emailField.value,
+      message: messageField.value,
+    });
+
+    const setDescribedBy = (control: Element, id: string, on: boolean): void => {
+      const ids = (control.getAttribute('aria-describedby') ?? '')
+        .split(/\s+/)
+        .filter((token) => token !== '' && token !== id);
+      if (on) ids.push(id);
+      if (ids.length > 0) control.setAttribute('aria-describedby', ids.join(' '));
+      else control.removeAttribute('aria-describedby');
+    };
+
+    const renderField = (field: FieldName): void => {
+      const key = errors[field];
+      const control = controls[field];
+      const slotEl = errorSlots[field];
+      const errorId = `contact-${field}-error`;
+      if (key === undefined) control.removeAttribute('aria-invalid');
+      else control.setAttribute('aria-invalid', 'true');
+      setDescribedBy(control, errorId, key !== undefined);
+      if (slotEl) {
+        const textEl = slotEl.querySelector('[data-error-text]') ?? slotEl;
+        textEl.textContent = key === undefined ? '' : text(key);
+        slotEl.hidden = key === undefined;
+      }
+    };
+
+    // Not a live region: focus goes to the first invalid field, which reads its own error.
+    const renderSummary = (): void => {
+      const items = FIELD_NAMES.flatMap((field) => {
+        const key = errors[field];
+        if (key === undefined) return [];
+        const link = doc.createElement('a');
+        link.href = `#contact-${field}`;
+        link.className = SUMMARY_LINK;
+        link.textContent = text(key);
+        const item = doc.createElement('li');
+        item.append(link);
+        return [item];
+      });
+      summaryList.replaceChildren(...items);
+      summary.hidden = items.length === 0;
+    };
+
+    const showErrors = (next: FieldErrors): boolean => {
+      errors = next;
+      for (const field of FIELD_NAMES) renderField(field);
+      renderSummary();
+      const first = FIELD_NAMES.find((field) => errors[field] !== undefined);
+      if (first === undefined) return false;
+      controls[first].focus();
+      return true;
+    };
+
+    const clearErrors = (): void => {
+      attempted = false;
+      errors = {};
+      for (const field of FIELD_NAMES) renderField(field);
+      renderSummary();
+    };
+
+    // --- Failure block (CONT-03, D-14) ----------------------------------------------------------
+    const prefilledMailto = (): string => {
+      const name = nameField.value.trim();
+      const checked = form.querySelector<HTMLInputElement>('input[name="service"]:checked');
+      const service =
+        checked && checked.value !== 'other'
+          ? (form.querySelector(`label[for="${checked.id}"]`)?.textContent.trim() ?? '')
+          : '';
+      const subject =
+        service === ''
+          ? interpolate(text('contact.mailto.subjectNoService'), { name })
+          : interpolate(text('contact.mailto.subject'), { service, name });
+      return buildPrefilledMailto({
+        to: form.dataset['email'] ?? '',
+        subject,
+        body: messageField.value,
+      });
+    };
+
+    const showFailure = (): void => {
+      failureMailto.href = prefilledMailto();
+      failure.hidden = false;
+      submitLabel.textContent = text('contact.retry');
+      // Focus stays where the visitor is; the status region reads the message once.
+      announce(`${text('contact.failure.title')} ${text('contact.failure.body')}`);
+    };
+
+    const hideFailure = (): void => {
+      failure.hidden = true;
+    };
+
+    // Non-success results keep every typed value and the checked chip (D-14): never reset.
     const handleNonSuccess = (result: Exclude<SendResult, { kind: 'ok' }>): void => {
       setSending(false);
       clearStatus();
       form.dataset['contactResult'] = result.kind;
+      if (result.kind === 'input') {
+        attempted = true;
+        // An input error with no field we can name still needs feedback: the generic failure.
+        if (showErrors(serverFieldErrors(result.fields))) return;
+      }
+      showFailure();
     };
 
     const finish = (result: SendResult, name: string): void => {
@@ -276,6 +436,9 @@ export function createContactForm(deps: ContactFormDeps): PageInit {
       (event) => {
         event.preventDefault();
         if (pending) return;
+        // Validate first: an invalid form never waits on (or spends) a Turnstile token.
+        attempted = true;
+        if (showErrors(validateContact(values()))) return;
         if (widgetFailed) {
           showNote(text('contact.turnstile.error'), 'error');
           return;
@@ -288,6 +451,7 @@ export function createContactForm(deps: ContactFormDeps): PageInit {
         }
 
         hideNote();
+        hideFailure();
         delete form.dataset['contactResult'];
         const data = new FormData(form);
         const nameValue = data.get('name');
@@ -309,6 +473,44 @@ export function createContactForm(deps: ContactFormDeps): PageInit {
 
     form.addEventListener('focusin', ensureWidget, { signal });
 
+    // Live re-validation after the first submit: only the changed field, focus never moves.
+    form.addEventListener(
+      'input',
+      (event) => {
+        if (!attempted) return;
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const field = target.getAttribute('name') ?? '';
+        if (!isFieldName(field) || controls[field] !== target) return;
+        // Only this field is re-checked; the others keep their current (client or server) error.
+        const fresh = validateContact(values());
+        const next: FieldErrors = {};
+        for (const name of FIELD_NAMES) {
+          const key = name === field ? fresh[name] : errors[name];
+          if (key !== undefined) next[name] = key;
+        }
+        errors = next;
+        renderField(field);
+        renderSummary();
+      },
+      { signal },
+    );
+
+    // A summary link moves focus to its field (no hash change, no scroll jump past the label).
+    summaryList.addEventListener(
+      'click',
+      (event) => {
+        const target = event.target;
+        const link = target instanceof Element ? target.closest('a') : null;
+        if (!link) return;
+        const field = (link.getAttribute('href') ?? '').replace('#contact-', '');
+        if (!isFieldName(field)) return;
+        event.preventDefault();
+        controls[field].focus();
+      },
+      { signal },
+    );
+
     again.addEventListener(
       'click',
       () => {
@@ -317,6 +519,8 @@ export function createContactForm(deps: ContactFormDeps): PageInit {
         if (other) other.checked = true;
         delete form.dataset['contactResult'];
         hideNote();
+        hideFailure();
+        clearErrors();
         setSending(false);
         success.hidden = true;
         form.hidden = false;

@@ -30,6 +30,9 @@ const strings = resolveContactStrings(locale, site.email);
 const field =
   'block w-full rounded-none border-0 border-b-2 border-ink-muted bg-surface-alt px-4 py-3 text-base text-ink aria-[invalid=true]:border-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent';
 const label = 'text-base font-semibold text-ink';
+// Error text sits under its field; the id always resolves, so aria-describedby never dangles.
+const fieldError = 'text-sm text-danger inline-flex items-start gap-2';
+const dangerTitle = 'text-base font-semibold text-danger inline-flex items-center gap-2';
 ---
 
 <form
@@ -39,8 +42,22 @@ const label = 'text-base font-semibold text-ink';
   aria-labelledby="contact-title"
   data-locale={locale}
   data-contact-strings={JSON.stringify(strings)}
+  data-email={site.email}
   class="relative flex flex-col gap-8"
 >
+  <!-- Error summary (D-10). Not a live region: focus moves to the first invalid field instead. -->
+  <div data-contact-summary hidden class="flex flex-col gap-2">
+    <p id="contact-summary-title" class={dangerTitle}>
+      <IconAlertCircle aria-hidden="true" focusable="false" class="size-5 shrink-0" />
+      {t('contact.summary.title')}
+    </p>
+    <ul
+      data-contact-summary-list
+      aria-labelledby="contact-summary-title"
+      class="flex flex-col gap-1 pl-7"
+    ></ul>
+  </div>
+
   <ServiceChips locale={locale} services={services} />
 
   <div class="grid gap-8 sm:grid-cols-2 sm:gap-x-6">
@@ -57,6 +74,10 @@ const label = 'text-base font-semibold text-ink';
         maxlength={LIMITS.name}
         class:list={[field, 'h-12']}
       />
+      <p id="contact-name-error" hidden class={fieldError}>
+        <IconAlertCircle aria-hidden="true" focusable="false" class="mt-0.5 size-4 shrink-0" />
+        <span data-error-text></span>
+      </p>
     </div>
     <div class="flex flex-col gap-2">
       <label for="contact-email" class={label}>
@@ -73,6 +94,10 @@ const label = 'text-base font-semibold text-ink';
         maxlength={LIMITS.email}
         class:list={[field, 'h-12']}
       />
+      <p id="contact-email-error" hidden class={fieldError}>
+        <IconAlertCircle aria-hidden="true" focusable="false" class="mt-0.5 size-4 shrink-0" />
+        <span data-error-text></span>
+      </p>
     </div>
   </div>
 
@@ -92,6 +117,10 @@ const label = 'text-base font-semibold text-ink';
       aria-describedby="contact-message-hint"
       class:list={[field, 'min-h-40 resize-y']}
     ></textarea>
+    <p id="contact-message-error" hidden class={fieldError}>
+      <IconAlertCircle aria-hidden="true" focusable="false" class="mt-0.5 size-4 shrink-0" />
+      <span data-error-text></span>
+    </p>
   </div>
 
   <!-- Honeypot: off-screen (not display:none, which bots skip) and out of the Tab order. -->
@@ -133,6 +162,25 @@ const label = 'text-base font-semibold text-ink';
     />
     <span data-turnstile-note-text></span>
   </p>
+
+  <!-- Failure block (CONT-03, D-14): one generic message for every non-input failure. The script
+       rebuilds the mailto from what the visitor typed each time it shows. -->
+  <div data-contact-failure hidden class="flex flex-col items-start gap-2">
+    <p class={dangerTitle}>
+      <IconAlertCircle aria-hidden="true" focusable="false" class="size-5 shrink-0" />
+      {t('contact.failure.title')}
+    </p>
+    <p class="text-ink max-w-[60ch] text-base">{strings['contact.failure.body']}</p>
+    <p>
+      <a
+        data-contact-failure-mailto
+        href={`mailto:${site.email}`}
+        class="text-ink decoration-accent focus-visible:outline-accent inline-flex min-h-11 items-center gap-2 text-base font-semibold decoration-2 underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+      >
+        {t('contact.failure.mailto')}
+      </a>
+    </p>
+  </div>
 </form>
 
 <div data-contact-success hidden class="bg-surface-alt flex flex-col items-start gap-6 p-6 sm:p-8">
