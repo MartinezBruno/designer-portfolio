@@ -1,0 +1,53 @@
+---
+/**
+ * Service radio chips for the contact form (D-06, D-07). A native radio group: one Tab stop (the
+ * checked chip), arrow keys move and check. The radio is visually hidden and its label is the
+ * pill; the focus ring and the checked fill are drawn on the label through `peer-*` variants.
+ * `other` ("Not sure yet / Something else") is checked in the HTML, so the default holds with no
+ * script.
+ */
+import IconCheck from '@tabler/icons/outline/check.svg';
+import { useTranslations, type Locale } from '../../i18n/t';
+import type { ServiceView } from '../../lib/content/home';
+
+interface Props {
+  locale: Locale;
+  services: readonly ServiceView[];
+}
+
+const { locale, services } = Astro.props;
+const t = useTranslations(locale);
+
+// Received in Phase 2 order (services.json `order`), then the no-service choice.
+const choices = [
+  ...services.map((service) => ({ id: service.id, label: service.title })),
+  { id: 'other', label: t('contact.service.other') },
+];
+
+const chip =
+  'inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-ink-muted px-4 py-2 text-left text-sm font-semibold text-ink cursor-pointer hover:border-ink [&>svg]:hidden peer-checked:border-ink peer-checked:bg-ink peer-checked:text-surface peer-checked:[&>svg]:block peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent motion-safe:transition-colors motion-safe:duration-150'; // taste-skill-ignore: 2px radio-chip boundary (WCAG 1.4.11), not a 1px box
+---
+
+<fieldset class="m-0 min-w-0 border-0 p-0">
+  <legend class="text-ink mb-4 text-base font-semibold">
+    {t('contact.service.legend')} <span class="font-normal">{t('contact.optional')}</span>
+  </legend>
+  <div class="flex flex-wrap gap-2">
+    {choices.map((choice) => (
+      <div>
+        <input
+          type="radio"
+          name="service"
+          id={`contact-service-${choice.id}`}
+          value={choice.id}
+          checked={choice.id === 'other'}
+          class="peer sr-only"
+        />
+        <label for={`contact-service-${choice.id}`} class={chip}>
+          <IconCheck aria-hidden="true" focusable="false" class="size-4" />
+          {choice.label}
+        </label>
+      </div>
+    ))}
+  </div>
+</fieldset>

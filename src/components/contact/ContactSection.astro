@@ -4,20 +4,24 @@
  * (D-01, D-04). Two columns from lg, stacked below (D-02): the invitation with the direct email
  * link and socials, then the contact column. The no-JS mailto block ships visible, with no
  * <noscript>, so a visitor without JavaScript can always email Martina (CONT-05, D-12). The form
- * that replaces it for JS visitors mounts in [data-contact-column] (05-05).
+ * that replaces it for JS visitors ships hidden in [data-contact-column] (05-05). The one live
+ * region sits outside the form so it survives the success swap, and exists from page load.
  */
 import IconArrowRight from '@tabler/icons/outline/arrow-right.svg';
 import IconMail from '@tabler/icons/outline/mail.svg';
+import ContactForm from './ContactForm.astro';
 import ButtonLink from '../ui/ButtonLink.astro';
 import SocialLinks from '../ui/SocialLinks.astro';
 import { site } from '../../data/site';
 import { interpolate, useTranslations, type Locale } from '../../i18n/t';
+import type { ServiceView } from '../../lib/content/home';
 
 interface Props {
   locale: Locale;
+  services: readonly ServiceView[];
 }
 
-const { locale } = Astro.props;
+const { locale, services } = Astro.props;
 const t = useTranslations(locale);
 // The subject is a dictionary constant, encoded; no visitor input reaches this link (T-05-07).
 const nojsHref = `mailto:${site.email}?subject=${encodeURIComponent(t('contact.nojs.subject'))}`;
@@ -62,6 +66,8 @@ const nojsHref = `mailto:${site.email}?subject=${encodeURIComponent(t('contact.n
           </Fragment>
         </ButtonLink>
       </div>
+      <ContactForm locale={locale} services={services} />
     </div>
   </div>
+  <p role="status" class="sr-only" data-contact-status></p>
 </section>
