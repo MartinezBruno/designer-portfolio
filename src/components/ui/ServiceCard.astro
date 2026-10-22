@@ -1,19 +1,26 @@
 ---
 /**
- * One featured service card. Intentionally non-interactive until Phase 5 (HOME-08) adds a real
- * destination: no links, no pointer cursor, no hover change. Cards are keyed by stable service
- * ids upstream so Phase 5 can attach filters without reshaping content.
+ * One featured service card. Only the explicit "Ask about this" text link is interactive (D-05):
+ * the card itself has no pointer cursor, hover change or stretched link. The link's accessible
+ * name adds the service title in an sr-only span ("Ask about this: Branding"), so the 4 links are
+ * distinct and still start with the visible label (WCAG 2.5.3). The section builds the href with
+ * the stable service id (D-08).
  */
+import IconArrowRight from '@tabler/icons/outline/arrow-right.svg';
 import ServiceIcon from './ServiceIcon.astro';
+import { interpolate, useTranslations, type Locale } from '../../i18n/t';
 import type { ServiceIconKey } from '../../lib/content/icons';
 
 interface Props {
   title: string;
   items: readonly string[];
   icon: ServiceIconKey;
+  href: string;
+  locale: Locale;
 }
 
-const { title, items, icon } = Astro.props;
+const { title, items, icon, href, locale } = Astro.props;
+const t = useTranslations(locale);
 ---
 
 <li class="bg-surface-alt flex h-full flex-col gap-4 rounded-2xl p-6">
@@ -28,4 +35,14 @@ const { title, items, icon } = Astro.props;
       ))}
     </ul>
   </div>
+  <p class="mt-auto">
+    <a
+      href={href}
+      class="text-ink decoration-accent focus-visible:outline-accent inline-flex min-h-11 items-center gap-2 text-base font-semibold decoration-2 underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+    >
+      {t('services.ask')}
+      <span class="sr-only">{interpolate(t('services.askTarget'), { title })}</span>
+      <IconArrowRight aria-hidden="true" focusable="false" class="size-5" />
+    </a>
+  </p>
 </li>
