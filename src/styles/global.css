@@ -137,3 +137,81 @@
     clip-path: inset(0);
   }
 }
+
+/*
+ * Hero load sequence (D-03, UI-SPEC "Hero load sequence"). Pure CSS keyframes from the first
+ * frame, so it completes even if every script fails; no hidden state exists outside a running
+ * `both`-filled animation that ends visible. hero.ts sets data-hero-played when it ends (or at
+ * once under reduced/off), and these selectors exclude it, so the hero never replays.
+ * 'reduced' and 'off' have no rules: the hero is static, no fade either (D-14).
+ */
+
+/* Line masks in every state, so layout never shifts. Vertical clip only (Pitfall 4). */
+[data-hero-line] {
+  overflow-x: visible;
+  overflow-y: clip;
+  padding-block: 0.1em;
+  margin-block: -0.1em;
+}
+/* Adjoining negative margins collapse to the larger one, so the gap between two masks needs both. */
+[data-hero-line] + [data-hero-line] {
+  margin-block-start: -0.2em;
+}
+
+[data-motion='on'] [data-hero]:not([data-hero-played]) [data-hero-line-inner] {
+  animation: hero-rise var(--t-hero) var(--ease-reveal) both;
+}
+[data-motion='on']
+  [data-hero]:not([data-hero-played])
+  [data-hero-line]:nth-of-type(2)
+  [data-hero-line-inner] {
+  animation-delay: 90ms;
+}
+[data-motion='on'] [data-hero]:not([data-hero-played]) picture[data-hero-portrait] {
+  animation: hero-shutter 840ms var(--ease-travel) 120ms both;
+}
+[data-motion='on'] [data-hero]:not([data-hero-played]) picture[data-hero-portrait] img {
+  animation: hero-scale 840ms var(--ease-soft) 120ms both;
+}
+[data-motion='on'] [data-hero]:not([data-hero-played]) [data-hero-lead] {
+  animation: hero-settle var(--t-settle) var(--ease-reveal) 200ms both;
+}
+[data-motion='on'] [data-hero]:not([data-hero-played]) [data-hero-cta] {
+  animation: hero-settle var(--t-settle) var(--ease-reveal) 280ms both;
+}
+
+@keyframes hero-rise {
+  from {
+    translate: 0 110%;
+  }
+  to {
+    translate: none;
+  }
+}
+/* Explicit inset(0) end: clip-path cannot interpolate from inset() to none. */
+@keyframes hero-shutter {
+  from {
+    clip-path: inset(100% 0 0 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+@keyframes hero-scale {
+  from {
+    scale: 1.08;
+  }
+  to {
+    scale: none;
+  }
+}
+@keyframes hero-settle {
+  from {
+    opacity: 0;
+    translate: 0 16px;
+  }
+  to {
+    opacity: 1;
+    translate: none;
+  }
+}

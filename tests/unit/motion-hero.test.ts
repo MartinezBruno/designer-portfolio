@@ -64,6 +64,7 @@ describe('createHeroPlayed', () => {
 
   it('waits for the CTA animationend when it mounts early under on', () => {
     setMotion('on');
+    document.querySelector('[data-hero-portrait]')?.remove();
     const cleanup = createHeroPlayed({ now: () => 120 })(document);
     expect(hero().hasAttribute('data-hero-played')).toBe(false);
 
@@ -73,6 +74,23 @@ describe('createHeroPlayed', () => {
     expect(hero().hasAttribute('data-hero-played')).toBe(false);
 
     fireAnimationEnd(cta());
+    expect(hero().hasAttribute('data-hero-played')).toBe(true);
+    cleanup?.();
+  });
+
+  it('also waits for the portrait, which finishes last (960ms), before marking played', () => {
+    setMotion('on');
+    const cleanup = createHeroPlayed({ now: () => 120 })(document);
+    fireAnimationEnd(cta());
+    expect(hero().hasAttribute('data-hero-played')).toBe(false);
+
+    const portrait = document.querySelector('[data-hero-portrait]');
+    // The img's scale animation bubbles up; only the picture's own shutter counts.
+    const img = portrait?.querySelector('img');
+    if (img) fireAnimationEnd(img);
+    expect(hero().hasAttribute('data-hero-played')).toBe(false);
+
+    if (portrait) fireAnimationEnd(portrait);
     expect(hero().hasAttribute('data-hero-played')).toBe(true);
     cleanup?.();
   });
