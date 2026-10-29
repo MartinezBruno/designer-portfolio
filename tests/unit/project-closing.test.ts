@@ -76,6 +76,20 @@ describe('ProjectContactBand', () => {
     expect(text(links[0] ?? '')).toBe('Trabajemos juntos');
   });
 
+  it('moves only the band contents: h2 lines, body and button wrapper settle', async () => {
+    const html = await band('en');
+    expect(html).toMatch(/<h2[^>]*data-reveal="lines"/);
+    expect(html).toMatch(/<p[^>]*data-reveal="settle"[^>]*data-reveal-delay="140"/);
+    expect(html).toMatch(/<div data-reveal="settle" data-reveal-delay="210">\s*<a /);
+    const section = /<section[^>]*>/.exec(html)?.[0] ?? '';
+    expect(section).not.toContain('data-reveal');
+    const field = /<section[^>]*>\s*<div[^>]*>/.exec(html)?.[0] ?? '';
+    expect(field).not.toContain('data-reveal');
+    for (const link of html.match(/<a [^>]*>/g) ?? []) {
+      expect(link).not.toContain('data-reveal');
+    }
+  });
+
   it('hides the arrow icon from assistive technology', async () => {
     const html = await band('en');
     expect(html).toMatch(/<svg[^>]*aria-hidden="true"/);
@@ -132,6 +146,24 @@ describe('NextProjectTeaser', () => {
     const html = await teaser({ locale: 'es' });
     expect(html).toContain('Siguiente proyecto');
     expect(html).toContain('Anterior:');
+  });
+
+  it('reveals heading, Previous wrapper, cover shutter and title (Phase 6 D-04)', async () => {
+    const html = await teaser({});
+    expect(html).toMatch(/<h2[^>]*data-reveal="lines"/);
+    expect(html).toMatch(
+      /<div data-reveal="settle" data-reveal-delay="140">\s*<a[^>]*href="\/projects\/sistema-visual\/"/,
+    );
+    expect(html).toMatch(
+      /<div[^>]*data-reveal="shutter"[^>]*data-reveal-delay="140"[^>]*>\s*<picture/,
+    );
+    expect(html).toMatch(/<h3[^>]*data-reveal="settle"[^>]*data-reveal-delay="210"/);
+    expect(html).not.toMatch(/<h3[^>]*data-reveal="lines"/);
+    for (const link of html.match(/<a\b[^>]*>/g) ?? []) {
+      expect(link).not.toContain('data-reveal');
+    }
+    const without = await teaser({ previous: null });
+    expect(without).not.toContain('<div data-reveal="settle" data-reveal-delay="140">');
   });
 
   it('uses no accent fill', async () => {

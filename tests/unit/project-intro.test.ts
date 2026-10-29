@@ -94,6 +94,25 @@ describe('ProjectIntro', () => {
     expect(html).toContain('<span class="sr-only">(opens in a new tab)</span>');
   });
 
+  it('splits the h1 into lines and keeps a lang span intact (Phase 6 D-04)', async () => {
+    const h1 = /<h1[^>]*>/.exec(await render())?.[0] ?? '';
+    expect(h1).toContain('data-reveal="lines"');
+    const marked = await render({ title: 'Posts de motos', titleLang: 'es' });
+    expect(marked).toMatch(/<h1[^>]*data-reveal="lines"[^>]*>\s*<span lang="es">Posts de motos/);
+  });
+
+  it('settles the summary, each meta group and the Behance row, never the link', async () => {
+    const html = await render();
+    expect(html).toMatch(/<p[^>]*data-reveal="settle"[^>]*data-reveal-delay="140"[^>]*>\s*A full/);
+    expect(html).toMatch(/<dl[^>]*data-reveal-stagger="70"/);
+    const groups = html.match(/<div[^>]*data-reveal="settle" data-reveal-delay="210"/g) ?? [];
+    expect(groups).toHaveLength(2);
+    expect(html).toMatch(/<p data-reveal="settle" data-reveal-delay="350">\s*<a /);
+    for (const link of html.match(/<a [^>]*>/g) ?? []) {
+      expect(link).not.toContain('data-reveal');
+    }
+  });
+
   it('never renders the cover image', async () => {
     const html = await render();
     expect(html).not.toContain('<img');
