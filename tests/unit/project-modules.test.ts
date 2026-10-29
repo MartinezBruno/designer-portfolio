@@ -212,6 +212,60 @@ describe('ProjectModule', () => {
   });
 });
 
+describe('reveal hooks (Phase 6 D-04)', () => {
+  const collectionItem: CollectionItemView = {
+    image: portrait,
+    alt: 'item',
+    ratio: 1,
+    widths: [portrait.width],
+    sizes: '100vw',
+    eager: false,
+  };
+  const stack: ModuleView[] = [
+    { kind: 'image', ...imageProps },
+    { kind: 'collection', rows: [[collectionItem]] },
+    {
+      kind: 'embed',
+      provider: 'figma',
+      providerName: 'Figma',
+      src: 'https://embed.figma.com/proto/abc',
+      iframeTitle: 'Mart — interactive Figma prototype',
+    },
+    { kind: 'unknown' },
+  ];
+
+  it('settles a TextModule as one block on its root', async () => {
+    const c = await container();
+    const out = await c.renderToString(TextModule, { props: { html: '<p>Hola</p>', lang: null } });
+    expect(firstTag(out)).toContain('data-reveal="settle"');
+    expect(out.match(/data-reveal=/g)).toHaveLength(1);
+  });
+
+  it('keeps ImageModule and CollectionModule static', async () => {
+    const c = await container();
+    const image = await c.renderToString(ImageModule, { props: imageProps });
+    expect(image).not.toContain('data-reveal');
+    const collection = await c.renderToString(CollectionModule, {
+      props: { rows: [[collectionItem, collectionItem]] },
+    });
+    expect(collection).not.toContain('data-reveal');
+    const unknown = await c.renderToString(UnknownModule, {
+      props: { behanceUrl: BEHANCE_URL, locale: 'en' },
+    });
+    expect(unknown).not.toContain('data-reveal');
+  });
+
+  it('dispatches every stack module kind without a reveal hook', async () => {
+    const c = await container();
+    for (const module of stack) {
+      const out = await c.renderToString(ProjectModule, {
+        props: { module, behanceUrl: BEHANCE_URL, locale: 'en' },
+      });
+      expect(out).not.toContain('data-reveal');
+    }
+  });
+});
+
 describe('set:html guard (T-04-01)', () => {
   function astroFiles(dir: string): string[] {
     return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

@@ -19,6 +19,7 @@ const t = useTranslations(locale);
   <div class="flex flex-col gap-6">
     <h1
       id="project-title"
+      data-reveal="lines"
       class="font-display text-ink text-4xl font-semibold tracking-tight text-pretty"
     >
       {detail.titleLang === null ? (
@@ -28,20 +29,26 @@ const t = useTranslations(locale);
       )}
     </h1>
     {detail.summary !== null && (
-      <p class="text-ink max-w-[60ch] text-base text-pretty">{detail.summary}</p>
+      <p
+        data-reveal="settle"
+        data-reveal-delay="140"
+        class="text-ink max-w-[60ch] text-base text-pretty"
+      >
+        {detail.summary}
+      </p>
     )}
   </div>
   <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
     {(detail.category !== null || detail.tools.length > 0) && (
-      <dl class="flex flex-col gap-6 md:flex-row md:gap-x-12">
+      <dl data-reveal-stagger="70" class="flex flex-col gap-6 md:flex-row md:gap-x-12">
         {detail.category !== null && (
-          <div class="flex flex-col gap-1">
+          <div data-reveal="settle" data-reveal-delay="210" class="flex flex-col gap-1">
             <dt class="text-ink-muted text-sm">{t('projects.meta.category')}</dt>
             <dd class="text-ink text-base">{detail.category}</dd>
           </div>
         )}
         {detail.tools.length > 0 && (
-          <div class="flex flex-col gap-1">
+          <div data-reveal="settle" data-reveal-delay="210" class="flex flex-col gap-1">
             <dt class="text-ink-muted text-sm">{t('projects.meta.tools')}</dt>
             <dd>
               <ul class="flex flex-wrap gap-x-4 gap-y-2">
@@ -57,7 +64,7 @@ const t = useTranslations(locale);
         )}
       </dl>
     )}
-    <p>
+    <p data-reveal="settle" data-reveal-delay="350">
       <ExternalTextLink href={detail.behanceUrl} locale={locale}>
         {t('detail.viewOnBehance')}
       </ExternalTextLink>

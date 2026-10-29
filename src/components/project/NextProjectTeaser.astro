@@ -24,29 +24,36 @@ const t = useTranslations(locale);
     <div class="flex flex-col items-start gap-6 md:col-span-5">
       <h2
         id="next-project-title"
+        data-reveal="lines"
         class="font-display text-ink text-2xl font-semibold tracking-tight"
       >
         {t('detail.next.heading')}
       </h2>
       {previous !== null && (
-        <a
-          href={previous.href}
-          class="text-ink decoration-accent focus-visible:outline-accent inline-flex min-h-11 items-center gap-2 text-base font-semibold decoration-2 underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2"
-        >
-          <IconArrowLeft aria-hidden="true" focusable="false" class="size-5 shrink-0" />
-          <span>
-            {t('detail.previous')}{' '}
-            {previous.titleLang === null ? (
-              previous.title
-            ) : (
-              <span lang={previous.titleLang}>{previous.title}</span>
-            )}
-          </span>
-        </a>
+        <div data-reveal="settle" data-reveal-delay="140">
+          <a
+            href={previous.href}
+            class="text-ink decoration-accent focus-visible:outline-accent inline-flex min-h-11 items-center gap-2 text-base font-semibold decoration-2 underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+          >
+            <IconArrowLeft aria-hidden="true" focusable="false" class="size-5 shrink-0" />
+            <span>
+              {t('detail.previous')}{' '}
+              {previous.titleLang === null ? (
+                previous.title
+              ) : (
+                <span lang={previous.titleLang}>{previous.title}</span>
+              )}
+            </span>
+          </a>
+        </div>
       )}
     </div>
     <article class="group/card relative flex flex-col gap-4 md:col-span-7">
-      <div class="bg-surface-alt aspect-[5/4] overflow-hidden">
+      <div
+        data-reveal="shutter"
+        data-reveal-delay="140"
+        class="bg-surface-alt aspect-[5/4] overflow-hidden"
+      >
         <Picture
           src={next.cover}
           alt={next.coverAlt}
@@ -60,7 +67,11 @@ const t = useTranslations(locale);
           class="size-full object-cover object-center"
         />
       </div>
-      <h3 class="font-display text-ink text-4xl font-semibold tracking-tight text-pretty">
+      <h3
+        data-reveal="settle"
+        data-reveal-delay="210"
+        class="font-display text-ink text-4xl font-semibold tracking-tight text-pretty"
+      >
         <a
           href={next.href}
           class="text-ink decoration-accent group-hover/card:underline focus-visible:after:outline-accent decoration-2 underline-offset-4 outline-hidden after:absolute after:inset-0 after:content-[''] focus-visible:underline focus-visible:after:outline-2 focus-visible:after:outline-offset-4"

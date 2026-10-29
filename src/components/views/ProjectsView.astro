@@ -20,15 +20,25 @@ const all = await getAllProjects(locale);
   class="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 py-16 sm:px-6 lg:px-8"
 >
   <div class="flex flex-col gap-6">
-    <h1 id="projects-title" class="font-display text-5xl font-semibold tracking-tight">
+    <h1
+      id="projects-title"
+      data-reveal="lines"
+      class="font-display text-5xl font-semibold tracking-tight"
+    >
       {t('projects.heading')}
     </h1>
-    <p class="text-ink max-w-[60ch] text-base text-pretty">{t('projects.intro')}</p>
+    <p
+      data-reveal="settle"
+      data-reveal-delay="140"
+      class="text-ink max-w-[60ch] text-base text-pretty"
+    >
+      {t('projects.intro')}
+    </p>
   </div>
   {all.length > 0 ? (
     <ProjectGrid projects={all} variant="full" headingLevel={2} locale={locale} eagerFirst />
   ) : (
-    <div class="flex flex-col gap-4">
+    <div data-reveal="settle" class="flex flex-col gap-4">
       <h2 class="font-display text-2xl font-semibold tracking-tight">
         {t('projects.empty.heading')}
       </h2>

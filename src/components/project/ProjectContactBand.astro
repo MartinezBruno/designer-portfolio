@@ -20,17 +20,22 @@ const contactHref = `${getRelativeLocaleUrl(locale, '/')}#contact`;
     <div class="flex flex-col gap-2">
       <h2
         id="project-cta-title"
+        data-reveal="lines"
         class="font-display text-ink text-2xl font-semibold tracking-tight text-pretty"
       >
         {t('detail.cta.heading')}
       </h2>
-      <p class="text-ink max-w-[60ch] text-base">{t('detail.cta.body')}</p>
+      <p data-reveal="settle" data-reveal-delay="140" class="text-ink max-w-[60ch] text-base">
+        {t('detail.cta.body')}
+      </p>
     </div>
-    <ButtonLink href={contactHref}>
-      {t('detail.cta.button')}
-      <Fragment slot="icon">
-        <IconArrowRight aria-hidden="true" focusable="false" class="size-5" />
-      </Fragment>
-    </ButtonLink>
+    <div data-reveal="settle" data-reveal-delay="210">
+      <ButtonLink href={contactHref}>
+        {t('detail.cta.button')}
+        <Fragment slot="icon">
+          <IconArrowRight aria-hidden="true" focusable="false" class="size-5" />
+        </Fragment>
+      </ButtonLink>
+    </div>
   </div>
 </section>
