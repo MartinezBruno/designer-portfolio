@@ -265,8 +265,8 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 06-01-PLAN.md — Three-state motion gate (on/reduced/off), stored override, motion:change bus, header motion toggle (EN/ES)
-- [ ] 06-02-PLAN.md — gsap@3.15.0 approval checkpoint, lazy memoised loader, homepage bundle measurement + Phase 5 baseline
+- [x] 06-01-PLAN.md — Three-state motion gate (on/reduced/off), stored override, motion:change bus, header motion toggle (EN/ES)
+- [x] 06-02-PLAN.md — gsap@3.15.0 approval checkpoint, lazy memoised loader, homepage bundle measurement + Phase 5 baseline
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -337,6 +337,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 3. Real Behance Work | 10/10 | Complete   | 2026-10-17 |
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
-| 6. Scroll & Interaction Motion | 0/TBD | Not started | - |
+| 6. Scroll & Interaction Motion | 2/10 | In Progress|  |
 | 7. Page Transitions & Smooth Scroll | 0/TBD | Not started | - |
 | 8. Quality Verification | 0/TBD | Not started | - |
