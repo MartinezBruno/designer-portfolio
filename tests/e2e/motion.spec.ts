@@ -72,6 +72,79 @@ test.describe('motion gate without JavaScript', () => {
       await expect(page.locator('footer svg').first()).toBeVisible();
     });
   }
+
+  // V-02 (D-05): without JS no reveal start state can apply.
+  for (const path of [...paths, '/projects/', '/es/projects/']) {
+    test(`${path} shows every [data-reveal] element at rest`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
+      const states = await page.evaluate(() =>
+        [...document.querySelectorAll('[data-reveal]')].map((el) => {
+          const style = getComputedStyle(el);
+          return {
+            opacity: style.opacity,
+            transform: style.transform,
+            translate: style.translate,
+            clipPath: style.clipPath,
+          };
+        }),
+      );
+      expect(states.length).toBeGreaterThan(0);
+      for (const state of states) {
+        expect(state.opacity).toBe('1');
+        expect(state.transform).toBe('none');
+        expect(state.translate).toBe('none');
+        expect(['none', 'inset(0px)']).toContain(state.clipPath);
+      }
+    });
+  }
+});
+
+test.describe('reveals under prefers-reduced-motion: reduce only fade', () => {
+  test.use({ reducedMotion: 'reduce' });
+
+  // V-12 (D-14): sample every [data-reveal] each frame while scrolling Home top to bottom.
+  test('/ never moves, scales or clips a reveal element', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('load');
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
+    const violations = await page.evaluate(async () => {
+      const found = new Set<string>();
+      const sample = (): void => {
+        for (const el of document.querySelectorAll('[data-reveal]')) {
+          const style = getComputedStyle(el);
+          const clip = style.clipPath;
+          if (
+            style.transform !== 'none' ||
+            style.translate !== 'none' ||
+            style.scale !== 'none' ||
+            (clip !== 'none' && clip !== 'inset(0px)')
+          ) {
+            found.add(
+              `${el.getAttribute('data-reveal') ?? ''}: ${style.transform} ${style.translate} ${style.scale} ${clip}`,
+            );
+          }
+        }
+      };
+      const frame = (): Promise<void> =>
+        new Promise((resolve) => {
+          requestAnimationFrame(() => {
+            sample();
+            resolve();
+          });
+        });
+      const step = window.innerHeight / 2;
+      const end = document.documentElement.scrollHeight;
+      for (let y = 0; y <= end; y += step) {
+        window.scrollTo(0, y);
+        for (let i = 0; i < 4; i += 1) await frame();
+      }
+      const stop = performance.now() + 1000;
+      while (performance.now() < stop) await frame();
+      return [...found];
+    });
+    expect(violations).toEqual([]);
+  });
 });
 
 test.describe('motion gate follows a reduced-motion change after load', () => {

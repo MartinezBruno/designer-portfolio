@@ -24,7 +24,11 @@ const { title, items, icon, href, locale } = Astro.props;
 const t = useTranslations(locale);
 ---
 
-<li class="bg-surface-alt flex h-full flex-col gap-4 rounded-2xl p-6">
+<li
+  class="bg-surface-alt flex h-full flex-col gap-4 rounded-2xl p-6"
+  data-reveal="settle"
+  data-reveal-delay="140"
+>
   <span class="bg-surface grid size-12 place-items-center rounded-full">
     <ServiceIcon name={icon} />
   </span>

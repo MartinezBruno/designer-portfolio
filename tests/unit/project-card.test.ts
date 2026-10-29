@@ -158,6 +158,26 @@ describe('project card size', () => {
   });
 });
 
+describe('project card reveal hooks', () => {
+  it('never shutters the eager (LCP) cover', async () => {
+    const html = await render({ eager: true });
+    expect(html).not.toContain('data-reveal="shutter"');
+    expect(mediaTag(html)).not.toContain('data-reveal');
+  });
+
+  it('shutters a lazy cover frame exactly once', async () => {
+    const html = await render({ eager: false });
+    expect(html.match(/data-reveal="shutter"/g)).toHaveLength(1);
+    expect(mediaTag(html)).toContain('data-reveal="shutter"');
+  });
+
+  it.each([true, false])('settles one text block (eager: %s)', async (eager) => {
+    const html = await render({ eager });
+    expect(html.match(/data-reveal="settle"/g)).toHaveLength(1);
+    expect(html).not.toContain('data-reveal="lines"');
+  });
+});
+
 describe('project card safety', () => {
   it('escapes a hostile title (T-03-06)', async () => {
     const html = await render({ project: { title: '<script>x</script>' } });

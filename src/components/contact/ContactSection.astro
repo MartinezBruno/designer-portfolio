@@ -36,12 +36,19 @@ const nojsHref = `mailto:${site.email}?subject=${encodeURIComponent(t('contact.n
     <div class="flex flex-col items-start gap-6 lg:col-span-5">
       <h2
         id="contact-title"
+        data-reveal="lines"
         class="font-display text-ink text-4xl font-semibold tracking-tight text-pretty"
       >
         {t('contact.heading')}
       </h2>
-      <p class="text-ink max-w-[60ch] text-base text-pretty">{t('contact.intro')}</p>
-      <div class="flex flex-col items-start gap-2">
+      <p
+        class="text-ink max-w-[60ch] text-base text-pretty"
+        data-reveal="settle"
+        data-reveal-delay="140"
+      >
+        {t('contact.intro')}
+      </p>
+      <div class="flex flex-col items-start gap-2" data-reveal="settle" data-reveal-delay="210">
         <p>
           <a
             href={`mailto:${site.email}`}
@@ -54,7 +61,7 @@ const nojsHref = `mailto:${site.email}?subject=${encodeURIComponent(t('contact.n
         <SocialLinks locale={locale} />
       </div>
     </div>
-    <div class="lg:col-span-7" data-contact-column>
+    <div class="lg:col-span-7" data-contact-column data-reveal="settle" data-reveal-delay="280">
       <div data-contact-nojs class="flex flex-col items-start gap-6">
         <p class="text-ink max-w-[60ch] text-base">
           {interpolate(t('contact.nojs.body'), { email: site.email })}

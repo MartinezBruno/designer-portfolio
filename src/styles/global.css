@@ -37,10 +37,103 @@
   --text-display--line-height: 0.9;
   --text-display--letter-spacing: -0.04em;
 
+  /* Motion easings (UI-SPEC "Motion Tokens"); tokens.ts mirrors them for GSAP. */
+  --ease-reveal: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-travel: cubic-bezier(0.76, 0, 0.24, 1);
+  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+
   --animate-marquee: marquee 40s linear infinite;
   @keyframes marquee {
     to {
       transform: translateX(calc(-100% - var(--marquee-gap)));
     }
+  }
+}
+
+/* Motion durations (UI-SPEC "Motion Tokens"); tokens.ts mirrors the GSAP ones in seconds. */
+:root {
+  --t-press: 140ms;
+  --t-hover: 180ms;
+  --t-ui: 240ms;
+  --t-fade: 320ms;
+  --t-settle: 560ms;
+  --t-line: 640ms;
+  --t-shutter: 720ms;
+  --t-hero: 720ms;
+}
+
+/*
+ * Scroll reveals (MOTN-01, UI-SPEC "Reveal Contract"). Hidden start states exist only under
+ * data-motion on/reduced and only use opacity, translate, scale and clip-path, so 'off' (no JS
+ * gate) shows everything. reveal.ts adds data-reveal-armed, data-revealed, data-reveal-instant
+ * and --reveal-delay; CSS does all the moving.
+ */
+[data-reveal='shutter'] > picture {
+  display: block;
+  block-size: 100%;
+}
+
+/* 'on': settle rises, shutter opens from the bottom edge, lines fade until 06-08 splits them. */
+[data-motion='on'] [data-reveal='settle']:not([data-revealed]) {
+  opacity: 0;
+  translate: 0 var(--reveal-travel, 20px);
+}
+[data-motion='on'] [data-reveal='shutter']:not([data-revealed]) {
+  clip-path: inset(0 0 100% 0);
+}
+[data-motion='on'] [data-reveal='shutter']:not([data-revealed]) picture {
+  scale: 1.08;
+}
+[data-motion='on'] [data-reveal='lines']:not([data-revealed]) {
+  opacity: 0;
+}
+
+/* 'reduced': every kind is an opacity-only fade (D-14). */
+[data-motion='reduced'] [data-reveal]:not([data-revealed]) {
+  opacity: 0;
+}
+
+[data-motion='on'] [data-reveal='settle'][data-revealed] {
+  transition:
+    opacity var(--t-settle) var(--ease-reveal) var(--reveal-delay, 0ms),
+    translate var(--t-settle) var(--ease-reveal) var(--reveal-delay, 0ms);
+}
+/* An explicit inset(0) end: clip-path cannot interpolate from inset() to none, it would snap. */
+[data-motion='on'] [data-reveal='shutter'][data-revealed] {
+  clip-path: inset(0);
+  transition: clip-path var(--t-shutter) var(--ease-travel) var(--reveal-delay, 0ms);
+}
+/* The picture's single transition declaration: 06-06 adds the hover clip-path here (Pitfall 12). */
+[data-motion='on'] [data-reveal='shutter'][data-revealed] picture {
+  transition: scale 900ms var(--ease-soft) var(--reveal-delay, 0ms);
+}
+[data-motion='on'] [data-reveal='lines'][data-revealed] {
+  transition: opacity var(--t-fade) var(--ease-reveal) var(--reveal-delay, 0ms);
+}
+[data-motion='reduced'] [data-reveal][data-revealed] {
+  transition: opacity var(--t-fade) var(--ease-reveal) var(--reveal-delay, 0ms);
+}
+
+/* Focus and late-mount reveals land at once. */
+:is([data-motion='on'], [data-motion='reduced']) [data-reveal][data-reveal-instant],
+:is([data-motion='on'], [data-motion='reduced']) [data-reveal][data-reveal-instant] picture {
+  transition: none;
+}
+
+/* Failsafe (D-05): anything no script armed within 1.5s shows itself. */
+:is([data-motion='on'], [data-motion='reduced'])
+  [data-reveal]:not([data-reveal-armed], [data-revealed]),
+[data-motion='on'] [data-reveal='shutter']:not([data-reveal-armed], [data-revealed]) picture {
+  animation: reveal-failsafe 1ms linear 1500ms forwards;
+}
+
+/* Both ends are the visible state, so the fill never carries interpolation residue. */
+@keyframes reveal-failsafe {
+  from,
+  to {
+    opacity: 1;
+    translate: none;
+    scale: none;
+    clip-path: inset(0);
   }
 }

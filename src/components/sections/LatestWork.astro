@@ -23,7 +23,11 @@ const t = useTranslations(locale);
     aria-labelledby="work-title"
     class="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 sm:px-6 lg:px-8"
   >
-    <h2 id="work-title" class="font-display text-2xl font-semibold tracking-tight">
+    <h2
+      id="work-title"
+      data-reveal="lines"
+      class="font-display text-2xl font-semibold tracking-tight"
+    >
       {t('work.heading')}
     </h2>
     <ProjectGrid
@@ -33,7 +37,7 @@ const t = useTranslations(locale);
       locale={locale}
       layout="row"
     />
-    <p>
+    <p data-reveal="settle" data-reveal-delay="280">
       <a
         href={getRelativeLocaleUrl(locale, 'projects')}
         class="text-ink decoration-accent focus-visible:outline-accent inline-flex min-h-11 items-center gap-2 text-base font-semibold decoration-2 underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2"

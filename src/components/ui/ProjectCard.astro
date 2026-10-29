@@ -47,11 +47,13 @@ const sizesFor: Record<TileSize, string> = {
 };
 // Spread so lazy covers carry no fetchpriority attribute at all (exactOptionalPropertyTypes).
 const priority = eager ? { fetchpriority: 'high' as const } : {};
+// The eager cover is the LCP image: it is never clipped or hidden, so it gets no shutter.
+const shutter = eager ? {} : { 'data-reveal': 'shutter' as const };
 ---
 
 <li class={sizeClasses[size]}>
   <article class="group/card relative flex flex-col gap-4">
-    <div class:list={['bg-surface-alt overflow-hidden', aspectClasses[size]]}>
+    <div class:list={['bg-surface-alt overflow-hidden', aspectClasses[size]]} {...shutter}>
       <Picture
         src={project.cover}
         alt={project.coverAlt}
@@ -66,7 +68,7 @@ const priority = eager ? { fetchpriority: 'high' as const } : {};
         class="size-full object-cover object-center"
       />
     </div>
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2" data-reveal="settle" data-reveal-delay="70">
       <Heading
         class:list={[
           'text-ink text-pretty',
