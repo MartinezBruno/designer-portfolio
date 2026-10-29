@@ -166,6 +166,15 @@ describe('NextProjectTeaser', () => {
     expect(without).not.toContain('<div data-reveal="settle" data-reveal-delay="140">');
   });
 
+  it('carries the shared card hover hooks (Phase 6 MOTN-04)', async () => {
+    const html = await teaser({});
+    expect(html).toMatch(/<article[^>]*\bdata-card\b[^>]*data-cursor="view"/);
+    expect(html.match(/data-cursor="view"/g)).toHaveLength(1);
+    expect(html.match(/data-card-mat/g)).toHaveLength(1);
+    expect(html).toMatch(/<picture[^>]*data-card-mat/);
+    expect(html).toMatch(/<img[^>]*data-card-image/);
+  });
+
   it('uses no accent fill', async () => {
     const html = await teaser({});
     expect(html).not.toContain('bg-accent');

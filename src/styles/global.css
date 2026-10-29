@@ -103,10 +103,7 @@
   clip-path: inset(0);
   transition: clip-path var(--t-shutter) var(--ease-travel) var(--reveal-delay, 0ms);
 }
-/* The picture's single transition declaration: 06-06 adds the hover clip-path here (Pitfall 12). */
-[data-motion='on'] [data-reveal='shutter'][data-revealed] picture {
-  transition: scale 900ms var(--ease-soft) var(--reveal-delay, 0ms);
-}
+/* The shutter picture's scale transition lives in the card mat rules below (Pitfall 12). */
 [data-motion='on'] [data-reveal='lines'][data-revealed] {
   transition: opacity var(--t-fade) var(--ease-reveal) var(--reveal-delay, 0ms);
 }
@@ -114,17 +111,22 @@
   transition: opacity var(--t-fade) var(--ease-reveal) var(--reveal-delay, 0ms);
 }
 
-/* Focus and late-mount reveals land at once. */
+/* Focus and late-mount reveals land at once (the card mat keeps its hover clip-path, below). */
 :is([data-motion='on'], [data-motion='reduced']) [data-reveal][data-reveal-instant],
-:is([data-motion='on'], [data-motion='reduced']) [data-reveal][data-reveal-instant] picture {
+:is([data-motion='on'], [data-motion='reduced'])
+  [data-reveal][data-reveal-instant]
+  picture:not([data-card-mat]) {
   transition: none;
 }
 
 /* Failsafe (D-05): anything no script armed within 1.5s shows itself. */
 :is([data-motion='on'], [data-motion='reduced'])
-  [data-reveal]:not([data-reveal-armed], [data-revealed]),
-[data-motion='on'] [data-reveal='shutter']:not([data-reveal-armed], [data-revealed]) picture {
+  [data-reveal]:not([data-reveal-armed], [data-revealed]) {
   animation: reveal-failsafe 1ms linear 1500ms forwards;
+}
+/* The picture only resets its scale: a filled clip-path would pin the card mat open. */
+[data-motion='on'] [data-reveal='shutter']:not([data-reveal-armed], [data-revealed]) picture {
+  animation: reveal-failsafe-scale 1ms linear 1500ms forwards;
 }
 
 /* Both ends are the visible state, so the fill never carries interpolation residue. */
@@ -136,6 +138,61 @@
     scale: none;
     clip-path: inset(0);
   }
+}
+@keyframes reveal-failsafe-scale {
+  from,
+  to {
+    scale: none;
+  }
+}
+
+/*
+ * Project imagery hover and focus (MOTN-04, UI-SPEC "Project Imagery Hover and Focus"). Pure CSS,
+ * 'on' only; 'reduced' and 'off' have no rules, so nothing changes there (D-14). Layers: the frame
+ * owns the reveal clip, the <picture> mat owns the hover clip-path plus the shutter reveal scale,
+ * the <img> owns the hover scale. Each layer has exactly one transition declaration per state
+ * (Pitfall 12); leave durations sit on rest, enter durations on the active state. The scale keeps
+ * the shutter's --reveal-delay; the mat never scales outside a reveal, so the delay is harmless.
+ */
+[data-motion='on'] [data-card-mat] {
+  clip-path: inset(0);
+  transition:
+    clip-path 280ms var(--ease-reveal),
+    scale 900ms var(--ease-soft) var(--reveal-delay, 0ms);
+}
+/* An instant reveal lands its scale at once but keeps the hover clip-path transition. */
+[data-motion='on'] [data-reveal-instant] > [data-card-mat] {
+  transition:
+    clip-path 280ms var(--ease-reveal),
+    scale 0s;
+}
+[data-motion='on'] [data-card-image] {
+  transition: scale 490ms var(--ease-soft);
+}
+
+/* Tailwind's hover: guard, written out: touch never gets a stuck zoom. */
+@media (hover: hover) {
+  [data-motion='on'] [data-card]:hover [data-card-mat] {
+    clip-path: inset(12px);
+    transition:
+      clip-path 400ms var(--ease-reveal),
+      scale 900ms var(--ease-soft) var(--reveal-delay, 0ms);
+  }
+  [data-motion='on'] [data-card]:hover [data-card-image] {
+    scale: 1.05;
+    transition: scale 700ms var(--ease-soft);
+  }
+}
+/* Keyboard focus on the stretched title link gets the same effect (D-07). */
+[data-motion='on'] [data-card]:has(:focus-visible) [data-card-mat] {
+  clip-path: inset(12px);
+  transition:
+    clip-path 400ms var(--ease-reveal),
+    scale 900ms var(--ease-soft) var(--reveal-delay, 0ms);
+}
+[data-motion='on'] [data-card]:has(:focus-visible) [data-card-image] {
+  scale: 1.05;
+  transition: scale 700ms var(--ease-soft);
 }
 
 /*

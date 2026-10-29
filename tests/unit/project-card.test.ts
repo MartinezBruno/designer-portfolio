@@ -178,6 +178,38 @@ describe('project card reveal hooks', () => {
   });
 });
 
+describe('project card hover hooks (Phase 6 MOTN-04)', () => {
+  it.each(['full', 'compact'] as const)(
+    '%s marks the article, one picture mat and the image',
+    async (variant) => {
+      for (const eager of [true, false]) {
+        const html = await render({ variant, eager });
+        expect(html).toMatch(/<article[^>]*\bdata-card\b[^>]*data-cursor="view"/);
+        expect(html.match(/data-cursor="view"/g)).toHaveLength(1);
+        expect(html.match(/data-card-mat/g)).toHaveLength(1);
+        expect(html).toMatch(/<picture[^>]*data-card-mat/);
+        expect(html).toMatch(/<picture[^>]*class="block size-full"/);
+        expect(html).toMatch(/<img[^>]*data-card-image/);
+        expect(html).toMatch(/<img[^>]*class="size-full object-cover object-center"/);
+      }
+    },
+  );
+
+  it('keeps title, summary and meta visible at rest (D-08)', async () => {
+    const html = await render();
+    const hiddenAtRest = /(?:^|\s)(?:opacity-0|invisible|hidden|sr-only)(?:\s|$)/;
+    const tags = [/<h2[^>]*>/, /<p[^>]*>/, /<dl[^>]*>/].map((re) => re.exec(html)?.[0] ?? '');
+    for (const tag of tags) {
+      expect(tag).not.toBe('');
+      expect(classTokens(tag).join(' ')).not.toMatch(hiddenAtRest);
+    }
+    expect(html).toContain('Brand Refresh');
+    expect(html).toContain(baseProject.summary);
+    expect(html).toContain('Branding');
+    expect(html).toContain('Figma, Adobe Illustrator');
+  });
+});
+
 describe('project card safety', () => {
   it('escapes a hostile title (T-03-06)', async () => {
     const html = await render({ project: { title: '<script>x</script>' } });
