@@ -110,6 +110,10 @@ export const en = {
   'contact.nojs.subject': 'New project enquiry',
   'services.ask': 'Ask about this',
   'services.askTarget': ': {title}',
+  // TODO(martina): confirm Phase 6 copy (cursor label, motion toggle, OS hint).
+  'cursor.view': 'View',
+  'motion.toggle': 'Reduce motion',
+  'motion.osLocked': 'Your device settings already reduce motion.',
 } as const;
 
 export type UIKey = keyof typeof en;
