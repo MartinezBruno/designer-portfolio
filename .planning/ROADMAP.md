@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Homepage Story** - Roles marquee, 4 featured services, tools, and availability badge, in both languages (completed 2026-10-17)
 - [x] **Phase 3: Real Behance Work** - Consent, a typed project model, a fail-loud snapshot sync, latest 3 on Home, and the Projects list page (completed 2026-10-17)
 - [x] **Phase 4: Project Detail & Discovery** - Mirrored detail pages with metadata and navigation, plus conditional filter/search (completed 2026-10-19)
-- [ ] **Phase 5: Contact** - Working spam-protected contact form (logging mailer in v1), service pre-selection, and a mailto fallback
+- [x] **Phase 5: Contact** - Working spam-protected contact form (logging mailer in v1), service pre-selection, and a mailto fallback (completed 2026-10-29)
 - [ ] **Phase 6: Scroll & Interaction Motion** - Reveals, text splits, cursor/magnetic buttons, card hover effects, reduced-motion support, and a motion toggle
 - [ ] **Phase 7: Page Transitions & Smooth Scroll** - Animated navigation with focus management, inertial scroll and parallax, no lifecycle leaks
 - [ ] **Phase 8: Quality Verification** - Measured performance budget, full axe/keyboard pass in both languages, and Spanish copy ready for review
@@ -243,7 +243,7 @@ Plans:
 
 **Wave 7** *(blocked on Wave 6 completion)*
 
-- [ ] 05-08-PLAN.md — Phase gate: pnpm verify, state screenshots, taste gate, measurements, user sign-off
+- [x] 05-08-PLAN.md — Phase gate: pnpm verify, state screenshots, taste gate, measurements, user sign-off
 **UI hint**: yes
 **Research flag**: Needs `/gsd:plan-phase --research-phase`. Topics: Astro Actions under static output with `@astrojs/cloudflare` 14 on workerd dev, Turnstile test-key values, Resend test-sender constraint.
 
@@ -307,7 +307,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 2. Homepage Story | 8/8 | Complete   | 2026-10-17 |
 | 3. Real Behance Work | 10/10 | Complete   | 2026-10-17 |
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
-| 5. Contact | 7/8 | In Progress|  |
+| 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 0/TBD | Not started | - |
 | 7. Page Transitions & Smooth Scroll | 0/TBD | Not started | - |
 | 8. Quality Verification | 0/TBD | Not started | - |
