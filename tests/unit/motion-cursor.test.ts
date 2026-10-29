@@ -28,7 +28,6 @@ const PAGE = `
   <button id="btn" type="button">Go</button>
   <p id="text">Plain copy</p>
   <textarea id="field"></textarea>
-  <iframe id="frame" title="embed"></iframe>
 `;
 
 interface Setter {
@@ -251,7 +250,11 @@ describe('createCursor', () => {
     over(el('text'));
     expect(l.hasAttribute('data-hidden')).toBe(false);
 
-    over(el('frame'));
+    // Added only here: happy-dom logs a warning for every iframe it parses.
+    const frame = document.createElement('iframe');
+    frame.title = 'embed';
+    document.body.append(frame);
+    over(frame);
     expect(l.hasAttribute('data-hidden')).toBe(true);
 
     over(el('card-img'));

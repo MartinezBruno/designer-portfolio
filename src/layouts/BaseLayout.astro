@@ -5,6 +5,7 @@ import type { Locale } from '../i18n/config';
 import SkipLink from '../components/global/SkipLink.astro';
 import SiteHeader from '../components/global/SiteHeader.astro';
 import SiteFooter from '../components/global/SiteFooter.astro';
+import CursorFollower from '../components/global/CursorFollower.astro';
 import SeoHead from '../components/global/SeoHead.astro';
 import type { PageKind } from '../lib/seo';
 import { motionGateInline } from '../lib/motion/gate';
@@ -50,6 +51,7 @@ const pathname = Astro.url.pathname;
       <slot />
     </main>
     <SiteFooter locale={locale} />
+    <CursorFollower locale={locale} />
     <script>
       import '../lib/motion';
       import '../lib/motion/effects';
