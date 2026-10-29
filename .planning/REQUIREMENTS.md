@@ -33,7 +33,7 @@ v1 "done" = working local build (deploy is post-v1).
 - [ ] **HOME-05**: Visitor sees the apps/tools she uses
 - [x] **HOME-06**: Visitor sees her 3 latest Behance projects (sorted by publish date) linking to their detail pages
 - [ ] **HOME-07**: Visitor sees an "available for projects" badge whose state she controls via content
-- [ ] **HOME-08**: Visitor can click a service and land on the contact form with that service pre-selected
+- [x] **HOME-08**: Visitor can click a service and land on the contact form with that service pre-selected
 
 ### Behance Data (DATA)
 
@@ -56,11 +56,11 @@ v1 "done" = working local build (deploy is post-v1).
 
 ### Contact (CONT)
 
-- [ ] **CONT-01**: Visitor can submit a contact form (name, email, message, service) with localized validation messages
-- [ ] **CONT-02**: Spam is blocked with a honeypot and Cloudflare Turnstile, verified server-side
-- [ ] **CONT-03**: Visitor gets clear localized success/error feedback (announced to screen readers) and keeps their typed text on failure
-- [ ] **CONT-04**: Submissions go through a mailer interface; in the local v1 build the provider logs the message (Resend provider ready for deploy)
-- [ ] **CONT-05**: Visitor without JavaScript still has a `mailto:` fallback
+- [x] **CONT-01**: Visitor can submit a contact form (name, email, message, service) with localized validation messages
+- [x] **CONT-02**: Spam is blocked with a honeypot and Cloudflare Turnstile, verified server-side
+- [x] **CONT-03**: Visitor gets clear localized success/error feedback (announced to screen readers) and keeps their typed text on failure
+- [x] **CONT-04**: Submissions go through a mailer interface; in the local v1 build the provider logs the message (Resend provider ready for deploy)
+- [x] **CONT-05**: Visitor without JavaScript still has a `mailto:` fallback
 
 ### Motion (MOTN)
 
@@ -133,7 +133,7 @@ Updated during roadmap creation.
 | HOME-05 | Phase 2 | Pending |
 | HOME-06 | Phase 3 | Complete |
 | HOME-07 | Phase 2 | Pending |
-| HOME-08 | Phase 5 | Pending |
+| HOME-08 | Phase 5 | Complete |
 | DATA-01 | Phase 3 | Complete |
 | DATA-02 | Phase 3 | Complete |
 | DATA-03 | Phase 3 | Complete |
@@ -147,11 +147,11 @@ Updated during roadmap creation.
 | PROJ-05 | Phase 4 | N/A (7 projects < 8) |
 | PROJ-06 | Phase 4 | N/A (7 projects < 8) |
 | PROJ-07 | Phase 4 | N/A (7 projects < 8) |
-| CONT-01 | Phase 5 | Pending |
-| CONT-02 | Phase 5 | Pending |
-| CONT-03 | Phase 5 | Pending |
-| CONT-04 | Phase 5 | Pending |
-| CONT-05 | Phase 5 | Pending |
+| CONT-01 | Phase 5 | Complete |
+| CONT-02 | Phase 5 | Complete |
+| CONT-03 | Phase 5 | Complete |
+| CONT-04 | Phase 5 | Complete |
+| CONT-05 | Phase 5 | Complete |
 | MOTN-01 | Phase 6 | Pending |
 | MOTN-02 | Phase 6 | Pending |
 | MOTN-03 | Phase 6 | Pending |
