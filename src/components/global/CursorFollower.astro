@@ -1,0 +1,53 @@
+---
+import type { Locale } from '../../i18n/config';
+import { useTranslations } from '../../i18n/t';
+
+// Decorative cursor follower (MOTN-03, UI-SPEC "Cursor Follower", D-09..D-11, D-13). The layer is
+// inert markup inside a <template>: nothing renders until cursor.ts clones it for a fine pointer
+// under data-motion="on" with no forced colours. The localized pill label is build-time text, so
+// client code never imports a dictionary. aria-hidden + pointer-events none: it adds nothing to the
+// accessibility tree and never takes a click. The native cursor is always kept (D-11).
+//
+// The positioner is the only element GSAP moves (x/y transform); dot and pill use the separate CSS
+// `translate`/`scale` properties, so the two never overwrite each other. Durations follow the
+// destination state: dot 180ms (hover token), 140ms out to the pill; pill 240ms in, 170ms out.
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<template data-cursor-template>
+  <div
+    data-cursor-layer
+    data-hidden
+    aria-hidden="true"
+    class="group/cursor pointer-events-none fixed inset-0 z-50 overflow-clip"
+  >
+    <span
+      data-cursor-pos
+      class="ease-reveal absolute top-0 left-0 transition-opacity duration-[140ms] group-data-hidden/cursor:opacity-0"
+    >
+      <span
+        data-cursor-dot
+        class="bg-accent ease-reveal absolute top-0 left-0 size-3 -translate-1/2 rounded-full transition-[scale,opacity] duration-[180ms] group-data-[state=link]/cursor:scale-200 group-data-[state=link]/cursor:opacity-35 group-data-[state=view]/cursor:opacity-0 group-data-[state=view]/cursor:duration-[140ms]"
+      ></span>
+      <span
+        data-cursor-pill
+        class="bg-accent text-accent-ink ease-reveal absolute top-0 left-0 inline-flex h-8 -translate-1/2 scale-60 items-center rounded-full px-4 text-sm font-semibold whitespace-nowrap opacity-0 transition-[scale,opacity] duration-[170ms] group-data-[state=view]/cursor:scale-100 group-data-[state=view]/cursor:opacity-100 group-data-[state=view]/cursor:duration-[240ms]"
+      >
+        {t('cursor.view')}
+      </span>
+    </span>
+  </div>
+</template>
+
+<script>
+  import { lifecycle } from '../../lib/motion';
+  import { createCursor } from '../../lib/motion/cursor';
+  import { loadGsap } from '../../lib/motion/load-gsap';
+  // GSAP stays behind the lazy loader: it is only fetched once the follower is allowed to mount.
+  lifecycle.register(createCursor({ matchMedia: (q) => window.matchMedia(q), loadGsap }));
+</script>

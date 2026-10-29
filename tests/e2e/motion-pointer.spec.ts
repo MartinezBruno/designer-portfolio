@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { devices, expect, test, type Locator, type Page } from '@playwright/test';
 
 // Phase 6 magnetic buttons (MOTN-03, D-12, D-13; VALIDATION V-09 and the face half of V-10).
@@ -67,6 +68,61 @@ async function pullFromRight(page: Page, shell: Locator): Promise<void> {
 }
 
 const isIdentity = (o: { x: number; y: number }): boolean => o.x === 0 && o.y === 0;
+
+// Cursor follower (MOTN-03, D-09..D-11, D-13; VALIDATION V-08 and the follower half of V-10/V-12).
+const LAYER = '[data-cursor-layer]';
+const HOME_TILE = 'section[aria-labelledby="work-title"] article[data-card]';
+
+/** The layer's state: 'none' when it does not exist, else hidden / rest / link / view. */
+function cursorState(page: Page): Promise<string> {
+  return page.evaluate((sel) => {
+    const layer = document.querySelector<HTMLElement>(sel);
+    if (!layer) return 'none';
+    if (layer.hasAttribute('data-hidden')) return 'hidden';
+    return layer.dataset['state'] ?? 'rest';
+  }, LAYER);
+}
+
+/**
+ * Wiggles the pointer at (x, y) until the follower shows. GSAP loads lazily after mount, so the
+ * first moves can land before the effect is listening.
+ */
+async function showCursorAt(page: Page, x: number, y: number): Promise<void> {
+  let nudge = 0;
+  await expect
+    .poll(
+      async () => {
+        nudge = nudge === 0 ? 1 : 0;
+        await page.mouse.move(x + nudge, y);
+        await page.waitForTimeout(60);
+        return cursorState(page);
+      },
+      { timeout: 5000 },
+    )
+    .not.toMatch(/^(none|hidden)$/);
+}
+
+async function centreOf(target: Locator): Promise<{ x: number; y: number }> {
+  await target.scrollIntoViewIfNeeded();
+  const b = await box(target);
+  return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+}
+
+/** Hovers the cover of the first Home "Latest work" tile until the pill is fully in. */
+async function hoverTile(page: Page): Promise<Locator> {
+  const tile = page.locator(HOME_TILE).first();
+  await tile.scrollIntoViewIfNeeded();
+  // Let the scroll-triggered reveals land first: mid-settle, the meta block's `translate` becomes
+  // the containing block of the stretched link, so the cover is briefly not part of the link.
+  await page.waitForTimeout(100);
+  await finishAnimations(page);
+  const c = await centreOf(tile.locator('[data-card-mat]'));
+  await showCursorAt(page, c.x, c.y);
+  await expect.poll(() => cursorState(page)).toBe('view');
+  const pill = page.locator(`${LAYER} [data-cursor-pill]`);
+  await expect.poll(() => pill.evaluate((p) => getComputedStyle(p).opacity)).toBe('1');
+  return tile;
+}
 
 test.describe('magnetic', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
@@ -154,6 +210,127 @@ test.describe('magnetic', () => {
   });
 });
 
+test.describe('cursor', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('one decorative, click-through layer mounts after the pointer moves', async ({ page }) => {
+    await page.goto('/');
+    await settled(page);
+    await showCursorAt(page, 720, 450);
+    const layer = page.locator(LAYER);
+    await expect(layer).toHaveCount(1);
+    await expect(layer).toHaveAttribute('aria-hidden', 'true');
+    expect(await layer.evaluate((l) => getComputedStyle(l).pointerEvents)).toBe('none');
+    // Nothing in the follower can take focus.
+    expect(await layer.locator('a, button, input, [tabindex]').count()).toBe(0);
+  });
+
+  for (const [path, label] of [
+    ['/', 'View'],
+    ['/es/', 'Ver'],
+  ] as const) {
+    test(`${path}: the pill reads "${label}" over a tile, and a click passes through it`, async ({
+      page,
+    }) => {
+      await page.goto(path);
+      await settled(page);
+      const tile = await hoverTile(page);
+      await expect(page.locator(`${LAYER} [data-cursor-pill]`)).toHaveText(label);
+      // The dot fades out under the pill.
+      await expect
+        .poll(() =>
+          page.locator(`${LAYER} [data-cursor-dot]`).evaluate((d) => getComputedStyle(d).opacity),
+        )
+        .toBe('0');
+
+      const href = await tile.locator('a[href]').first().getAttribute('href');
+      if (href === null) throw new Error('tile has no link');
+      await page.mouse.down();
+      await page.mouse.up();
+      await page.waitForURL((url) => url.pathname === href);
+    });
+  }
+
+  test('the dot grows over the hero CTA and hides over the message field', async ({ page }) => {
+    await page.goto('/');
+    await settled(page);
+    const cta = await centreOf(page.locator(HERO_CTA));
+    await showCursorAt(page, cta.x, cta.y);
+    await expect.poll(() => cursorState(page)).toBe('link');
+    const dot = page.locator(`${LAYER} [data-cursor-dot]`);
+    await expect.poll(() => dot.evaluate((d) => getComputedStyle(d).scale)).toBe('2');
+
+    const field = await centreOf(page.locator('textarea[name="message"]'));
+    await page.mouse.move(field.x, field.y);
+    await expect.poll(() => cursorState(page)).toBe('hidden');
+    await expect
+      .poll(() =>
+        page.locator(`${LAYER} [data-cursor-pos]`).evaluate((p) => getComputedStyle(p).opacity),
+      )
+      .toBe('0');
+  });
+
+  test('the follower never causes horizontal scroll at the right edge', async ({ page }) => {
+    await page.goto('/');
+    await settled(page);
+    await showCursorAt(page, 720, 450);
+    const width = await page.evaluate(() => window.innerWidth);
+    for (const y of [450, 451, 452]) {
+      await page.mouse.move(width - 1, y);
+      await page.waitForTimeout(80);
+    }
+    await page.waitForTimeout(400);
+    const { scrollWidth, innerWidth } = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      innerWidth: window.innerWidth,
+    }));
+    expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
+  });
+
+  test('the native cursor is never hidden', async ({ page }) => {
+    await page.goto('/');
+    await settled(page);
+    await hoverTile(page);
+    const hidden = await page.evaluate(() =>
+      [...document.querySelectorAll('*')]
+        .filter((el) => getComputedStyle(el).cursor === 'none')
+        .map((el) => el.tagName),
+    );
+    expect(hidden).toEqual([]);
+  });
+
+  test('the motion toggle removes the layer and brings it back live', async ({ page }) => {
+    await page.goto('/');
+    await settled(page);
+    await showCursorAt(page, 720, 450);
+
+    const toggle = page.locator('[data-motion-toggle]');
+    await toggle.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
+    await expect(page.locator(LAYER)).toHaveCount(0);
+    await page.mouse.move(700, 400);
+    await page.mouse.move(710, 410);
+    await expect(page.locator(LAYER)).toHaveCount(0);
+
+    await page.keyboard.press('Enter');
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+    await showCursorAt(page, 720, 450);
+    await expect(page.locator(LAYER)).toHaveCount(1);
+  });
+
+  test('zero axe violations with the pill shown', async ({ page }) => {
+    await page.goto('/');
+    await settled(page);
+    await finishAnimations(page);
+    await hoverTile(page);
+    const { violations } = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .analyze();
+    expect(violations).toEqual([]);
+  });
+});
+
 // Touch: Desktop Chrome reports a fine hover pointer, so the device profiles flip it (Pitfall 11).
 // defaultBrowserType is dropped: it cannot change inside a describe, and the suite is chromium-only.
 for (const name of ['Pixel 7', 'iPhone 14'] as const) {
@@ -177,6 +354,19 @@ for (const name of ['Pixel 7', 'iPhone 14'] as const) {
       expect(transforms.length).toBeGreaterThan(0);
       expect(transforms.every((t) => t === 'none')).toBe(true);
     });
+
+    test('no cursor follower exists after taps', async ({ page }) => {
+      await page.goto('/');
+      await settled(page);
+      expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
+
+      // Taps in the page gutter beside a tile: no navigation, but touch pointer events fire.
+      const tile = await centreOf(page.locator(HOME_TILE).first().locator('[data-card-mat]'));
+      await page.touchscreen.tap(2, tile.y);
+      await page.touchscreen.tap(2, tile.y + 40);
+      await page.waitForTimeout(400);
+      await expect(page.locator(LAYER)).toHaveCount(0);
+    });
   });
 }
 
@@ -194,5 +384,20 @@ test.describe('reduce', () => {
       await page.waitForTimeout(150);
     }
     expect((await faceOffset(shell)).raw).toBe('none');
+  });
+
+  test('no cursor follower exists after mouse moves', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('load');
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
+    for (const [x, y] of [
+      [300, 300],
+      [700, 450],
+      [1100, 600],
+    ] as const) {
+      await page.mouse.move(x, y);
+      await page.waitForTimeout(150);
+    }
+    await expect(page.locator(LAYER)).toHaveCount(0);
   });
 });
