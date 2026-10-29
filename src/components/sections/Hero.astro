@@ -20,17 +20,33 @@ const t = useTranslations(locale);
 const contactHref = `${getRelativeLocaleUrl(locale, '/')}#contact`;
 ---
 
-<section aria-labelledby="hero-title" class="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
+<section
+  data-hero
+  aria-labelledby="hero-title"
+  class="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8"
+>
   <div class="grid gap-8 lg:grid-cols-12 lg:items-center">
     <div class="flex flex-col gap-8 lg:col-span-7">
       <!-- Greeting is the headline: always exactly two lines, never an eyebrow above it. -->
       <h1 id="hero-title" class="font-display text-display -ml-[0.04em] font-semibold">
-        <span class="block">{t('hero.greeting')}</span> <span class="block">{site.firstName}.</span>
+        <span class="block" data-hero-line>
+          <span class="block" data-hero-line-inner>
+            {t('hero.greeting')}
+          </span>
+        </span>{' '}
+        <span class="block" data-hero-line>
+          <span class="block" data-hero-line-inner>
+            {site.firstName}.
+          </span>
+        </span>
       </h1>
-      <p class="text-ink text-lead max-w-[55ch] text-pretty">
+      <p data-hero-lead class="text-ink text-lead max-w-[55ch] text-pretty">
         {`${t('hero.role')} ${t('hero.description')}`}
       </p>
-      <div class="flex flex-col items-start gap-x-6 gap-y-4 sm:flex-row sm:flex-wrap sm:items-center">
+      <div
+        data-hero-cta
+        class="flex flex-col items-start gap-x-6 gap-y-4 sm:flex-row sm:flex-wrap sm:items-center"
+      >
         <ButtonLink href={contactHref}>
           {t('hero.cta')}
           <Fragment slot="icon">
@@ -49,8 +65,18 @@ const contactHref = `${getRelativeLocaleUrl(locale, '/')}#contact`;
         fetchpriority="high"
         width={321}
         height={324}
-        class="mx-auto aspect-square w-full max-w-64 rounded-full object-contain lg:max-w-80"
+        pictureAttributes={{
+          'data-hero-portrait': '',
+          class: 'mx-auto block w-full max-w-64 lg:max-w-80',
+        }}
+        class="aspect-square w-full rounded-full object-contain"
       />
     </div>
   </div>
 </section>
+
+<script>
+  import { lifecycle } from '../../lib/motion';
+  import { createHeroPlayed } from '../../lib/motion/hero';
+  lifecycle.register(createHeroPlayed({ now: () => performance.now() }));
+</script>

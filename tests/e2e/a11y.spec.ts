@@ -31,29 +31,6 @@ function detailPaths(): string[] {
 
 const detailPages = detailPaths();
 
-/**
- * Audits the settled page: above-the-fold reveals (Phase 6 D-04) fade in on load, and axe blends a
- * mid-fade opacity into its contrast maths. Waits two frames for the observer's first batch, then
- * for every CSS transition to finish. Elements still waiting below the fold sit at opacity 0, which
- * axe treats as hidden; the no-JS and failsafe e2e prove they become visible.
- */
-async function settleReveals(page: Page): Promise<void> {
-  await page.waitForLoadState('load');
-  await page.evaluate(
-    () =>
-      new Promise((resolve) => {
-        requestAnimationFrame(() => requestAnimationFrame(resolve));
-      }),
-  );
-  await page.waitForFunction(() =>
-    document
-      .getAnimations()
-      .every(
-        (animation) => !(animation instanceof CSSTransition) || animation.playState === 'finished',
-      ),
-  );
-}
-
 const pages = [
   '/',
   '/es/',
@@ -64,10 +41,34 @@ const pages = [
   ...detailPages,
 ];
 
+/**
+ * Waits until the page has settled before an axe scan: above-the-fold reveals (Phase 6 D-04) and
+ * the hero load sequence fade in on load, and axe blends a mid-fade opacity into its contrast
+ * maths. Waits two frames for the reveal observer's first batch, then for every finite animation
+ * and transition to finish. Infinite ones (the marquee) are ignored. Elements still waiting below
+ * the fold sit at opacity 0, which axe treats as hidden; the no-JS and failsafe e2e prove they
+ * become visible.
+ */
+async function settleMotion(page: Page): Promise<void> {
+  await page.waitForLoadState('load');
+  await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(resolve));
+      }),
+  );
+  await page.evaluate(async () => {
+    const finite = document
+      .getAnimations()
+      .filter((a) => a.effect?.getComputedTiming().endTime !== Infinity);
+    await Promise.allSettled(finite.map((a) => a.finished));
+  });
+}
+
 for (const path of pages) {
   test(`${path} has zero WCAG 2.2 AA axe violations`, async ({ page }) => {
     await page.goto(path);
-    await settleReveals(page);
+    await settleMotion(page);
     const { violations } = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
@@ -452,7 +453,7 @@ test.describe('with prefers-reduced-motion: reduce', () => {
     test(`${path} has zero WCAG 2.2 AA axe violations under reduced motion`, async ({ page }) => {
       await page.goto(path);
       await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
-      await settleReveals(page);
+      await settleMotion(page);
       const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       expect(violations).toEqual([]);
     });
@@ -472,6 +473,7 @@ for (const [path] of keyboardCases) {
 
     const tooltip = page.locator('[data-tool]:focus [data-tooltip]');
     await expect(tooltip).toBeVisible();
+    await settleMotion(page);
 
     const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
     expect(violations).toEqual([]);
