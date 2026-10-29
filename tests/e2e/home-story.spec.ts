@@ -266,8 +266,11 @@ for (const [path, dict, locale] of cases) {
     });
 
     test('accent: hero CTA uses the client primary color', async ({ page }) => {
-      const cta = page.getByRole('link', { name: dict['hero.cta'] });
-      expect(await cta.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(
+      // Since 06-07 the accent fill sits on the moving face inside the stationary shell.
+      const face = page
+        .getByRole('link', { name: dict['hero.cta'] })
+        .locator('[data-magnetic-face]');
+      expect(await face.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(
         'rgb(15, 112, 183)',
       );
     });

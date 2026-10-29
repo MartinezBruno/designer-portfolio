@@ -3,3 +3,5 @@
 ## From 06-08 (out of scope, pre-existing)
 
 - **16 e2e failures from the 06-07 magnetic shell/face split.** `tests/e2e/home-story.spec.ts:268` ("accent: hero CTA uses the client primary color", `/` and `/es/`) and `tests/e2e/project-detail.spec.ts:161` ("ends with the contact band…", all 14 detail pages) select `a.bg-accent` / `button.bg-accent`. Since 06-07 the fill class sits on the inner `span[data-magnetic-face]` (`src/lib/ui/button-classes.ts:14`), so those locators match 0 elements. 06-08 touches neither file. Fix: point the locators at `[data-magnetic-face].bg-accent`, or at the shell plus its face.
+
+  **Resolved 2026-10-29 (orchestrator, post-wave-5 merge):** both locators now target the accent fill on `[data-magnetic-face]`. Full offline e2e: 618 passed, 1 skipped. Note: the wave-4 post-merge gate missed these failures because the orchestrator read only the tail of the Playwright output.

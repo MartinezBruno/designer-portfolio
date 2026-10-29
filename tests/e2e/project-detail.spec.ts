@@ -172,7 +172,8 @@ for (const { lang, dict } of cases) {
           );
           await expect(contact).toHaveAccessibleName(dict['detail.cta.button']);
           // The contact button is the page's only accent button.
-          await expect(page.locator('main a.bg-accent, main button.bg-accent')).toHaveCount(1);
+          // Since 06-07 the accent fill sits on the moving face inside the stationary shell.
+          await expect(page.locator('main [data-magnetic-face].bg-accent')).toHaveCount(1);
 
           const teaser = page.locator('main section[aria-labelledby="next-project-title"]');
           if (detail.next === null) {
