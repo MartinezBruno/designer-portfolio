@@ -98,7 +98,9 @@
     opacity var(--t-settle) var(--ease-reveal) var(--reveal-delay, 0ms),
     translate var(--t-settle) var(--ease-reveal) var(--reveal-delay, 0ms);
 }
+/* An explicit inset(0) end: clip-path cannot interpolate from inset() to none, it would snap. */
 [data-motion='on'] [data-reveal='shutter'][data-revealed] {
+  clip-path: inset(0);
   transition: clip-path var(--t-shutter) var(--ease-travel) var(--reveal-delay, 0ms);
 }
 /* The picture's single transition declaration: 06-06 adds the hover clip-path here (Pitfall 12). */

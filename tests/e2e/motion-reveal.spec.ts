@@ -94,6 +94,34 @@ test.describe('scroll reveals on Home', () => {
   }
 });
 
+test.describe('shutter reveal', () => {
+  // clip-path cannot interpolate between inset() and none; the open state must be inset(0).
+  test('the scroll shutter opens through intermediate clip values', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await page.waitForLoadState('load');
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+    const samples = await page.evaluate(async () => {
+      const heading = document.getElementById('work-title');
+      const frame = document.querySelector(
+        'section[aria-labelledby="work-title"] [data-reveal="shutter"]',
+      );
+      if (!heading || !frame) return [];
+      window.scrollTo(0, heading.getBoundingClientRect().top + window.scrollY - 96);
+      const out: string[] = [];
+      const start = performance.now();
+      while (performance.now() - start < 1000) {
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        out.push(getComputedStyle(frame).clipPath);
+      }
+      return out;
+    });
+    const partial = samples.filter((clip) => /^inset\(0px 0px (?!100%)[\d.]+%\)$/.test(clip));
+    expect(partial.length, `samples: ${samples.join(', ')}`).toBeGreaterThan(0);
+    expect(samples.at(-1)).toBe('inset(0px)');
+  });
+});
+
 test.describe('keyboard focus reveals a card instantly', () => {
   test('focus on the first Latest-work card reveals it within one frame', async ({ page }) => {
     await page.goto('/');
