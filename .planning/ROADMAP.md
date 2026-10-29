@@ -274,8 +274,8 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 06-04-PLAN.md — Projects page and detail page reveals (D-04 amends Phase 4 D-04), static image stack
-- [ ] 06-05-PLAN.md — CSS hero load sequence with no-replay marker and LCP measurement
+- [x] 06-04-PLAN.md — Projects page and detail page reveals (D-04 amends Phase 4 D-04), static image stack
+- [x] 06-05-PLAN.md — CSS hero load sequence with no-replay marker and LCP measurement
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -337,6 +337,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 3. Real Behance Work | 10/10 | Complete   | 2026-10-17 |
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
-| 6. Scroll & Interaction Motion | 3/10 | In Progress|  |
+| 6. Scroll & Interaction Motion | 5/10 | In Progress|  |
 | 7. Page Transitions & Smooth Scroll | 0/TBD | Not started | - |
 | 8. Quality Verification | 0/TBD | Not started | - |
