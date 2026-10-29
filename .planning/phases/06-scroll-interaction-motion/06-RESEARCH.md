@@ -507,15 +507,18 @@ export function initCursor(doc: Document, deps: CursorDeps): Cleanup | undefined
 | A8 | Tailwind v4 accepts `group-has-[:focus-visible]/card:` combined with `motion-on:` | Pattern 7 | Low. Check the compiled CSS in the first hover task (grep `dist` CSS for `:has(:focus-visible)`) |
 | A9 | Page-relative rect caching is sufficient for magnetic hit-testing | Pattern 6 | Low. V-09 tests after scroll |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Where does the `cursor.view` label live in markup?**
    - What we know: client code must not import the dictionaries (t.ts comment: client code should avoid bundling them).
    - Recommendation: a `data-cursor-label` attribute on `<body>` set in `BaseLayout`, or a `<template data-cursor-template>`. Planner picks one.
+   - RESOLVED: 06-09 Task 1 uses a build-time `<template data-cursor-template>` rendered by `CursorFollower.astro` (localized `cursor.view` text from the server-side dictionary); `cursor.ts` clones it at mount, so client code never imports the dictionaries.
 2. **One BaseLayout script or per-component scripts for the new effects?**
    - What we know: both work. Astro emits one module per component script, and all share the `motion` chunk.
    - Recommendation: register reveal, cursor and magnetic from `src/lib/motion/index.ts`-adjacent `effects.ts`, imported by the BaseLayout script (one place, every page). Register the toggle from `MotionToggle.astro`. The bundle script measures both.
+   - RESOLVED: 06-03 Task 1 creates `src/lib/motion/effects.ts`, imported by the BaseLayout script, which registers reveal (06-03), magnetic (06-07) and the split-lines driver (06-08). The toggle registers from `MotionToggle.astro` (06-01), the hero marker from `Hero.astro` (06-05) and the cursor from `CursorFollower.astro` (06-09). 06-10 Task 1 audits every `lifecycle.register(` call, and `scripts/measure-bundle.ts` (06-02, 06-10) measures the result.
 3. **Inherited UI-SPEC open questions** (copy review, toggle position below `sm`, icon choice, hover duration feel, 64 px spacing) are non-blocking and go to the user at review.
+   - RESOLVED (deferred to user review): 06-10 Task 3 (blocking human-verify checkpoint) puts UI-SPEC Open Questions 1-4 to the user and records the answers in the SUMMARY. Requested changes become follow-ups or gap-closure items.
 
 ## Environment Availability
 

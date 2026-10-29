@@ -261,7 +261,36 @@ Plans:
   4. With `prefers-reduced-motion`, all non-essential motion is disabled or replaced with simple fades. Visitor can also switch animations off with an on-page toggle, and that works without changing OS settings.
   5. All effects register through the Phase 1 lifecycle registry, and the homepage JS bundle size is measured and recorded.
 
-**Plans**: TBD
+**Plans**: 10 plans
+Plans:
+**Wave 1**
+
+- [ ] 06-01-PLAN.md — Three-state motion gate (on/reduced/off), stored override, motion:change bus, header motion toggle (EN/ES)
+- [ ] 06-02-PLAN.md — gsap@3.15.0 approval checkpoint, lazy memoised loader, homepage bundle measurement + Phase 5 baseline
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 06-03-PLAN.md — Reveal runtime (IntersectionObserver, CSS failsafe, reduced fades) + Home section and project card reveals
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 06-04-PLAN.md — Projects page and detail page reveals (D-04 amends Phase 4 D-04), static image stack
+- [ ] 06-05-PLAN.md — CSS hero load sequence with no-replay marker and LCP measurement
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 06-06-PLAN.md — Shared project imagery hover/focus mat + zoom (CSS only), data-cursor markers
+- [ ] 06-07-PLAN.md — Magnetic pill CTAs, named links and social icons (shell/face split, gsap quickTo)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 06-08-PLAN.md — Masked line-split headings with SplitText (aria, lang, revert, failure safety)
+- [ ] 06-09-PLAN.md — Cursor follower with localized View pill (fine pointer + full motion only)
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 06-10-PLAN.md — Phase gate: axe across motion states, final bundle numbers, full taste gate, user review
+
 **UI hint**: yes
 
 ### Phase 7: Page Transitions & Smooth Scroll
