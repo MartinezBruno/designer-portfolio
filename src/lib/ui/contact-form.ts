@@ -1,6 +1,6 @@
 import { interpolate } from '../../i18n/interpolate';
 import { CONTACT_ERRORS, type ContactErrorKey } from '../contact/errors';
-import { FIELD_NAMES, type FieldName } from '../contact/fields';
+import { FIELD_NAMES, TURNSTILE_ACTION, type FieldName } from '../contact/fields';
 import { buildPrefilledMailto } from '../contact/mailto';
 import type { ContactStrings, ContactUIKey } from '../contact/strings';
 import { validateContact, type ContactValues, type FieldErrors } from '../contact/validate';
@@ -258,7 +258,7 @@ export function createContactForm(deps: ContactFormDeps): PageInit {
             size: 'compact',
             theme: 'light',
             language: locale,
-            action: 'contact',
+            action: TURNSTILE_ACTION,
             callback: () => {
               // A token arrived: the widget recovered from any earlier transient error (WR-02),
               // and neither the "still running" nor the error note applies any more.

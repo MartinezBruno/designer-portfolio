@@ -8,10 +8,19 @@
 import { ActionError, defineAction } from 'astro:actions';
 import { CONTACT_TO, MAILER, RESEND_API_KEY, TURNSTILE_SECRET_KEY } from 'astro:env/server';
 import services from '../data/services.json';
+import { TURNSTILE_ACTION } from '../lib/contact/fields';
 import { createMailer } from '../lib/contact/mailer/index';
 import { contactSchema } from '../lib/contact/schema';
 import { serviceTitlesEs, submitContact } from '../lib/contact/submit';
-import { verifyTurnstile } from '../lib/contact/turnstile';
+import { site } from '../data/site';
+import { verifyTurnstile, type TurnstileBinding } from '../lib/contact/turnstile';
+
+// A real verdict must echo the widget's action and come from the host the site is served on
+// (WR-03). A real secret with a stale site.url fails closed: update site.url before deploy.
+const TURNSTILE_BINDING: TurnstileBinding = {
+  action: TURNSTILE_ACTION,
+  hostnames: [new URL(site.url).hostname],
+};
 
 function sendFailed(): ActionError {
   return new ActionError({ code: 'BAD_REQUEST', message: 'send_failed' });
@@ -36,6 +45,7 @@ export const server = {
             TURNSTILE_SECRET_KEY,
             token,
             ctx.request.headers.get('CF-Connecting-IP'),
+            TURNSTILE_BINDING,
           ),
         mailer: () => createMailer({ MAILER, CONTACT_TO, RESEND_API_KEY }, fetch),
         serviceTitlesEs: titles,

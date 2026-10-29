@@ -35,6 +35,9 @@ export const HONEYPOT = 'extra_info';
 /** Name of the hidden input Turnstile creates inside its container. */
 export const TURNSTILE_FIELD = 'cf-turnstile-response';
 
+/** Turnstile widget `action`; siteverify verdicts must echo it (WR-03). */
+export const TURNSTILE_ACTION = 'contact';
+
 /** Text fields that can carry a validation error. */
 export const FIELD_NAMES = ['name', 'email', 'message'] as const;
 
