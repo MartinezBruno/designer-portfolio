@@ -1,5 +1,8 @@
 import { currentMotionState, onMotionChange } from './events';
+import type { MotionState } from './gate';
 import type { PageInit } from './lifecycle';
+import type { GsapModules } from './load-gsap';
+import { canSplit, splitAndRise, type SplitHandle } from './split-lines';
 
 /**
  * Everything the reveal effect needs from outside the DOM, injected so unit tests can drive the
@@ -11,10 +14,16 @@ export interface RevealDeps {
     cb: IntersectionObserverCallback,
     init: IntersectionObserverInit,
   ): Pick<IntersectionObserver, 'observe' | 'unobserve' | 'disconnect'>;
+  /**
+   * The lazy GSAP + SplitText loader. When present, `lines` headings under 'on' wait for it and
+   * rise line by line; without it they take the CSS reveal like every other kind.
+   */
+  loadGsap?: () => Promise<GsapModules>;
 }
 
 const SELECTOR = '[data-reveal]';
 const PENDING = '[data-reveal]:not([data-revealed])';
+const isLines = (el: HTMLElement): boolean => el.dataset['reveal'] === 'lines';
 /** The CSS failsafe shows unarmed elements at 1500ms; a later mount must not hide them again. */
 const FAILSAFE_MS = 1500;
 const MAX_BASE_MS = 600;
@@ -85,9 +94,27 @@ export function createReveal(deps: RevealDeps): PageInit {
     const pending = new Set<HTMLElement>();
     let observer: ReturnType<RevealDeps['createObserver']> | undefined;
 
+    // Lines driver (Pattern 3 rules 3 and 6): under 'on' a `lines` heading stays unarmed (the CSS
+    // failsafe owns it) until GSAP has loaded, so nothing is ever armed with no way to reveal it.
+    let gsapMods: GsapModules | undefined;
+    let ctx: ReturnType<GsapModules['gsap']['context']> | undefined;
+    let loading = false;
+    const waitingLines = new Set<HTMLElement>();
+    const splits = new Set<SplitHandle>();
+    const splitReady = (): boolean =>
+      gsapMods !== undefined && ctx !== undefined && currentMotionState(doc) === 'on';
+
     const finish = (el: HTMLElement, instant: boolean, delay = 0): void => {
       if (!pending.delete(el)) return;
       observer?.unobserve(el);
+      if (!instant && isLines(el) && splitReady() && canSplit(el)) {
+        const mods = gsapMods as GsapModules;
+        // Inside the context, so cleanup's ctx.revert() restores the heading's original markup.
+        ctx?.add(() => {
+          splits.add(splitAndRise(el, mods));
+        });
+        return;
+      }
       if (instant) el.setAttribute('data-reveal-instant', '');
       else el.style.setProperty('--reveal-delay', `${String(delay)}ms`);
       el.setAttribute('data-revealed', '');
@@ -100,16 +127,18 @@ export function createReveal(deps: RevealDeps): PageInit {
 
     // Late mount: the failsafe already showed everything, so whatever is in (or above) the
     // viewport stays shown; only elements below the fold get armed. One layout read, at mount.
-    const late = deps.now() > FAILSAFE_MS;
-    const viewport = win?.innerHeight ?? 0;
+    const shownByFailsafe = (el: HTMLElement): boolean =>
+      deps.now() > FAILSAFE_MS && el.getBoundingClientRect().top < (win?.innerHeight ?? 0);
+    const showInstantly = (el: HTMLElement): void => {
+      el.setAttribute('data-revealed', '');
+      el.setAttribute('data-reveal-instant', '');
+    };
+    const gateLines = deps.loadGsap !== undefined && currentMotionState(doc) === 'on';
     const toArm: HTMLElement[] = [];
     for (const el of elements) {
-      if (late && el.getBoundingClientRect().top < viewport) {
-        el.setAttribute('data-revealed', '');
-        el.setAttribute('data-reveal-instant', '');
-      } else {
-        toArm.push(el);
-      }
+      if (shownByFailsafe(el)) showInstantly(el);
+      else if (gateLines && isLines(el)) waitingLines.add(el);
+      else toArm.push(el);
     }
 
     // Arm only once the observer exists (Pitfall 1): if creating it throws, nothing is armed and
@@ -164,13 +193,78 @@ export function createReveal(deps: RevealDeps): PageInit {
       { signal: ac.signal },
     );
 
-    // CSS swaps the transitions between 'on' and 'reduced' by itself; 06-08 extends this hook
-    // for the GSAP line rise.
-    onMotionChange(doc, () => undefined, ac.signal);
+    /**
+     * Arms lines headings that waited for a driver. One that the failsafe already showed (in or
+     * above the viewport after 1.5s) stays shown instead of blinking out (Pitfall 6).
+     */
+    const armWaiting = (): void => {
+      for (const el of waitingLines) {
+        if (el.hasAttribute('data-revealed')) continue;
+        if (shownByFailsafe(el)) {
+          showInstantly(el);
+          continue;
+        }
+        el.setAttribute('data-reveal-armed', '');
+        pending.add(el);
+        observer?.observe(el);
+      }
+      waitingLines.clear();
+    };
+
+    const ensureGsap = (): void => {
+      const load = deps.loadGsap;
+      if (load === undefined || gsapMods !== undefined || loading) return;
+      loading = true;
+      void load()
+        .then((mods) => {
+          if (ac.signal.aborted) return;
+          gsapMods = mods;
+          ctx = mods.gsap.context(() => undefined);
+          armWaiting();
+        })
+        .catch(() => {
+          if (ac.signal.aborted) return;
+          // GSAP chunk failed (D-05): nothing may stay hidden, so show the waiting lines now.
+          for (const el of waitingLines) if (!el.hasAttribute('data-revealed')) showInstantly(el);
+          waitingLines.clear();
+        })
+        .finally(() => {
+          loading = false;
+        });
+    };
+
+    const finishSplits = (): void => {
+      for (const handle of splits) handle.finish();
+      splits.clear();
+    };
+
+    if (waitingLines.size > 0) ensureGsap();
+
+    // CSS swaps settle/shutter transitions between 'on' and 'reduced' by itself; only the GSAP
+    // line rise needs handling here.
+    onMotionChange(
+      doc,
+      (state: MotionState) => {
+        if (state === 'on') {
+          // Nothing replays; lines still waiting to reveal get the split driver if it is missing.
+          const linesLeft = [...pending].some(isLines) || waitingLines.size > 0;
+          if (linesLeft) ensureGsap();
+          return;
+        }
+        finishSplits();
+        // Waiting lines take the fade path (or, under 'off', no hidden state at all).
+        armWaiting();
+      },
+      ac.signal,
+    );
 
     return () => {
       ac.abort();
       observer?.disconnect();
+      splits.clear();
+      ctx?.revert();
+      ctx = undefined;
+      waitingLines.clear();
       // Unrevealed elements drop the armed marker so the CSS failsafe owns them again.
       for (const el of pending) el.removeAttribute('data-reveal-armed');
       pending.clear();

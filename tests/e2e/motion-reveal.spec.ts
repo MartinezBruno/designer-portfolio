@@ -162,6 +162,41 @@ test.describe('keyboard focus reveals a card instantly', () => {
   });
 });
 
+test.describe('stretched card link mid-reveal', () => {
+  // A translating ancestor becomes the containing block of the title link's `after:inset-0`
+  // overlay, shrinking it to the text block; the cover must stay clickable while the card reveals.
+  for (const width of [1440, 390]) {
+    test(`clicking a Latest-work cover mid-reveal opens the project at ${String(width)}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/');
+      await page.waitForLoadState('load');
+      await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+      const card = page.locator('section[aria-labelledby="work-title"] article').first();
+      const href = await card.locator('a').first().getAttribute('href');
+      expect(href).not.toBeNull();
+      await card.evaluate((el) => {
+        el.scrollIntoView({ block: 'center' });
+      });
+      await page.waitForTimeout(200);
+      const state = await card.evaluate((el) => {
+        const text = el.querySelector<HTMLElement>('[data-reveal="settle"]');
+        return {
+          revealed: text?.hasAttribute('data-revealed') ?? false,
+          running: (text?.getAnimations().length ?? 0) > 0,
+        };
+      });
+      // Precondition: the text block is still mid-transition when the click lands.
+      expect(state).toEqual({ revealed: true, running: true });
+      const box = await card.locator('> div').first().boundingBox();
+      if (!box) throw new Error('cover has no box');
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      await expect(page).toHaveURL(new RegExp(`${href ?? ''}$`));
+    });
+  }
+});
+
 test.describe('LCP cover', () => {
   test('lcp cover: the first Projects card cover frame is never a reveal target', async ({
     page,
@@ -308,4 +343,168 @@ test.describe('detail module stack', () => {
       expect(faded).toEqual([]);
     });
   }
+});
+
+// Headline line splits (MOTN-02, D-01, V-06): every `lines` heading keeps its accessible name (and
+// a detail h1 its lang span) before, during and after the rise, and is plain text again afterwards.
+const LINES = '[data-reveal="lines"]';
+const SPLIT_PARTS = '.split-line, .split-line-mask';
+
+/** Prefer a detail whose h1 carries a lang span (the title is in the other language). */
+const splitDetail = (locale: 'en' | 'es'): string => {
+  const details = expectedDetails(locale);
+  const detail = details.find((d) => d.titleLang !== null) ?? details[0];
+  if (detail === undefined) throw new Error(`no visible ${locale} project`);
+  return detail.href;
+};
+const SPLIT_PAGES = [
+  '/',
+  '/es/',
+  '/projects/',
+  '/es/projects/',
+  splitDetail('en'),
+  splitDetail('es'),
+];
+
+/** Normalized names read before any split could run (SplitText's aria-label equals the text). */
+function headingNames(page: Page): Promise<string[]> {
+  return page.evaluate((selector) => {
+    const norm = (value: string): string => value.replace(/\s+/g, ' ').trim();
+    return [...document.querySelectorAll<HTMLElement>(selector)].map((el) =>
+      norm(el.getAttribute('aria-label') ?? el.textContent),
+    );
+  }, LINES);
+}
+
+test.describe('split headings', () => {
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 390, height: 844 },
+  ]) {
+    for (const path of SPLIT_PAGES) {
+      test(`split ${path} at ${String(viewport.width)}: names and lang survive, split reverts`, async ({
+        page,
+      }) => {
+        await page.setViewportSize(viewport);
+        await page.goto(path, { waitUntil: 'domcontentloaded' });
+        await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+        const names = await headingNames(page);
+        expect(names.length).toBeGreaterThan(0);
+        const langCounts = await page
+          .locator(LINES)
+          .evaluateAll((els) => els.map((el) => el.querySelectorAll('[lang]').length));
+        await page.waitForLoadState('load');
+
+        let seenSplit = 0;
+        const headings = page.locator(LINES);
+        for (let i = 0; i < names.length; i += 1) {
+          const heading = headings.nth(i);
+          await heading.evaluate((el) => {
+            el.scrollIntoView({ block: 'center' });
+          });
+          await page.waitForTimeout(200);
+          if ((await heading.locator(SPLIT_PARTS).count()) > 0) seenSplit += 1;
+          await expect(heading).toHaveAccessibleName(names[i] ?? '', { timeout: 100 });
+          if ((langCounts[i] ?? 0) > 0) {
+            expect(await heading.locator('[lang]').count()).toBeGreaterThan(0);
+          }
+        }
+        await page.waitForTimeout(1200);
+        for (let i = 0; i < names.length; i += 1) {
+          const heading = headings.nth(i);
+          await expect(heading).toHaveAccessibleName(names[i] ?? '');
+          await expect(heading.locator(SPLIT_PARTS)).toHaveCount(0);
+          await expect(heading).toHaveAttribute('data-revealed', '');
+          expect(await heading.evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
+          if ((langCounts[i] ?? 0) > 0) {
+            expect(await heading.locator('[lang]').count()).toBe(langCounts[i]);
+          }
+        }
+        // The line rise really ran under full motion (not only the fade fallback).
+        expect(seenSplit).toBeGreaterThan(0);
+      });
+    }
+  }
+
+  // No committed title currently needs a lang span, so wrap the detail h1 text in one (the markup
+  // ProjectIntro emits when titleLang is set) to exercise SplitText's aria 'none' path for real.
+  for (const width of [1440, 390]) {
+    test(`split keeps a detail h1 lang span throughout at ${String(width)}`, async ({ page }) => {
+      const path = firstDetail('en');
+      await page.route(`**${path}`, async (route) => {
+        const response = await route.fetch();
+        const body = (await response.text()).replace(
+          /(<h1 id="project-title"[^>]*>)([^<]+)(<\/h1>)/,
+          '$1<span lang="es">$2</span>$3',
+        );
+        await route.fulfill({ response, body });
+      });
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      const h1 = page.locator('#project-title');
+      await expect(h1.locator('span[lang="es"]')).toHaveCount(1);
+      const name = await h1.evaluate((el) => el.textContent.replace(/\s+/g, ' ').trim());
+
+      await expect(h1.locator('.split-line-mask').first()).toBeAttached({ timeout: 1500 });
+      expect(await h1.getAttribute('aria-label')).toBeNull();
+      expect(await h1.locator('[lang="es"]').count()).toBeGreaterThan(0);
+      await expect(h1).toHaveAccessibleName(name, { timeout: 100 });
+
+      await expect(h1.locator(SPLIT_PARTS)).toHaveCount(0, { timeout: 2000 });
+      await expect(h1.locator('span[lang="es"]')).toHaveCount(1);
+      await expect(h1).toHaveAccessibleName(name);
+    });
+  }
+
+  test('split re-wraps on resize mid-reveal and ends as the original plain text', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await page.waitForLoadState('load');
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+    const heading = page.locator(`section[aria-labelledby="work-title"] ${LINES}`).first();
+    const original = await heading.evaluate((el) => ({ html: el.innerHTML, text: el.textContent }));
+    await heading.evaluate((el) => {
+      el.scrollIntoView({ block: 'center' });
+    });
+    await page.waitForTimeout(200);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(1200);
+    await expect(heading.locator(SPLIT_PARTS)).toHaveCount(0);
+    const after = await heading.evaluate((el) => ({ html: el.innerHTML, text: el.textContent }));
+    expect(after).toEqual(original);
+    expect(await heading.getAttribute('aria-label')).toBeNull();
+  });
+
+  test('split fails safe when only the gsap chunk fails: every lines heading shows', async ({
+    page,
+  }) => {
+    let aborted = 0;
+    // Only chunks carrying GSAP's "GreenSock" marker are aborted; every other module still runs.
+    await page.route('**/_astro/**/*.js', async (route) => {
+      const response = await route.fetch();
+      const body = await response.text();
+      if (body.includes('GreenSock')) {
+        aborted += 1;
+        await route.abort();
+        return;
+      }
+      await route.fulfill({ response, body });
+    });
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+    expect(await page.locator(LINES).count()).toBeGreaterThan(0);
+    await expect
+      .poll(
+        async () =>
+          page
+            .locator(LINES)
+            .evaluateAll((els) => els.filter((el) => getComputedStyle(el).opacity !== '1').length),
+        { timeout: 1600, intervals: [100] },
+      )
+      .toBe(0);
+    expect(aborted).toBeGreaterThan(0);
+    await expect(page.locator(`${LINES} .split-line-mask`)).toHaveCount(0);
+  });
 });

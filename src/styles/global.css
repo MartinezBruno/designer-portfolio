@@ -73,10 +73,20 @@
   block-size: 100%;
 }
 
-/* 'on': settle rises, shutter opens from the bottom edge, lines fade until 06-08 splits them. */
+/* 'on': settle rises, shutter opens from the bottom edge, lines stay hidden until split-lines.ts
+ * rises them (or the fade below takes over). */
 [data-motion='on'] [data-reveal='settle']:not([data-revealed]) {
   opacity: 0;
   translate: 0 var(--reveal-travel, 20px);
+}
+/*
+ * Inside a card the settle block holds the title link whose `after:inset-0` overlay stretches over
+ * the whole tile. Any translate (even mid-transition) makes the block that overlay's containing
+ * block and shrinks it, so the cover stops being clickable. Card text fades only; the cover's
+ * shutter carries the card's motion.
+ */
+[data-motion='on'] [data-card] [data-reveal='settle']:not([data-revealed]) {
+  translate: none;
 }
 [data-motion='on'] [data-reveal='shutter']:not([data-revealed]) {
   clip-path: inset(0 0 100% 0);
@@ -106,6 +116,19 @@
 /* The shutter picture's scale transition lives in the card mat rules below (Pitfall 12). */
 [data-motion='on'] [data-reveal='lines'][data-revealed] {
   transition: opacity var(--t-fade) var(--ease-reveal) var(--reveal-delay, 0ms);
+}
+/*
+ * 'on' line rise (MOTN-02, D-01): split-lines.ts sets data-revealed in the same task that inserts
+ * the masks, so the heading lands at opacity 1 at once and only the lines move. A lines heading
+ * that is not split (it wraps a link, or GSAP is missing) keeps the fade above.
+ */
+[data-motion='on'] [data-reveal='lines'][data-revealed]:has(.split-line-mask) {
+  transition: none;
+}
+/* Room for descenders and ascenders inside the vertical-only clip, without moving the layout. */
+.split-line-mask {
+  padding-block: 0.1em;
+  margin-block: -0.1em;
 }
 [data-motion='reduced'] [data-reveal][data-revealed] {
   transition: opacity var(--t-fade) var(--ease-reveal) var(--reveal-delay, 0ms);
