@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CONTACT_ERRORS } from '../../src/lib/contact/errors';
 import { contactSchema } from '../../src/lib/contact/schema';
+import { validateContact } from '../../src/lib/contact/validate';
 
 const valid = {
   name: 'Ana',
@@ -76,6 +77,36 @@ describe('contactSchema message', () => {
   it('caps the message at 5000 characters', () => {
     expect(issuesFor({ ...valid, message: 'a'.repeat(5001) }, 'message')[0]).toBe(
       'contact.error.messageTooLong',
+    );
+  });
+
+  it('counts a multipart CRLF line break as one character, like the browser', async () => {
+    // A multi-line message at exactly the limit, as the browser measures it (LF line breaks).
+    const lines = Array.from({ length: 50 }, () => 'a'.repeat(99));
+    const message = lines.join('\n');
+    expect(message.length).toBe(4999);
+    const typed = `${message}b`;
+    expect(typed.length).toBe(5000);
+    expect(validateContact({ name: 'Ana', email: 'ana@example.com', message: typed })).toEqual({});
+
+    // Round-trip through the same multipart encoding the Action client uses.
+    const fd = new FormData();
+    fd.set('message', typed);
+    const wire = await new Response(fd).formData();
+    const sent = wire.get('message');
+    expect(typeof sent).toBe('string');
+    expect(sent).toContain('\r\n');
+
+    const parsed = parse({ ...valid, message: sent });
+    expect(parsed.message).toBe(typed);
+    expect(issuesFor({ ...valid, message: `${String(sent)}c` }, 'message')[0]).toBe(
+      'contact.error.messageTooLong',
+    );
+  });
+
+  it('normalizes bare CR line breaks to LF', () => {
+    expect(parse({ ...valid, message: 'línea uno\rlínea dos' }).message).toBe(
+      'línea uno\nlínea dos',
     );
   });
 });

@@ -31,8 +31,11 @@ export const contactSchema = z.object({
         .email({ pattern: EMAIL_PATTERN, error: CONTACT_ERRORS.emailInvalid })
         .max(LIMITS.email, { error: CONTACT_ERRORS.emailTooLong }),
     ),
+  // Multipart encoding turns every LF into CRLF, but the browser counts a line break as one
+  // character (textarea API value). Normalize first so both sides measure the same text (WR-01).
   message: z
     .string({ error: CONTACT_ERRORS.messageRequired })
+    .overwrite((value) => value.replace(/\r\n?/g, '\n'))
     .trim()
     .min(1, { error: CONTACT_ERRORS.messageRequired, abort: true })
     .min(LIMITS.messageMin, { error: CONTACT_ERRORS.messageShort })
