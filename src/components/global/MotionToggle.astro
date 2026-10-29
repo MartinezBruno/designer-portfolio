@@ -1,0 +1,60 @@
+---
+import IconSparkles from '@tabler/icons/outline/sparkles-2.svg';
+import IconSparklesOff from '@tabler/icons/outline/sparkles-2-off.svg';
+import { useTranslations, type Locale } from '../../i18n/t';
+
+// Header motion toggle (MOTN-08, UI-SPEC "Motion Toggle"). Hidden until the head gate resolves
+// 'on' or 'reduced' (motion-js), so without JS or matchMedia it never renders (D-05). The name
+// stays "Reduce motion" in every state; aria-pressed carries the state. The visual tooltip is
+// aria-hidden (the name is announced once); the OS-lock hint reaches screen readers through
+// aria-describedby on the hidden #motion-toggle-hint node, set by the script only when locked.
+interface Props {
+  locale: Locale;
+  class?: string;
+}
+
+const { locale, class: extraClass } = Astro.props;
+const t = useTranslations(locale);
+
+const tooltip =
+  'invisible absolute top-full right-0 z-10 pt-2 opacity-0 group-hover/motion:visible group-hover/motion:opacity-100 group-has-[:focus-visible]/motion:visible group-has-[:focus-visible]/motion:opacity-100 group-data-dismissed/motion:invisible! group-data-dismissed/motion:opacity-0! motion-on:transition-[opacity,visibility] motion-on:duration-[240ms]';
+---
+
+<div
+  data-motion-toggle-root
+  class:list={['group/motion relative hidden motion-js:inline-flex', extraClass]}
+>
+  <button
+    type="button"
+    data-motion-toggle
+    aria-pressed="false"
+    aria-label={t('motion.toggle')}
+    class="group/toggle text-ink hover:text-ink-muted aria-disabled:text-ink-muted focus-visible:outline-accent inline-flex min-h-11 min-w-11 items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-150"
+  >
+    <IconSparkles
+      aria-hidden="true"
+      focusable="false"
+      class="size-5 group-aria-pressed/toggle:hidden"
+    />
+    <IconSparklesOff
+      aria-hidden="true"
+      focusable="false"
+      class="hidden size-5 group-aria-pressed/toggle:block"
+    />
+  </button>
+  <span aria-hidden="true" data-motion-tooltip class={tooltip}>
+    <span class="bg-ink text-surface block w-max max-w-64 rounded-lg px-2 py-1 text-sm font-semibold">
+      <span class="group-data-locked/motion:hidden">{t('motion.toggle')}</span>
+      <span class="hidden group-data-locked/motion:inline">{t('motion.osLocked')}</span>
+    </span>
+  </span>
+  <span id="motion-toggle-hint" hidden>
+    {t('motion.osLocked')}
+  </span>
+</div>
+
+<script>
+  import { lifecycle } from '../../lib/motion';
+  import { initMotionToggle } from '../../lib/motion/toggle';
+  lifecycle.register(initMotionToggle);
+</script>

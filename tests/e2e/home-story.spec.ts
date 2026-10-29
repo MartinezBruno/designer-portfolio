@@ -323,8 +323,13 @@ test.describe('marquee tap on touch', () => {
   });
 });
 
-async function expectStaticMarquee(page: Page, locale: 'en' | 'es'): Promise<void> {
-  await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
+// Phase 6 (D-14): OS reduce resolves to 'reduced'; only no-JS stays 'off'. Both are static.
+async function expectStaticMarquee(
+  page: Page,
+  locale: 'en' | 'es',
+  state: 'reduced' | 'off',
+): Promise<void> {
+  await expect(page.locator('html')).toHaveAttribute('data-motion', state);
   await expect(copyB(page)).toBeHidden();
   await expect(page.locator('[data-marquee-toggle]')).toBeHidden();
   expect(await style(copyA(page), 'animationName')).toBe('none');
@@ -343,7 +348,7 @@ test.describe('static marquee with reduced motion', () => {
       test('static: reduced motion shows one list without button', async ({ page }) => {
         const errors = collectErrors(page);
         await page.goto(path);
-        await expectStaticMarquee(page, locale);
+        await expectStaticMarquee(page, locale, 'reduced');
         expect(errors).toEqual([]);
       });
     });
@@ -357,7 +362,7 @@ test.describe('static marquee without JavaScript', () => {
     test.describe(path, () => {
       test('static: no-JS shows roles, services and tool names', async ({ page }) => {
         await page.goto(path);
-        await expectStaticMarquee(page, locale);
+        await expectStaticMarquee(page, locale, 'off');
         await expect(servicesSection(page).getByRole('heading', { level: 3 })).toHaveCount(4);
         await expect(toolsSection(page).getByRole('img')).toHaveCount(5);
         for (const name of toolNames) {

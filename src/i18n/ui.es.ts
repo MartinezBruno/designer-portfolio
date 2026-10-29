@@ -117,4 +117,8 @@ export const es = {
   'contact.nojs.subject': 'Nueva consulta de proyecto',
   'services.ask': 'Consultar',
   'services.askTarget': ': {title}',
+  // TODO(martina): confirm Phase 6 copy (cursor label, motion toggle, OS hint).
+  'cursor.view': 'Ver',
+  'motion.toggle': 'Reducir movimiento',
+  'motion.osLocked': 'La configuración de tu dispositivo ya reduce el movimiento.',
 } as const satisfies Dictionary;

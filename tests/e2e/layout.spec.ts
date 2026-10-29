@@ -239,3 +239,69 @@ test.describe('phase 3 header and layout', () => {
     expect(tileBottom).toBeGreaterThan(headerBottom);
   });
 });
+
+// Phase 6 (D-16, UI-SPEC Motion Toggle): the header toggle keeps the header heights; below sm it
+// sits at row 1's right end, opposite the wordmark, and its OS-lock tooltip never overflows 320px.
+test.describe('phase 6 header motion toggle layout', () => {
+  for (const [path, dict] of cases) {
+    test(`header on ${path} keeps 64px from sm and 89px below sm with the toggle`, async ({
+      page,
+    }) => {
+      const header = page.getByRole('banner');
+      const toggle = header.getByRole('button', { name: dict['motion.toggle'], exact: true });
+
+      await page.setViewportSize({ width: 640, height: 800 });
+      await page.goto(path);
+      await expect(toggle).toBeVisible();
+      const wide = (await header.boundingBox())?.height ?? 0;
+      expect(Math.abs(wide - 64)).toBeLessThanOrEqual(1);
+
+      for (const width of [390, 320]) {
+        await page.setViewportSize({ width, height: 844 });
+        const narrow = (await header.boundingBox())?.height ?? 0;
+        expect(Math.abs(narrow - 89), `header height at ${width}`).toBeLessThanOrEqual(2);
+      }
+    });
+
+    test(`at 320px ${path} puts the toggle on row 1, right-aligned`, async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 640 });
+      await page.goto(path);
+      const header = page.getByRole('banner');
+      const toggle = await header
+        .getByRole('button', { name: dict['motion.toggle'], exact: true })
+        .boundingBox();
+      const nav = await header
+        .getByRole('navigation', { name: dict['nav.label'], exact: true })
+        .boundingBox();
+      expect(toggle).not.toBeNull();
+      expect(nav).not.toBeNull();
+      expect(toggle?.y ?? Infinity).toBeLessThan(nav?.y ?? -Infinity);
+      const right = (toggle?.x ?? 0) + (toggle?.width ?? 0);
+      expect(320 - right).toBeLessThanOrEqual(16);
+      expect(toggle?.width ?? 0).toBeGreaterThanOrEqual(44);
+      expect(toggle?.height ?? 0).toBeGreaterThanOrEqual(44);
+    });
+  }
+
+  test.describe('with the OS reducing motion', () => {
+    test.use({ reducedMotion: 'reduce' });
+
+    test('at 320px the ES OS-lock tooltip does not overflow', async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 640 });
+      await page.goto('/es/');
+      const toggle = page
+        .getByRole('banner')
+        .getByRole('button', { name: es['motion.toggle'], exact: true });
+      await toggle.hover();
+      const tooltip = page.locator('[data-motion-tooltip]');
+      await expect(tooltip).toBeVisible();
+      const box = await tooltip.boundingBox();
+      expect(box?.x ?? -1).toBeGreaterThanOrEqual(0);
+      expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(320);
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      );
+      expect(overflow).toBe(true);
+    });
+  });
+});

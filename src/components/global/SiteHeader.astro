@@ -6,6 +6,7 @@ import { stripLocale } from '../../i18n/routes';
 import { useTranslations } from '../../i18n/t';
 import type { PageKind } from '../../lib/seo';
 import LanguageSwitcher from './LanguageSwitcher.astro';
+import MotionToggle from './MotionToggle.astro';
 
 interface Props {
   locale: Locale;
@@ -20,8 +21,11 @@ const isProjects = /^\/projects\/?$/.test(bare);
 const t = useTranslations(locale);
 // Every Contact link lands on the Home section of the same locale (D-04).
 const contactHref = `${getRelativeLocaleUrl(locale, '/')}#contact`;
-// Layout (UI-SPEC Header nav): two rows below sm (wordmark; nav + languages), one 64px row from
-// sm. DOM order stays wordmark, nav, languages, so visual order equals tab order.
+// Layout (UI-SPEC Header nav, Motion Toggle): two rows below sm (wordmark + motion toggle; nav +
+// languages), one 64px row from sm. DOM and tab order is wordmark, nav, languages, toggle at every
+// width. From sm visual order equals tab order; below sm the toggle sits at row 1's right end
+// (order-last moves nav + languages to row 2), so focus moves from ES up to it (UI-SPEC Open
+// Question 2: row 2 has no room for a 44px toggle at 320px).
 // Shared by both nav links (D-20): same look as the Phase 2 Contact link.
 const navLink =
   'text-ink focus-visible:outline-accent inline-flex min-h-11 items-center text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2';
@@ -36,7 +40,7 @@ const navLink =
     >
       {site.name}
     </a>
-    <div class="flex basis-full items-center justify-between gap-2 sm:basis-auto sm:justify-end sm:gap-4">
+    <div class="order-last flex basis-full items-center justify-between gap-2 sm:order-none sm:ml-auto sm:basis-auto sm:justify-end sm:gap-4">
       <nav aria-label={t('nav.label')}>
         <ul class="flex items-center gap-6">
           <li>
@@ -60,5 +64,6 @@ const navLink =
       </nav>
       <LanguageSwitcher locale={locale} pathname={pathname} kind={kind} />
     </div>
+    <MotionToggle locale={locale} class="sm:ml-2" />
   </div>
 </header>

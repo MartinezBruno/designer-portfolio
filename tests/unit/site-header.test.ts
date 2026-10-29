@@ -74,5 +74,37 @@ describe('SiteHeader', () => {
     const group = classTokens(/<div[^>]*class="[^"]*\bbasis-full\b[^"]*"[^>]*>/.exec(html)?.[0]);
     expect(group).toContain('basis-full');
     expect(group).toContain('sm:basis-auto');
+    // Below sm nav + languages wrap to row 2, so the toggle sits on row 1 opposite the wordmark.
+    expect(group).toContain('order-last');
+    expect(group).toContain('sm:order-none');
+  });
+
+  it.each([
+    ['en', '/'],
+    ['es', '/es/'],
+  ] as const)('%s renders one motion toggle after the language switcher', async (locale, path) => {
+    const dict = dicts[locale];
+    const html = await render(locale, path);
+    const buttons = html.match(/<button[^>]*data-motion-toggle[^>]*>/g) ?? [];
+    expect(buttons).toHaveLength(1);
+    const button = buttons[0] ?? '';
+    expect(button).toContain(`aria-label="${dict['motion.toggle']}"`);
+    expect(button).toContain('aria-pressed="false"');
+    expect(button).toContain('type="button"');
+
+    const languagesAt = html.indexOf(`aria-label="${dict['lang.label']}"`);
+    expect(languagesAt).toBeGreaterThan(-1);
+    expect(html.indexOf('data-motion-toggle')).toBeGreaterThan(languagesAt);
+
+    const root = classTokens(/<div[^>]*data-motion-toggle-root[^>]*>/.exec(html)?.[0]);
+    expect(root).toContain('hidden');
+    expect(root).toContain('motion-js:inline-flex');
+
+    // Both icons are rendered and swapped by aria-pressed in CSS.
+    expect(html.match(/<svg[^>]*class="[^"]*group-aria-pressed\/toggle:hidden/g)).toHaveLength(1);
+    expect(html.match(/<svg[^>]*class="[^"]*group-aria-pressed\/toggle:block/g)).toHaveLength(1);
+
+    expect(html).toContain('id="motion-toggle-hint"');
+    expect(html).toContain(dict['motion.osLocked']);
   });
 });
