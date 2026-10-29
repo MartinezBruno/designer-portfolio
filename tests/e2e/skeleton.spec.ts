@@ -3,6 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { site } from '../../src/data/site';
 import { en } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
+import { settleMotion } from './helpers/motion';
 
 const pages = [
   ['/', 'en', en],
@@ -20,6 +21,8 @@ for (const [path, locale, dict] of pages) {
     await expect(heading).toBeVisible();
     await expect(heading).toHaveText(`${dict['hero.greeting']} ${site.firstName}.`);
 
+    // Phase 6: the hero sequence and the first reveals fade in on load; axe judges the settled page.
+    await settleMotion(page);
     const { violations } = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
