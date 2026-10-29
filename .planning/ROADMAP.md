@@ -279,8 +279,8 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 06-06-PLAN.md — Shared project imagery hover/focus mat + zoom (CSS only), data-cursor markers
-- [ ] 06-07-PLAN.md — Magnetic pill CTAs, named links and social icons (shell/face split, gsap quickTo)
+- [x] 06-06-PLAN.md — Shared project imagery hover/focus mat + zoom (CSS only), data-cursor markers
+- [x] 06-07-PLAN.md — Magnetic pill CTAs, named links and social icons (shell/face split, gsap quickTo)
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
@@ -337,6 +337,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 3. Real Behance Work | 10/10 | Complete   | 2026-10-17 |
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
-| 6. Scroll & Interaction Motion | 5/10 | In Progress|  |
+| 6. Scroll & Interaction Motion | 7/10 | In Progress|  |
 | 7. Page Transitions & Smooth Scroll | 0/TBD | Not started | - |
 | 8. Quality Verification | 0/TBD | Not started | - |
