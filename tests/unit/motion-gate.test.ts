@@ -81,16 +81,21 @@ describe('applyMotionGate', () => {
   });
 
   it.each(['<img src=x>', 'on', '', 'REDUCED', ' reduced'])(
-    'treats the stored value %j as on and never writes it into the DOM',
+    'treats the stored value %j as on',
     (stored) => {
       mockMatchMedia({ [REDUCE_QUERY]: false });
       window.localStorage.setItem(MOTION_STORAGE_KEY, stored);
       expect(applyMotionGate(document, window)).toBe('on');
-      if (stored !== '') {
-        expect(document.documentElement.outerHTML).not.toContain(stored);
-      }
     },
   );
+
+  it('never writes a tampered stored value into the DOM', () => {
+    mockMatchMedia({ [REDUCE_QUERY]: false });
+    window.localStorage.setItem(MOTION_STORAGE_KEY, '<img src=x>');
+    applyMotionGate(document, window);
+    expect(document.documentElement.outerHTML).not.toContain('<img src=x>');
+    expect(document.documentElement.outerHTML).not.toContain('img src');
+  });
 
   it('lets the OS decide when reading localStorage throws', () => {
     const restore = blockLocalStorage();

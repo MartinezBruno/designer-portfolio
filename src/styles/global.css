@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 @custom-variant motion-on (&:where([data-motion='on'], [data-motion='on'] *));
+/* Phase 6: 'reduced' = OS reduce or the header toggle; motion-js = JS gate ran (on or reduced).
+   New motion never uses motion-safe:, which ignores the toggle. */
+@custom-variant motion-reduced (&:where([data-motion='reduced'], [data-motion='reduced'] *));
+@custom-variant motion-js (&:where([data-motion='on'], [data-motion='reduced'], [data-motion='on'] *, [data-motion='reduced'] *));
 
 @theme {
   --font-sans: var(--font-inter);
