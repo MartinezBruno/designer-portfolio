@@ -260,8 +260,10 @@ export function createContactForm(deps: ContactFormDeps): PageInit {
             language: locale,
             action: 'contact',
             callback: () => {
-              // A token arrived: the "still running" note no longer applies.
-              if (!widgetFailed) hideNote();
+              // A token arrived: the widget recovered from any earlier transient error (WR-02),
+              // and neither the "still running" nor the error note applies any more.
+              widgetFailed = false;
+              hideNote();
             },
             'error-callback': () => {
               showWidgetError();
@@ -439,16 +441,18 @@ export function createContactForm(deps: ContactFormDeps): PageInit {
         // Validate first: an invalid form never waits on (or spends) a Turnstile token.
         attempted = true;
         if (showErrors(validateContact(values()))) return;
-        if (widgetFailed) {
-          showNote(text('contact.turnstile.error'), 'error');
-          return;
-        }
+        // A present token always wins over an earlier widget error: Turnstile retries on its own.
         const token = api && widgetId !== null ? (api.getResponse(widgetId) ?? '') : '';
         if (token === '') {
+          if (widgetFailed) {
+            showNote(text('contact.turnstile.error'), 'error');
+            return;
+          }
           ensureWidget();
           showNote(text('contact.turnstile.wait'), 'wait');
           return;
         }
+        widgetFailed = false;
 
         hideNote();
         hideFailure();
@@ -524,6 +528,8 @@ export function createContactForm(deps: ContactFormDeps): PageInit {
         setSending(false);
         success.hidden = true;
         form.hidden = false;
+        // A rendered widget gets a fresh challenge; only a script that never loaded stays failed.
+        if (api && widgetId !== null) widgetFailed = false;
         resetWidget();
         clearStatus();
         nameField.focus();

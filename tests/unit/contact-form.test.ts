@@ -256,6 +256,68 @@ describe('createContactForm', () => {
     cleanup?.();
   });
 
+  it('blocks the send while the widget is in error and shows the error note', async () => {
+    const { deps, send, turnstile } = setup('');
+    const cleanup = createContactForm(deps)(document);
+    await flush();
+    turnstile.rendered[0]?.options['error-callback']?.('600010');
+    fill();
+    submit();
+    expect(send).not.toHaveBeenCalled();
+    expect(noteText()).toBe(strings['contact.turnstile.error']);
+    cleanup?.();
+  });
+
+  it('recovers when the widget issues a token after an error-callback', async () => {
+    const { deps, send, turnstile } = setup('');
+    const cleanup = createContactForm(deps)(document);
+    await flush();
+    turnstile.rendered[0]?.options['error-callback']?.('600010');
+    expect(note().hidden).toBe(false);
+
+    // Turnstile retried on its own and minted a token.
+    turnstile.setToken('tok');
+    turnstile.rendered[0]?.options.callback?.('tok');
+    expect(note().hidden).toBe(true);
+
+    fill();
+    submit();
+    expect(send).toHaveBeenCalledTimes(1);
+    cleanup?.();
+  });
+
+  it('a present token wins over an earlier error even without a callback', async () => {
+    const { deps, send, turnstile } = setup('tok');
+    const cleanup = createContactForm(deps)(document);
+    await flush();
+    turnstile.rendered[0]?.options['error-callback']?.('600010');
+    fill();
+    submit();
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(note().hidden).toBe(true);
+    cleanup?.();
+  });
+
+  it('"Send another message" clears a widget error', async () => {
+    const { deps, send, turnstile } = setup('tok');
+    const cleanup = createContactForm(deps)(document);
+    await flush();
+    fill();
+    submit();
+    await flush();
+    turnstile.rendered[0]?.options['error-callback']?.('600010');
+
+    el<HTMLButtonElement>('[data-contact-again]').click();
+    expect(note().hidden).toBe(true);
+    // The reset widget has no token yet: the visitor sees the wait note, not the error.
+    turnstile.setToken('');
+    fill();
+    submit();
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(noteText()).toBe(strings['contact.turnstile.wait']);
+    cleanup?.();
+  });
+
   it('shows the load-error note when the script fails to load', async () => {
     const { deps, loadTurnstile } = setup();
     loadTurnstile.mockImplementation(() => Promise.reject(new Error('blocked')));
