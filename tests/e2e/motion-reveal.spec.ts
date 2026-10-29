@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { expectedDetails } from './helpers/projects';
 
 // Scroll reveals (MOTN-01, UI-SPEC "Reveal Contract"): V-03 (JS fails after the gate), V-05
 // (every element reveals once and never re-hides), focus reveal (Pitfall 7) and the LCP cover rule.
@@ -173,4 +174,138 @@ test.describe('LCP cover', () => {
     const second = page.locator('#main article').nth(1).locator('> div').first();
     await expect(second).toHaveAttribute('data-reveal', 'shutter');
   });
+});
+
+// Projects page heading block and detail pages (Phase 6 D-04, amends Phase 4 D-04), both locales.
+const firstDetail = (locale: 'en' | 'es'): string => {
+  const detail = expectedDetails(locale)[0];
+  if (detail === undefined) throw new Error(`no visible ${locale} project`);
+  return detail.href;
+};
+const DETAIL_PATHS = [firstDetail('en'), firstDetail('es')];
+const PROJECT_PAGES = ['/projects/', '/es/projects/', ...DETAIL_PATHS];
+/** The edge-to-edge module stack (ProjectDetailView): the article's direct child after the intro. */
+const STACK = 'article[aria-labelledby="project-title"] > div';
+
+const hiddenCount = (states: RevealState[]): number =>
+  states.filter((r) => r.opacity !== '1' || !openClip(r.clipPath) || r.translate !== 'none').length;
+
+/** Detail pages run tens of thousands of pixels: wheel in larger steps, sampling as we go. */
+async function scrollDetailToBottom(page: Page, onStep?: () => Promise<void>): Promise<void> {
+  for (let i = 0; i < 400; i += 1) {
+    const atBottom = await page.evaluate(
+      () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2,
+    );
+    if (atBottom) break;
+    await page.mouse.wheel(0, 800);
+    await page.waitForTimeout(60);
+    if (onStep) await onStep();
+  }
+}
+
+test.describe('Projects and detail reveals without JavaScript', () => {
+  test.use({ javaScriptEnabled: false });
+  for (const path of PROJECT_PAGES) {
+    test(`${path} without JavaScript shows every [data-reveal]`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page.locator('html')).not.toHaveAttribute('data-motion', /on|reduced/);
+      const states = await readReveals(page);
+      expect(states.length).toBeGreaterThan(0);
+      expect(hiddenCount(states)).toBe(0);
+    });
+  }
+});
+
+test.describe('Projects and detail reveals when every script fails', () => {
+  for (const path of PROJECT_PAGES) {
+    test(`${path} fails safe: every [data-reveal] is visible by 1.6 s`, async ({ page }) => {
+      await page.route('**/_astro/**/*.js', (route) => route.abort());
+      await page.goto(path);
+      await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+      expect(await page.locator('[data-reveal]').count()).toBeGreaterThan(0);
+      await expect
+        .poll(async () => hiddenCount(await readReveals(page)), {
+          timeout: 1700,
+          intervals: [100],
+        })
+        .toBe(0);
+    });
+  }
+});
+
+test.describe('Projects and detail scroll reveals', () => {
+  for (const path of PROJECT_PAGES) {
+    test(`${path} scroll at 1440x900 reveals everything once and never re-hides`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto(path);
+      await page.waitForLoadState('load');
+      await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+      await page.mouse.move(720, 450);
+      await scrollDetailToBottom(page);
+
+      await expect
+        .poll(async () => (await readReveals(page)).filter((r) => !r.revealed).length, {
+          timeout: 3000,
+        })
+        .toBe(0);
+
+      await page.evaluate(() => {
+        window.scrollTo(0, 0);
+      });
+      await page.waitForTimeout(200);
+      await expect
+        .poll(
+          async () =>
+            (await readReveals(page)).filter((r) => !r.revealed || r.opacity !== '1').length +
+            hiddenCount(await readReveals(page)),
+          { timeout: 3000 },
+        )
+        .toBe(0);
+    });
+  }
+});
+
+test.describe('detail module stack', () => {
+  for (const path of DETAIL_PATHS) {
+    test(`${path} static stack: no reveal inside, every module image opaque while scrolling`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto(path);
+      await page.waitForLoadState('load');
+      await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+
+      const stack = page.locator(STACK);
+      await expect(stack).toHaveCount(1);
+      expect(await stack.evaluate((el) => el.hasAttribute('data-reveal'))).toBe(false);
+      // Text modules settle as one block; nothing else in the stack (images, grids, embeds) does.
+      const kinds = await stack.evaluate((el) =>
+        [...el.querySelectorAll('[data-reveal]')].map(
+          (node) =>
+            `${node.tagName}:${node.getAttribute('data-reveal') ?? ''}:${String(node.querySelector('img') !== null)}`,
+        ),
+      );
+      for (const kind of kinds) expect(kind).toBe('DIV:settle:false');
+      expect(await stack.locator('img').count()).toBeGreaterThan(0);
+
+      const faded: string[] = [];
+      const sample = async (): Promise<void> => {
+        const low = await stack.evaluate((el) =>
+          [...el.querySelectorAll('img')].flatMap((img) => {
+            let opacity = 1;
+            for (let node: Element | null = img; node; node = node.parentElement) {
+              opacity *= Number.parseFloat(getComputedStyle(node).opacity);
+            }
+            return opacity < 1 ? [`${img.currentSrc || img.src}@${String(opacity)}`] : [];
+          }),
+        );
+        faded.push(...low);
+      };
+      await sample();
+      await scrollDetailToBottom(page, sample);
+      expect(faded).toEqual([]);
+    });
+  }
 });

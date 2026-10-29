@@ -7,7 +7,8 @@ import type { Locale } from '../../i18n/t';
 import type { ProjectDetailView } from '../../lib/projects/model';
 
 // Detail page body. The module stack follows the intro band inside the article. The page ends with
-// the contact band, then the next-project teaser (omitted with 1 visible project). No motion (D-04).
+// the contact band, then the next-project teaser (omitted with 1 visible project). Intro, text
+// modules, band and teaser reveal on scroll (Phase 6 D-04); the image stack itself stays static.
 interface Props {
   detail: ProjectDetailView;
   locale: Locale;
