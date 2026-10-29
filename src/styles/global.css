@@ -15,6 +15,9 @@
   --color-ink-muted: #5e5750;
   --color-accent: #0f70b7;
   --color-accent-ink: #ffffff;
+  /* Primary pill hover: a step darker, never lighter. The old bg-accent/90 lightened to #267ebd,
+     4.37:1 under white 14px text (WCAG 1.4.3 needs 4.5:1); the magnetic face keeps it hovered. */
+  --color-accent-hover: color-mix(in oklab, var(--color-accent) 88%, var(--color-ink));
   --color-danger: #b42318;
   --color-success: #1f7a4d;
 

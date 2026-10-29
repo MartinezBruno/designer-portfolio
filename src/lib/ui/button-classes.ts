@@ -11,7 +11,7 @@ export const primaryShell =
 // One transition declaration for both the hover fill and the press scale; the press only applies
 // under `data-motion="on"`. GSAP's x/y write `transform`, the press writes `scale`, so they never clash.
 export const primaryFace =
-  'bg-accent text-accent-ink hover:bg-accent/90 inline-flex h-full items-center gap-2 rounded-full px-6 text-sm font-semibold motion-safe:transition-[background-color,scale] motion-safe:duration-150 motion-on:active:scale-[0.97]';
+  'bg-accent text-accent-ink hover:bg-accent-hover inline-flex h-full items-center gap-2 rounded-full px-6 text-sm font-semibold motion-safe:transition-[background-color,scale] motion-safe:duration-150 motion-on:active:scale-[0.97]';
 
 // Ink pill: the secondary action (embed facade load, "Send another message"). Never magnetic.
 export const inkButton =
