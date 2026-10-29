@@ -45,6 +45,13 @@ export default defineConfig({
         values: ['console', 'resend'],
         default: 'console',
       }),
+      // Local/e2e opt-in for the console mailer and Turnstile test keys. Unset in a deploy, so a
+      // forgotten MAILER or test key fails closed instead of dropping leads (WR-04).
+      CONTACT_ALLOW_TEST_CONFIG: envField.boolean({
+        context: 'server',
+        access: 'secret',
+        default: false,
+      }),
       CONTACT_TO: envField.string({ context: 'server', access: 'secret', optional: true }),
       RESEND_API_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
       TURNSTILE_SECRET_KEY: envField.string({

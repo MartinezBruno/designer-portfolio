@@ -8,6 +8,8 @@ import { join } from 'node:path';
 
 const SERVER_DIR = join('dist', 'server');
 const ENV_LINES = [
+  // Opt in to the console mailer and test keys; a deploy without it fails closed (WR-04).
+  'CONTACT_ALLOW_TEST_CONFIG=true',
   'MAILER=console',
   'TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA',
   'CONTACT_TO=inbox@example.invalid',

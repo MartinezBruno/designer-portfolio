@@ -6,8 +6,16 @@
 // handler only ever throws one generic ActionError and internal detail stays in server logs.
 // Secrets come only from astro:env/server.
 import { ActionError, defineAction } from 'astro:actions';
-import { CONTACT_TO, MAILER, RESEND_API_KEY, TURNSTILE_SECRET_KEY } from 'astro:env/server';
+import { PUBLIC_TURNSTILE_SITE_KEY } from 'astro:env/client';
+import {
+  CONTACT_ALLOW_TEST_CONFIG,
+  CONTACT_TO,
+  MAILER,
+  RESEND_API_KEY,
+  TURNSTILE_SECRET_KEY,
+} from 'astro:env/server';
 import services from '../data/services.json';
+import { contactConfigProblem } from '../lib/contact/deploy-guard';
 import { TURNSTILE_ACTION } from '../lib/contact/fields';
 import { createMailer } from '../lib/contact/mailer/index';
 import { contactSchema } from '../lib/contact/schema';
@@ -36,6 +44,17 @@ export const server = {
         titles = serviceTitlesEs(services);
       } catch (error) {
         console.error('[contact] rejected: config', error instanceof Error ? error.message : '');
+        throw sendFailed();
+      }
+      // Fail closed on local-only config outside local dev (WR-04): never a false "sent".
+      const problem = contactConfigProblem({
+        allowTestConfig: CONTACT_ALLOW_TEST_CONFIG,
+        mailer: MAILER,
+        turnstileSecret: TURNSTILE_SECRET_KEY,
+        siteKey: PUBLIC_TURNSTILE_SITE_KEY,
+      });
+      if (problem !== undefined) {
+        console.error('[contact] rejected: config', problem);
         throw sendFailed();
       }
       const outcome = await submitContact(input, {
