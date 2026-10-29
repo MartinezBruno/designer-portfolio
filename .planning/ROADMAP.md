@@ -284,8 +284,8 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 06-08-PLAN.md — Masked line-split headings with SplitText (aria, lang, revert, failure safety)
-- [ ] 06-09-PLAN.md — Cursor follower with localized View pill (fine pointer + full motion only)
+- [x] 06-08-PLAN.md — Masked line-split headings with SplitText (aria, lang, revert, failure safety)
+- [x] 06-09-PLAN.md — Cursor follower with localized View pill (fine pointer + full motion only)
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
@@ -337,6 +337,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 3. Real Behance Work | 10/10 | Complete   | 2026-10-17 |
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
-| 6. Scroll & Interaction Motion | 7/10 | In Progress|  |
+| 6. Scroll & Interaction Motion | 9/10 | In Progress|  |
 | 7. Page Transitions & Smooth Scroll | 0/TBD | Not started | - |
 | 8. Quality Verification | 0/TBD | Not started | - |
