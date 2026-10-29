@@ -69,11 +69,11 @@ for (const path of ['/', '/es/']) {
   });
 }
 
-// UI-SPEC keyboard order on Home: skip link, wordmark, Projects, Contact, EN, ES, hero CTA,
+// UI-SPEC keyboard order on Home: skip link, wordmark, Projects, Contact, EN, ES, motion toggle, hero CTA,
 // invisible marquee pause toggle (button over the band), 4 service card links, 3 project links, See all, 5 tool tiles,
 // Contact section email, Behance, service radio, name, email, message (then Send message from the
 // footer with Shift+Tab), footer email, Behance. On the Projects pages: skip
-// link, wordmark, Projects, Contact, EN, ES, 7 project links (newest first), footer email, Behance.
+// link, wordmark, Projects, Contact, EN, ES, motion toggle, 7 project links (newest first), footer email, Behance.
 interface Step {
   name: string;
   href?: string;
@@ -124,6 +124,8 @@ function headerSteps(dict: Dictionary, homeHref: string, enHref: string, esHref:
     { name: dict['nav.contact'], href: `${homeHref}#contact` },
     { name: `EN ${dict['lang.en']}`, href: enHref },
     { name: `ES ${dict['lang.es']}`, href: esHref },
+    // Phase 6 (D-16, V-16): the motion toggle is last in the header at every width.
+    { name: dict['motion.toggle'], tag: 'BUTTON' },
   ];
 }
 
@@ -388,7 +390,7 @@ test.describe('with prefers-reduced-motion: reduce', () => {
       page,
     }) => {
       await page.goto(href);
-      await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
+      await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
       await activateFacade(page, dict);
       const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       expect(violations).toEqual([]);
@@ -398,7 +400,7 @@ test.describe('with prefers-reduced-motion: reduce', () => {
   for (const [path, dict, homeHref] of keyboardCases) {
     test(`${path} has zero WCAG 2.2 AA axe violations under reduced motion`, async ({ page }) => {
       await page.goto(path);
-      await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
+      await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
       const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       expect(violations).toEqual([]);
     });
@@ -407,11 +409,14 @@ test.describe('with prefers-reduced-motion: reduce', () => {
       page,
     }) => {
       await page.goto(path);
-      await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
+      await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
       await expect(page.locator('[data-marquee-toggle]')).toBeHidden();
 
-      // With motion off the pause button is display:none, so it drops out of the order.
-      const steps = expectedOrderFor(dict, homeHref).filter((step) => step.tag !== 'BUTTON');
+      // Under reduced motion the pause button is display:none, so it drops out of the order. The
+      // motion toggle stays: locked with aria-disabled, but still focusable (D-18).
+      const steps = expectedOrderFor(dict, homeHref).filter(
+        (step) => step.name !== dict['roles.pause'],
+      );
       for (const step of steps) {
         await tabAndExpect(page, step);
       }
@@ -422,7 +427,7 @@ test.describe('with prefers-reduced-motion: reduce', () => {
   for (const path of ['/projects/', '/es/projects/', ...detailPages]) {
     test(`${path} has zero WCAG 2.2 AA axe violations under reduced motion`, async ({ page }) => {
       await page.goto(path);
-      await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
+      await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
       const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       expect(violations).toEqual([]);
     });
