@@ -3,11 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { dispatchMotionChange } from '../../src/lib/motion/events';
 import { createLifecycle } from '../../src/lib/motion/lifecycle';
 import type { GsapModules } from '../../src/lib/motion/load-gsap';
-import {
-  createMagnetic,
-  magneticOffset,
-  type MagneticDeps,
-} from '../../src/lib/motion/magnetic';
+import { createMagnetic, magneticOffset, type MagneticDeps } from '../../src/lib/motion/magnetic';
 import { FakeMediaQueryList } from './helpers/fake-media';
 
 const FINE = '(hover: hover) and (pointer: fine)';
@@ -32,7 +28,9 @@ function el(id: string): HTMLElement {
 
 function stubRects(): ReturnType<typeof vi.fn>[] {
   return Object.entries(RECTS).map(([id, r]) => {
-    const spy = vi.fn(() => DOMRect.fromRect({ x: r.left, y: r.top, width: r.width, height: r.height }));
+    const spy = vi.fn(() =>
+      DOMRect.fromRect({ x: r.left, y: r.top, width: r.width, height: r.height }),
+    );
     el(id).getBoundingClientRect = spy;
     return spy;
   });
@@ -104,7 +102,8 @@ function harness(opts: { fine?: boolean; forced?: boolean; reject?: boolean } = 
   );
   const ro = { observe: vi.fn(), disconnect: vi.fn() };
   const deps: MagneticDeps = {
-    matchMedia: (q) => (q === FINE ? fine : q === FORCED ? forced : new FakeMediaQueryList(q, false)),
+    matchMedia: (q) =>
+      q === FINE ? fine : q === FORCED ? forced : new FakeMediaQueryList(q, false),
     loadGsap,
     createResizeObserver: () => ro,
   };
