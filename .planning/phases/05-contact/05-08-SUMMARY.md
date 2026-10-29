@@ -26,12 +26,12 @@ key-decisions:
   - "nyquist_compliant stays false until the 05-08-02 sign-off row is green"
 requirements-completed: []
 duration: about 45 min
-completed: pending sign-off
+completed: 2026-10-28
 ---
 
 # Phase 5 Plan 08: Phase gate (states, measurements, taste) Summary
 
-**Task 1 is done. A new state spec drives the Contact section through initial, pre-selected, validation, sending, failure, success and no-JS states in EN and ES at 1440 and 390. In each state it saves a screenshot and checks: no overflow at 320, the h2 in 2 lines or fewer at 320/390/768/1440, and the submit as the only accent fill. It found one real bug, which is fixed: a 100-character name in the success panel widened the page to 670px at 320. The full gate is green. Task 2 (user sign-off) is pending.**
+**Task 1 is done. A new state spec drives the Contact section through initial, pre-selected, validation, sending, failure, success and no-JS states in EN and ES at 1440 and 390. In each state it saves a screenshot and checks: no overflow at 320, the h2 in 2 lines or fewer at 320/390/768/1440, and the submit as the only accent fill. It found one real bug, which is fixed: a 100-character name in the success panel widened the page to 670px at 320. The full gate is green. Task 2 (user sign-off) was approved on 2026-10-28.**
 
 ## Task Commits
 
@@ -175,7 +175,7 @@ Top three problems (most visible first):
 
 ## Sign-off
 
-**Pending.** Task 2 (user review, VoiceOver, `/security-review`, commit list) is waiting for the user.
+**Approved** by the user on 2026-10-28 (reply: "approved"). Task 2 is complete. The open taste items above are carried to the polish phase.
 
 ## Self-Check: PASSED
 

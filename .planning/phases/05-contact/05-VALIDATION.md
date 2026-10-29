@@ -2,7 +2,7 @@
 phase: 5
 slug: contact
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: true
 created: 2026-10-19
 ---
@@ -63,7 +63,7 @@ created: 2026-10-19
 | 05-07-02 | 05-07 | 6 | HOME-08 | — | Card link href and accessible name | unit | `pnpm vitest run tests/unit/featured-services.test.ts` | ✅ | ✅ |
 | 05-07-03 | 05-07 | 6 | HOME-08 | T-05-32 | `?service=` allow-listed; unknown value leaves "other" | unit + e2e | `pnpm vitest run tests/unit/contact-service-param.test.ts tests/unit/service-preselect.test.ts` | ✅ | ✅ |
 | 05-08-01 | 05-08 | 7 | CONT-01..05, HOME-08 | T-05-33, T-05-35 | Every state: no overflow at 320, h2 ≤ 2 lines, submit the only accent; no secrets in dist | e2e + gate | `pnpm verify && pnpm build:offline && pnpm exec playwright test tests/e2e/contact-states.spec.ts` | ✅ | ✅ |
-| 05-08-02 | 05-08 | 7 | CONT-01..05, HOME-08 | T-05-34 | User review, VoiceOver, `/security-review` | manual checkpoint | user sign-off | n/a | ⬜ pending sign-off |
+| 05-08-02 | 05-08 | 7 | CONT-01..05, HOME-08 | T-05-34 | User review, VoiceOver, `/security-review` | manual checkpoint | user sign-off | n/a | ✅ approved 2026-10-28 |
 
 Status from the 05-08 Task 1 run (2026-10-22): `pnpm verify` 905 unit + 559 e2e green, `pnpm build:offline` 0 network attempts. `nyquist_compliant` stays `false` until the 05-08-02 sign-off row turns green; flip it then.
 
@@ -116,6 +116,6 @@ Requirement → test targets (from research):
 - [x] Wave 0 covers all MISSING references
 - [x] No watch-mode flags
 - [x] Feedback latency < 60s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending
