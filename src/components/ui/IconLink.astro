@@ -3,6 +3,7 @@ import IconArrowUpRight from '@tabler/icons/outline/arrow-up-right.svg';
 
 // External icon-only link (44x44). aria-label overrides content, so the new-tab hint is part of it too;
 // the sr-only copy keeps the hint in the DOM text. rel blocks reverse tabnabbing (T-03-01).
+// Magnetic (D-12): the link keeps the 44px hit area and focus outline; only the inner face moves.
 interface Props {
   href: string;
   label: string;
@@ -17,9 +18,12 @@ const { href, label, newTabHint } = Astro.props;
   target="_blank"
   rel="noopener noreferrer"
   aria-label={`${label} ${newTabHint}`}
+  data-magnetic="link"
   class="text-ink hover:text-ink-muted focus-visible:outline-accent inline-flex min-h-11 min-w-11 items-center justify-center gap-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-150"
 >
-  <slot />
-  <span class="sr-only">{newTabHint}</span>
-  <IconArrowUpRight aria-hidden="true" focusable="false" class="size-4" />
+  <span data-magnetic-face class="inline-flex items-center justify-center gap-0.5">
+    <slot />
+    <span class="sr-only">{newTabHint}</span>
+    <IconArrowUpRight aria-hidden="true" focusable="false" class="size-4" />
+  </span>
 </a>

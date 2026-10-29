@@ -50,6 +50,17 @@ describe('LatestWork', () => {
     expect(link).toMatch(/<svg[^>]*aria-hidden="true"/);
   });
 
+  it('makes See all a magnetic link whose face carries the underline (Phase 6 D-12)', async () => {
+    const link = seeAllLink(await render(three), '/projects/');
+    const shell = /<a [^>]*>/.exec(link)?.[0] ?? '';
+    expect(shell).toContain('data-magnetic="link"');
+    expect(shell).not.toContain('data-reveal');
+    expect(shell).not.toMatch(/\shover:underline/);
+    const face = /<span[^>]*data-magnetic-face[^>]*>/.exec(link)?.[0] ?? '';
+    expect(face).toContain('group-hover/link:underline');
+    expect(face).toContain(' gap-2');
+  });
+
   it('links to /es/projects/ with the Spanish label (es)', async () => {
     const html = await render(three, 'es');
     expect(html).toContain(es['work.heading']);

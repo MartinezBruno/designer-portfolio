@@ -59,11 +59,16 @@ async function headingLines(page: Page): Promise<number> {
 async function accentFills(page: Page): Promise<string[]> {
   await page.mouse.move(0, 0);
   return page.locator('section#contact').evaluate((section, accent) => {
-    return [section, ...section.querySelectorAll('*')]
-      .filter((el) => el.checkVisibility() && getComputedStyle(el).backgroundColor === accent)
-      .map((el) =>
-        el.hasAttribute('data-contact-submit') ? 'submit' : el.outerHTML.slice(0, 120),
-      );
+    return (
+      [section, ...section.querySelectorAll('*')]
+        .filter((el) => el.checkVisibility() && getComputedStyle(el).backgroundColor === accent)
+        // Since 06-07 the fill sits on the submit's magnetic face span, not on the button itself.
+        .map((el) =>
+          el.matches('[data-contact-submit] > [data-magnetic-face]')
+            ? 'submit'
+            : el.outerHTML.slice(0, 120),
+        )
+    );
   }, ACCENT);
 }
 

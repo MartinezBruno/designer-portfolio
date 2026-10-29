@@ -4,22 +4,34 @@ import { useTranslations, type Locale } from '../../i18n/t';
 
 // Text form of the IconLink new-tab pattern. The visible slot text is the accessible name, so
 // there is no aria-label; the sr-only hint ends it. rel blocks reverse tabnabbing (T-04-03).
+// The underline lives on the inner span, so it travels with the face when `magnetic` is set
+// (D-12: only "View on Behance"; the embed and unknown-module uses stay still).
 interface Props {
   href: string;
   locale: Locale;
+  magnetic?: boolean;
 }
 
-const { href, locale } = Astro.props;
+const { href, locale, magnetic = false } = Astro.props;
 const t = useTranslations(locale);
+// Spread, not `data-magnetic={undefined}` (exactOptionalPropertyTypes).
+const shellAttrs = magnetic ? { 'data-magnetic': 'link' } : {};
+const faceAttrs = magnetic ? { 'data-magnetic-face': '' } : {};
 ---
 
 <a
   href={href}
   target="_blank"
   rel="noopener noreferrer"
-  class="text-ink decoration-accent focus-visible:outline-accent inline-flex min-h-11 items-center gap-2 text-base font-semibold decoration-2 underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+  {...shellAttrs}
+  class="group/link text-ink focus-visible:outline-accent inline-flex min-h-11 items-center text-base font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
 >
-  <slot />
-  <span class="sr-only">{t('a11y.newTab')}</span>
-  <IconArrowUpRight aria-hidden="true" focusable="false" class="size-4" />
+  <span
+    {...faceAttrs}
+    class="decoration-accent inline-flex items-center gap-2 decoration-2 underline-offset-4 group-hover/link:underline group-focus-visible/link:underline"
+  >
+    <slot />
+    <span class="sr-only">{t('a11y.newTab')}</span>
+    <IconArrowUpRight aria-hidden="true" focusable="false" class="size-4" />
+  </span>
 </a>

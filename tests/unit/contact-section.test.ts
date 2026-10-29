@@ -177,6 +177,22 @@ describe.each([
     expect(html).toContain(escapeHtml(dict['contact.submit']));
   });
 
+  it('splits the submit into a stationary shell and a magnetic face (Phase 6 D-12)', async () => {
+    const html = await render(locale);
+    const submit = openTag(html, /<button[^>]*data-contact-submit[^>]*>/);
+    expect(submit).toContain('data-magnetic="pill"');
+    expect(classTokens(submit)).toEqual(
+      expect.arrayContaining(['h-12', 'rounded-full', 'aria-disabled:cursor-progress']),
+    );
+    expect(classTokens(submit)).not.toContain('bg-accent');
+    const inner = /<button[^>]*data-contact-submit[^>]*>([\s\S]*?)<\/button>/.exec(html)?.[1] ?? '';
+    const face = openTag(inner, /<span[^>]*data-magnetic-face[^>]*>/);
+    expect(classTokens(face)).toEqual(expect.arrayContaining(['bg-accent', 'px-6']));
+    for (const hook of ['data-contact-submit-label', 'data-icon-ready', 'data-icon-sending']) {
+      expect(inner).toContain(hook);
+    }
+  });
+
   it('ships the success panel hidden and exactly one status region', async () => {
     const html = await render(locale);
     expect(openTag(html, /<div[^>]*data-contact-success[^>]*>/)).toMatch(/\shidden[\s>]/);
