@@ -125,7 +125,9 @@
   animation: reveal-failsafe 1ms linear 1500ms forwards;
 }
 
+/* Both ends are the visible state, so the fill never carries interpolation residue. */
 @keyframes reveal-failsafe {
+  from,
   to {
     opacity: 1;
     translate: none;
