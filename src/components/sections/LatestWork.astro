@@ -38,12 +38,20 @@ const t = useTranslations(locale);
       layout="row"
     />
     <p data-reveal="settle" data-reveal-delay="280">
+      <!-- Magnetic (D-12): the link keeps hit area and outline; the face (and its underline) moves.
+           The reveal stays on the <p>, never on the magnetic element. -->
       <a
         href={getRelativeLocaleUrl(locale, 'projects')}
-        class="text-ink decoration-accent focus-visible:outline-accent inline-flex min-h-11 items-center gap-2 text-base font-semibold decoration-2 underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+        data-magnetic="link"
+        class="group/link text-ink focus-visible:outline-accent inline-flex min-h-11 items-center text-base font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
       >
-        {t('work.seeAll')}
-        <IconArrowRight aria-hidden="true" focusable="false" class="size-5" />
+        <span
+          data-magnetic-face
+          class="decoration-accent inline-flex items-center gap-2 decoration-2 underline-offset-4 group-hover/link:underline group-focus-visible/link:underline"
+        >
+          {t('work.seeAll')}
+          <IconArrowRight aria-hidden="true" focusable="false" class="size-5" />
+        </span>
       </a>
     </p>
   </section>

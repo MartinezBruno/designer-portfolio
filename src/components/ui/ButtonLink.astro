@@ -1,7 +1,9 @@
 ---
-import { primaryButton } from '../../lib/ui/button-classes';
+import { primaryFace, primaryShell } from '../../lib/ui/button-classes';
 
-// Accent pill CTA. Reused by the hero and the 404 view. Default slot = label, "icon" slot trails it.
+// Accent pill CTA. Reused by the hero, the contact section, the detail contact band and the 404
+// view. Default slot = label, "icon" slot trails it. Magnetic (D-12): the link is the stationary
+// shell, only the inner face moves.
 interface Props {
   href: string;
 }
@@ -9,7 +11,9 @@ interface Props {
 const { href } = Astro.props;
 ---
 
-<a href={href} class={primaryButton}>
-  <slot />
-  <slot name="icon" />
+<a href={href} class={primaryShell} data-magnetic="pill">
+  <span data-magnetic-face class={primaryFace}>
+    <slot />
+    <slot name="icon" />
+  </span>
 </a>

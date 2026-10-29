@@ -94,6 +94,14 @@ describe('ProjectIntro', () => {
     expect(html).toContain('<span class="sr-only">(opens in a new tab)</span>');
   });
 
+  it('makes View on Behance magnetic: the link stays, its face moves (Phase 6 D-12)', async () => {
+    const html = await render();
+    const link = /<a [^>]*>/.exec(html)?.[0] ?? '';
+    expect(link).toContain('data-magnetic="link"');
+    expect(html.match(/data-magnetic-face/g)).toHaveLength(1);
+    expect(html).toMatch(/<a [^>]*>\s*<span[^>]*data-magnetic-face[^>]*>\s*View on Behance/);
+  });
+
   it('splits the h1 into lines and keeps a lang span intact (Phase 6 D-04)', async () => {
     const h1 = /<h1[^>]*>/.exec(await render())?.[0] ?? '';
     expect(h1).toContain('data-reveal="lines"');

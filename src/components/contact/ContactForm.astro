@@ -15,7 +15,7 @@ import { useTranslations, type Locale } from '../../i18n/t';
 import type { ServiceView } from '../../lib/content/home';
 import { HONEYPOT, LIMITS } from '../../lib/contact/fields';
 import { resolveContactStrings } from '../../lib/contact/strings';
-import { inkButton, primaryButton } from '../../lib/ui/button-classes';
+import { inkButton, primaryFace, primaryShell } from '../../lib/ui/button-classes';
 
 interface Props {
   locale: Locale;
@@ -138,17 +138,21 @@ const dangerTitle = 'text-base font-semibold text-danger inline-flex items-cente
     <button
       type="submit"
       data-contact-submit
-      class:list={[primaryButton, 'aria-disabled:cursor-progress']}
+      data-magnetic="pill"
+      class:list={[primaryShell, 'aria-disabled:cursor-progress']}
     >
-      <span data-contact-submit-label>{t('contact.submit')}</span>
-      <IconArrowRight data-icon-ready aria-hidden="true" focusable="false" class="size-5" />
-      <!-- SVG components take no `hidden` attribute; the script toggles the `hidden` class. -->
-      <IconLoader2
-        data-icon-sending
-        aria-hidden="true"
-        focusable="false"
-        class="hidden size-5 motion-safe:animate-spin"
-      />
+      <!-- Magnetic face (D-12): only this span moves; the button keeps the hit area and outline. -->
+      <span data-magnetic-face class={primaryFace}>
+        <span data-contact-submit-label>{t('contact.submit')}</span>
+        <IconArrowRight data-icon-ready aria-hidden="true" focusable="false" class="size-5" />
+        <!-- SVG components take no `hidden` attribute; the script toggles the `hidden` class. -->
+        <IconLoader2
+          data-icon-sending
+          aria-hidden="true"
+          focusable="false"
+          class="hidden size-5 motion-safe:animate-spin"
+        />
+      </span>
     </button>
   </div>
 
