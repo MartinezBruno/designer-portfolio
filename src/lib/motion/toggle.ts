@@ -3,6 +3,7 @@ import { isOsReduced, setMotionPreference } from './gate';
 import type { Cleanup } from './lifecycle';
 
 const HINT_ID = 'motion-toggle-hint';
+const REDUCE_QUERY = '(prefers-reduced-motion: reduce)';
 
 /**
  * Header motion toggle (MOTN-08, D-15..D-18). Pressing it switches `data-motion` between 'on' and
@@ -44,6 +45,11 @@ export function initMotionToggle(doc: Document): Cleanup | undefined {
   );
 
   onMotionChange(doc, sync, signal);
+  // The lock follows the OS setting even when the resolved state does not change (a stored
+  // 'reduced' choice keeps data-motion 'reduced', so no motion:change fires on unlock).
+  if (typeof win.matchMedia === 'function') {
+    win.matchMedia(REDUCE_QUERY).addEventListener('change', sync, { signal });
+  }
 
   // Esc hides the tooltip while focus stays (WCAG 1.4.13); leaving clears the dismissal.
   button.addEventListener(

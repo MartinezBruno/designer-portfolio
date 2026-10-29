@@ -118,9 +118,13 @@ describe('initMotionToggle', () => {
     expect(button.hasAttribute('aria-describedby')).toBe(false);
     expect(getRoot().hasAttribute('data-locked')).toBe(false);
 
-    // With a stored choice, unlocking keeps it pressed.
+    // With a stored choice the resolved state never changes (no motion:change), but the lock
+    // still follows the OS, and unlocking keeps it pressed.
     button.click();
     mql.fire(true);
+    expect(motion()).toBe('reduced');
+    expect(button.getAttribute('aria-disabled')).toBe('true');
+    expect(getRoot().hasAttribute('data-locked')).toBe(true);
     mql.fire(false);
     expect(motion()).toBe('reduced');
     expect(button.getAttribute('aria-pressed')).toBe('true');
