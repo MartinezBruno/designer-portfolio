@@ -8,6 +8,8 @@ lifecycle.register(
   createReveal({
     now: () => performance.now(),
     createObserver: (cb, init) => new IntersectionObserver(cb, init),
+    // Lines headings rise through SplitText under 'on'; the loader keeps GSAP out of eager chunks.
+    loadGsap,
   }),
 );
 
