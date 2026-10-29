@@ -23,7 +23,7 @@ interface Props {
 const { projects, variant, headingLevel, locale, eagerFirst, layout = 'rhythm' } = Astro.props;
 ---
 
-<ul class="grid grid-cols-1 gap-y-12 md:grid-cols-12 md:gap-x-6">
+<ul class="grid grid-cols-1 gap-y-12 md:grid-cols-12 md:gap-x-6" data-reveal-stagger="90">
   {projects.map((project, index) => (
     <ProjectCard
       project={project}
