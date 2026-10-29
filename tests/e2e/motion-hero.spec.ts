@@ -103,6 +103,32 @@ test.describe('hero load sequence with full motion', () => {
     });
   }
 
+  test('the first frame is never blank (UI-SPEC fallback start values)', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+    // Seek every hero animation to its start so the check is the frame-0 pose, not a later one.
+    const frame0 = await page.evaluate(() => {
+      for (const a of document.getAnimations()) {
+        if (a instanceof CSSAnimation && a.animationName.startsWith('hero-')) {
+          a.pause();
+          a.currentTime = 0;
+        }
+      }
+      const lines = [...document.querySelectorAll<HTMLElement>('[data-hero-line]')].map((mask) => {
+        const inner = mask.querySelector<HTMLElement>('[data-hero-line-inner]');
+        const m = mask.getBoundingClientRect();
+        const i = inner?.getBoundingClientRect();
+        // Visible share of the inner line inside its mask.
+        return i ? (Math.min(m.bottom, i.bottom) - Math.max(m.top, i.top)) / i.height : 0;
+      });
+      const picture = document.querySelector('picture[data-hero-portrait]');
+      return { lines, clip: picture ? getComputedStyle(picture).clipPath : '' };
+    });
+    // Line 1 starts at 60% down (about 40% showing); line 2 waits 90ms in its fill-backwards pose.
+    for (const visible of frame0.lines) expect(visible).toBeGreaterThan(0.3);
+    expect(frame0.clip).toBe('inset(35% 0px 0px)');
+  });
+
   test('the sequence completes with every module script aborted (CSS only)', async ({ page }) => {
     await page.route('**/_astro/**/*.js', (route) => route.abort());
     await page.goto('/', { waitUntil: 'domcontentloaded' });

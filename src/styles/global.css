@@ -180,9 +180,14 @@
   animation: hero-settle var(--t-settle) var(--ease-reveal) 280ms both;
 }
 
+/*
+ * UI-SPEC LCP fallback start values, chosen by the user on 2026-10-29 so the first frame is never
+ * blank (D-03): the headline starts 60% down its mask (its top already shows) and the portrait
+ * starts 35% open.
+ */
 @keyframes hero-rise {
   from {
-    translate: 0 110%;
+    translate: 0 60%;
   }
   to {
     translate: none;
@@ -191,7 +196,7 @@
 /* Explicit inset(0) end: clip-path cannot interpolate from inset() to none. */
 @keyframes hero-shutter {
   from {
-    clip-path: inset(100% 0 0 0);
+    clip-path: inset(35% 0 0 0);
   }
   to {
     clip-path: inset(0);
