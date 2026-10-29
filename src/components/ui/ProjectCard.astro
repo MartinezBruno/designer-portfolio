@@ -52,7 +52,7 @@ const shutter = eager ? {} : { 'data-reveal': 'shutter' as const };
 ---
 
 <li class={sizeClasses[size]}>
-  <article class="group/card relative flex flex-col gap-4">
+  <article data-card data-cursor="view" class="group/card relative flex flex-col gap-4">
     <div class:list={['bg-surface-alt overflow-hidden', aspectClasses[size]]} {...shutter}>
       <Picture
         src={project.cover}
@@ -65,6 +65,8 @@ const shutter = eager ? {} : { 'data-reveal': 'shutter' as const };
         loading={eager ? 'eager' : 'lazy'}
         {...priority}
         decoding="async"
+        pictureAttributes={{ 'data-card-mat': '', class: 'block size-full' }}
+        data-card-image
         class="size-full object-cover object-center"
       />
     </div>

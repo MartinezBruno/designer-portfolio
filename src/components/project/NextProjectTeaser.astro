@@ -48,7 +48,11 @@ const t = useTranslations(locale);
         </div>
       )}
     </div>
-    <article class="group/card relative flex flex-col gap-4 md:col-span-7">
+    <article
+      data-card
+      data-cursor="view"
+      class="group/card relative flex flex-col gap-4 md:col-span-7"
+    >
       <div
         data-reveal="shutter"
         data-reveal-delay="140"
@@ -64,6 +68,8 @@ const t = useTranslations(locale);
           height={next.cover.height}
           loading="lazy"
           decoding="async"
+          pictureAttributes={{ 'data-card-mat': '', class: 'block size-full' }}
+          data-card-image
           class="size-full object-cover object-center"
         />
       </div>
