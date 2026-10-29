@@ -34,7 +34,8 @@ export class FakeIntersectionObserver {
   /** Fires the callback with minimal entries; `intersecting` defaults to true. */
   trigger(targets: readonly Element[], intersecting = true): void {
     const entries = targets.map(
-      (target) => ({ target, isIntersecting: intersecting }) as unknown as IntersectionObserverEntry,
+      (target) =>
+        ({ target, isIntersecting: intersecting }) as unknown as IntersectionObserverEntry,
     );
     this.callback(entries, this as unknown as IntersectionObserver);
   }
