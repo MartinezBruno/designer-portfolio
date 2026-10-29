@@ -41,9 +41,24 @@ const pages = [
   ...detailPages,
 ];
 
+/**
+ * Waits until every finite animation and transition on the page has finished (the hero load
+ * sequence and scroll reveals), so axe never measures colour contrast on a mid-fade element.
+ * Infinite ones (the marquee) are ignored.
+ */
+async function settleMotion(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const finite = document
+      .getAnimations()
+      .filter((a) => a.effect?.getComputedTiming().endTime !== Infinity);
+    await Promise.allSettled(finite.map((a) => a.finished));
+  });
+}
+
 for (const path of pages) {
   test(`${path} has zero WCAG 2.2 AA axe violations`, async ({ page }) => {
     await page.goto(path);
+    await settleMotion(page);
     const { violations } = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
@@ -447,6 +462,7 @@ for (const [path] of keyboardCases) {
 
     const tooltip = page.locator('[data-tool]:focus [data-tooltip]');
     await expect(tooltip).toBeVisible();
+    await settleMotion(page);
 
     const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
     expect(violations).toEqual([]);
