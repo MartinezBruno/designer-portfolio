@@ -1,7 +1,10 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { dispatchMotionChange } from '../../src/lib/motion/events';
 import { createLifecycle } from '../../src/lib/motion/lifecycle';
+import type { GsapModules } from '../../src/lib/motion/load-gsap';
 import { createReveal, revealDelay, type RevealDeps } from '../../src/lib/motion/reveal';
+import { FakeSplitText, makeGsapFake, type GsapFake } from './helpers/fake-gsap';
 import { FakeIntersectionObserver } from './helpers/fake-io';
 
 const FIXTURE = `
@@ -42,6 +45,10 @@ function makeDeps(now = 100): RevealDeps {
 
 function setMotion(state: string): void {
   document.documentElement.dataset['motion'] = state;
+}
+
+async function flush(): Promise<void> {
+  for (let i = 0; i < 5; i += 1) await Promise.resolve();
 }
 
 describe('revealDelay', () => {
@@ -264,5 +271,157 @@ describe('createReveal', () => {
     const live = FakeIntersectionObserver.instances.filter((io) => !io.disconnected);
     expect(live).toHaveLength(1);
     lifecycle.unmount();
+  });
+});
+
+describe('createReveal lines driver (SplitText)', () => {
+  let fake: GsapFake;
+
+  beforeEach(() => {
+    document.body.innerHTML = `${FIXTURE}<h2 id="h2" data-reveal="lines">Second</h2>`;
+    FakeIntersectionObserver.reset();
+    FakeSplitText.reset();
+    fake = makeGsapFake();
+    setMotion('on');
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+    setMotion('off');
+    vi.restoreAllMocks();
+  });
+
+  function withGsap(
+    load: () => Promise<GsapModules> = () => Promise.resolve(fake.modules),
+  ): RevealDeps & { loadGsap: ReturnType<typeof vi.fn> } {
+    return { ...makeDeps(), loadGsap: vi.fn(load) };
+  }
+
+  function switchTo(state: 'on' | 'reduced'): void {
+    setMotion(state);
+    dispatchMotionChange(document, state);
+  }
+
+  it("under 'on' arms lines only after GSAP loads, then splits them on intersection", async () => {
+    const deps = withGsap();
+    const cleanup = createReveal(deps)(document);
+    const io = FakeIntersectionObserver.last();
+    expect(deps.loadGsap).toHaveBeenCalledTimes(1);
+    expect(el('h').hasAttribute('data-reveal-armed')).toBe(false);
+    expect(io.observed.has(el('h'))).toBe(false);
+    // CSS-driven kinds arm at mount.
+    expect(el('a').hasAttribute('data-reveal-armed')).toBe(true);
+
+    await flush();
+    expect(el('h').hasAttribute('data-reveal-armed')).toBe(true);
+    expect(io.observed.has(el('h'))).toBe(true);
+
+    io.trigger([el('h')]);
+    expect(FakeSplitText.created).toHaveLength(1);
+    expect(FakeSplitText.created[0]?.target).toBe(el('h'));
+    expect(el('h').hasAttribute('data-revealed')).toBe(true);
+    expect(el('h').style.getPropertyValue('--reveal-delay')).toBe('');
+    expect(io.observed.has(el('h'))).toBe(false);
+    cleanup?.();
+  });
+
+  it('a lines heading that wraps a link falls back to the CSS reveal', async () => {
+    el('h').innerHTML = '<a href="#">Linked</a>';
+    const cleanup = createReveal(withGsap())(document);
+    await flush();
+    FakeIntersectionObserver.last().trigger([el('h')]);
+    expect(FakeSplitText.created).toHaveLength(0);
+    expect(el('h').hasAttribute('data-revealed')).toBe(true);
+    cleanup?.();
+  });
+
+  it('shows every unrevealed lines heading instantly when GSAP fails to load', async () => {
+    const cleanup = createReveal(withGsap(() => Promise.reject(new Error('chunk 404'))))(document);
+    await flush();
+    for (const id of ['h', 'h2']) {
+      expect(el(id).hasAttribute('data-revealed')).toBe(true);
+      expect(el(id).hasAttribute('data-reveal-instant')).toBe(true);
+    }
+    expect(FakeSplitText.created).toHaveLength(0);
+    cleanup?.();
+  });
+
+  it("under 'reduced' arms lines at mount, fades them and never loads GSAP", () => {
+    setMotion('reduced');
+    const deps = withGsap();
+    const cleanup = createReveal(deps)(document);
+    const io = FakeIntersectionObserver.last();
+    expect(el('h').hasAttribute('data-reveal-armed')).toBe(true);
+    io.trigger([el('h')]);
+    expect(el('h').hasAttribute('data-revealed')).toBe(true);
+    expect(deps.loadGsap).not.toHaveBeenCalled();
+    expect(FakeSplitText.created).toHaveLength(0);
+    cleanup?.();
+  });
+
+  it("switching to 'reduced' mid-rise finishes and reverts the split; waiting lines fade", async () => {
+    const cleanup = createReveal(withGsap())(document);
+    await flush();
+    const io = FakeIntersectionObserver.last();
+    io.trigger([el('h')]);
+    const split = FakeSplitText.created[0];
+    switchTo('reduced');
+    expect(fake.tweens[0]?.progress).toHaveBeenCalledWith(1);
+    expect(split?.reverted).toBe(1);
+    expect(el('h').querySelector('.split-line-mask')).toBeNull();
+
+    io.trigger([el('h2')]);
+    expect(el('h2').hasAttribute('data-revealed')).toBe(true);
+    expect(FakeSplitText.created).toHaveLength(1);
+    cleanup?.();
+  });
+
+  it("switching to 'reduced' while GSAP loads arms the waiting lines for the fade", () => {
+    const cleanup = createReveal(withGsap(() => new Promise(() => undefined)))(document);
+    const io = FakeIntersectionObserver.last();
+    expect(el('h').hasAttribute('data-reveal-armed')).toBe(false);
+    switchTo('reduced');
+    expect(el('h').hasAttribute('data-reveal-armed')).toBe(true);
+    expect(io.observed.has(el('h'))).toBe(true);
+    io.trigger([el('h')]);
+    expect(el('h').hasAttribute('data-revealed')).toBe(true);
+    expect(FakeSplitText.created).toHaveLength(0);
+    cleanup?.();
+  });
+
+  it("switching to 'on' loads GSAP once for waiting lines and leaves revealed ones alone", async () => {
+    setMotion('reduced');
+    const deps = withGsap();
+    const cleanup = createReveal(deps)(document);
+    const io = FakeIntersectionObserver.last();
+    io.trigger([el('h'), el('a')]);
+    const before = el('h').outerHTML;
+
+    switchTo('on');
+    switchTo('on');
+    expect(deps.loadGsap).toHaveBeenCalledTimes(1);
+    await flush();
+    expect(el('h').outerHTML).toBe(before);
+
+    io.trigger([el('h2')]);
+    expect(FakeSplitText.created).toHaveLength(1);
+    expect(FakeSplitText.created[0]?.target).toBe(el('h2'));
+    cleanup?.();
+  });
+
+  it('cleanup reverts the GSAP context (splits restored)', async () => {
+    const cleanup = createReveal(withGsap())(document);
+    await flush();
+    FakeIntersectionObserver.last().trigger([el('h')]);
+    cleanup?.();
+    expect(fake.revert).toHaveBeenCalledTimes(1);
+  });
+
+  it('a load that resolves after cleanup arms nothing', async () => {
+    const cleanup = createReveal(withGsap())(document);
+    cleanup?.();
+    await flush();
+    expect(el('h').hasAttribute('data-reveal-armed')).toBe(false);
+    expect(fake.context).not.toHaveBeenCalled();
   });
 });
