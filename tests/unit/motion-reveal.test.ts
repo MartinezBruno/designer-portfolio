@@ -340,9 +340,11 @@ describe('createReveal', () => {
       lifecycle.mount();
     }
     expect(lifecycle.activeCleanups).toBe(1);
+    // One scroll trigger, plus the current mount's one-shot viewport pass (its callback has not run).
     const live = FakeIntersectionObserver.instances.filter((io) => !io.disconnected);
-    expect(live).toHaveLength(1);
+    expect(live.map((io) => io.init.rootMargin).sort()).toEqual(['0px', '0px 0px -12% 0px']);
     lifecycle.unmount();
+    expect(FakeIntersectionObserver.instances.every((io) => io.disconnected)).toBe(true);
   });
 });
 

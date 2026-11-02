@@ -143,7 +143,27 @@ export function createReveal(deps: RevealDeps): PageInit {
 
     // Arm only once the observer exists (Pitfall 1): if creating it throws, nothing is armed and
     // the CSS failsafe still shows every element.
+    let mountPass: ReturnType<RevealDeps['createObserver']> | undefined;
+    let mountPassDone = false;
     try {
+      // Mount-time viewport pass (06-10 review): an element already on the first screen but inside
+      // the trigger's bottom 12% would otherwise stay blank until the first scroll. A one-shot
+      // observer with no margin reveals what is visible now, as one staggered batch, then goes
+      // away. Created first, so its initial callback runs before the trigger's and owns the batch.
+      mountPass = deps.createObserver(
+        (entries) => {
+          if (mountPassDone) return;
+          mountPassDone = true;
+          mountPass?.disconnect();
+          const batch: HTMLElement[] = [];
+          for (const entry of entries) {
+            const target = entry.target as HTMLElement;
+            if (entry.isIntersecting && pending.has(target)) batch.push(target);
+          }
+          if (batch.length > 0) revealBatch(batch);
+        },
+        { rootMargin: '0px', threshold: 0 },
+      );
       observer = deps.createObserver(
         (entries) => {
           const batch: HTMLElement[] = [];
@@ -159,10 +179,12 @@ export function createReveal(deps: RevealDeps): PageInit {
         el.setAttribute('data-reveal-armed', '');
         pending.add(el);
         observer.observe(el);
+        mountPass.observe(el);
       }
     } catch (err) {
       for (const el of toArm) el.removeAttribute('data-reveal-armed');
       pending.clear();
+      mountPass?.disconnect();
       observer?.disconnect();
       throw err;
     }
@@ -260,6 +282,7 @@ export function createReveal(deps: RevealDeps): PageInit {
 
     return () => {
       ac.abort();
+      mountPass?.disconnect();
       observer?.disconnect();
       splits.clear();
       ctx?.revert();
