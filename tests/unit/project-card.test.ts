@@ -210,6 +210,25 @@ describe('project card hover hooks (Phase 6 MOTN-04)', () => {
   });
 });
 
+describe('project card parallax hooks (07-08 MOTN-06)', () => {
+  it('a lazy card has an overflow-clip parallax frame and a parallax image', async () => {
+    const html = await render({ eager: false });
+    const frame = mediaTag(html);
+    expect(frame).toContain('data-parallax-frame');
+    expect(classTokens(frame)).toContain('overflow-clip');
+    expect(classTokens(frame)).not.toContain('overflow-hidden');
+    expect(html).toMatch(/<img[^>]*\bdata-parallax\b(?!-)/);
+    expect(html.match(/data-parallax-frame/g)).toHaveLength(1);
+    expect(html.match(/data-parallax(?!-)/g)).toHaveLength(1);
+  });
+
+  it('the eager (LCP) cover never moves', async () => {
+    const html = await render({ eager: true });
+    expect(html).not.toContain('data-parallax');
+    expect(classTokens(mediaTag(html))).toContain('overflow-clip');
+  });
+});
+
 describe('project card safety', () => {
   it('escapes a hostile title (T-03-06)', async () => {
     const html = await render({ project: { title: '<script>x</script>' } });

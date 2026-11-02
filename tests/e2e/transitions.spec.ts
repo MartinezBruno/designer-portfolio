@@ -372,7 +372,10 @@ async function recordArrival(page: Page): Promise<void> {
     };
     const entranceDone = (el: Element): boolean =>
       el.querySelector('.split-line-mask') === null &&
-      el.getAnimations({ subtree: true }).every((a) => a.playState === 'finished');
+      el
+        .getAnimations({ subtree: true })
+        // 07-08 parallax is scroll-linked: it never finishes while on screen, so only timed ones.
+        .every((a) => !(a.timeline instanceof DocumentTimeline) || a.playState === 'finished');
 
     const isImage = (el: Element): boolean =>
       el.getAttribute('data-reveal') === 'shutter' || el.querySelector('picture') !== null;

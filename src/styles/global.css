@@ -371,6 +371,13 @@ html[data-motion='reduced']::view-transition-new(root) {
   [data-wipe-panel] {
     opacity: 0 !important;
   }
+  /* Paper gets the still Phase 6 box: no drift, no overscan (07-08). */
+  [data-parallax] {
+    animation: none !important;
+    translate: none !important;
+    top: auto !important;
+    height: 100% !important;
+  }
 }
 
 /*
@@ -420,6 +427,63 @@ html[data-motion='reduced']::view-transition-new(root) {
 [data-motion='on'] [data-card]:has(:focus-visible) [data-card-image] {
   scale: 1.05;
   transition: scale 700ms var(--ease-soft);
+}
+
+/*
+ * Parallax (MOTN-06; 07 D-09..D-13, D-18; UI-SPEC "Parallax"; Research Pattern 7, Pitfall 5).
+ * Zero JS: CSS scroll-driven animations. Lazy card covers and the Next-project thumbnail drift
+ * inside their frame as the page scrolls, on every pointer (D-12), under 'on' only. The frame is
+ * `overflow: clip` (not hidden: a hidden frame is a scroll container, and an anonymous view()
+ * timeline on the image would stay stuck), and it names the --px view timeline the image follows.
+ *
+ * Layering (D-13): the frame owns the reveal clip, the <picture> mat the hover clip-path and the
+ * reveal scale, the <img> the hover `scale` transition and this `translate` animation. Separate
+ * properties compose, so each layer still has exactly one transition declaration per state.
+ *
+ * Overscan exists only under 'on': in 'reduced', 'off', print and browsers without scroll
+ * timelines the image is exactly its Phase 6 box (translate none, height = frame). These rules
+ * are unlayered, so the height override beats Tailwind's `size-full` utility (layered).
+ */
+[data-parallax-frame] {
+  --px-overscan: 4%;
+  --px-travel: 3.5%;
+}
+
+@supports (animation-timeline: view()) {
+  [data-motion='on'] [data-parallax-frame] {
+    view-timeline: --px block;
+  }
+  /*
+   * Longhands only, never the `animation` shorthand: the build's CSS minifier folds a shorthand
+   * plus animation-timeline into one `animation: ... --px` declaration, which browsers reject
+   * (the timeline is reset-only in the shorthand), so the whole animation would be dropped.
+   */
+  [data-motion='on'] [data-parallax-frame] [data-parallax] {
+    position: relative;
+    top: calc(var(--px-overscan) * -1);
+    height: calc(100% + 2 * var(--px-overscan));
+    animation-name: parallax;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: --px;
+    animation-range: cover 0% cover 100%;
+  }
+
+  /* Later scroll-linked image rules (the 07-09 detail side entrance) join this gate below. */
+}
+
+/*
+ * Linear: the image tracks the scroll position. Arithmetic (UI-SPEC): the image is 108% of the
+ * frame, 3.5% of 108% = 3.78% of the frame per direction, below the 4% overscan, so an image edge
+ * never enters the frame. Total travel is about 7.6% of the frame (D-10: about 5-10%).
+ */
+@keyframes parallax {
+  from {
+    translate: 0 calc(var(--px-travel) * -1);
+  }
+  to {
+    translate: 0 var(--px-travel);
+  }
 }
 
 /*

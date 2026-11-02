@@ -235,3 +235,70 @@ for (const { width, height } of WIDTHS) {
     });
   }
 }
+
+// 7. Card parallax (07-08): one Home card, one Projects card and the Next-project teaser with the
+// frame entering (15% visible at the bottom), centred and leaving (15% visible at the top). The
+// images are the same in both locales, so EN only. Named 7-{subject}-{width}-{position}.png.
+const PARALLAX_SUBJECTS = [
+  { key: 'home', path: '/', card: 'section[aria-labelledby="work-title"] article[data-card]' },
+  // The second tile: the first is the eager LCP cover, which never drifts.
+  { key: 'projects', path: '/projects/', card: '#main article[data-card] >> nth=1' },
+  {
+    key: 'teaser',
+    path: (expectedProjects('en').find((project) => project.slug === DETAIL_SLUG) ?? { href: '/' })
+      .href,
+    card: 'section[aria-labelledby="next-project-title"] article[data-card]',
+  },
+] as const;
+
+for (const { width, height } of WIDTHS) {
+  test.describe(`7 parallax ${width}`, () => {
+    test.use({ viewport: { width, height } });
+
+    for (const subject of PARALLAX_SUBJECTS) {
+      test(`7 ${subject.key} card at three scroll positions`, async ({ page }) => {
+        await page.goto(subject.path);
+        await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+        const card = page.locator(subject.card).first();
+        const frame = card.locator('[data-parallax-frame]');
+        await expect(frame).toHaveCount(1);
+        for (const position of ['entering', 'centred', 'leaving'] as const) {
+          await frame.evaluate((element, where) => {
+            const rect = element.getBoundingClientRect();
+            const top = rect.top + window.scrollY;
+            const vh = window.innerHeight;
+            const target =
+              where === 'entering'
+                ? top - vh + rect.height * 0.15
+                : where === 'centred'
+                  ? top - (vh - rect.height) / 2
+                  : top + rect.height * 0.85;
+            const max = document.documentElement.scrollHeight - vh;
+            window.scrollTo({ top: Math.max(0, Math.min(max, target)), behavior: 'instant' });
+          }, position);
+          if (position === 'entering') {
+            // Let the shutter open on the first pass so later frames show the image itself.
+            await frame.evaluate((element) => element.scrollIntoView({ block: 'center' }));
+            await expect(frame).toHaveAttribute('data-revealed');
+            await page.waitForTimeout(1000);
+            await frame.evaluate((element) => {
+              const rect = element.getBoundingClientRect();
+              const top = rect.top + window.scrollY;
+              const max = document.documentElement.scrollHeight - window.innerHeight;
+              const target = top - window.innerHeight + rect.height * 0.15;
+              window.scrollTo({ top: Math.max(0, Math.min(max, target)), behavior: 'instant' });
+            });
+          }
+          await page.waitForTimeout(300);
+          await page.evaluate(
+            () =>
+              new Promise((resolve) => {
+                requestAnimationFrame(() => requestAnimationFrame(resolve));
+              }),
+          );
+          await page.screenshot({ path: `${OUT}/7-${subject.key}-${width}-${position}.png` });
+        }
+      });
+    }
+  });
+}
