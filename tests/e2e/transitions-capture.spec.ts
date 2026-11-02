@@ -2,10 +2,12 @@ import { mkdirSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { en, type Dictionary } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
-import { softNavigate } from './helpers/navigation';
+import { wipeRelease } from '../../src/lib/motion/tokens';
+import { settleMotion } from './helpers/motion';
+import { softNavigate, waitForNavigationIdle } from './helpers/navigation';
 
 // Opt-in capture of the Phase 7 navigation-transition screenshots (07 UI-SPEC "Verification",
-// extra items 1, 4 and 5) for the taste-skill review. The behaviour itself is gated by
+// extra items 1, 4, 5 and 6) for the taste-skill review. The behaviour itself is gated by
 // transitions.spec.ts and transitions-reduced.spec.ts. Run with
 //   CAPTURE_TRANSITIONS=1 pnpm exec playwright test tests/e2e/transitions-capture.spec.ts
 // PNGs go to .taste-skill/transitions/ (gitignored), named {item}-{locale}-{width}-{pct}.png.
@@ -129,6 +131,42 @@ for (const { width, height } of WIDTHS) {
         // The link's name is "<code> <language>", as in i18n.spec.
         await language.getByRole('link', { name: target }).click();
         await shoot(page, `4-${locale}-${width}-50`);
+      });
+
+      // 6. The arriving InstaBlogs detail page at release (wipe frozen at 70%, the release point)
+      //    and at settle (07-04, D-16): nothing on the arriving page animates while covered.
+      test('6 detail arrival at release and at settle', async ({ page }) => {
+        await pauseTransitions(page);
+        await page.goto(`${home}projects/`);
+        await settleMotion(page);
+        await armCapture(page, wipeRelease);
+        await page
+          .locator(`main article a[href="${home}projects/${DETAIL_SLUG}/"]`)
+          .first()
+          .click();
+        await expect.poll(() => page.evaluate(() => window.__capturePaused === true)).toBe(true);
+        // The release timer runs at ready + 392 ms whatever the frozen frame shows.
+        await expect
+          .poll(() => page.evaluate(() => !document.documentElement.hasAttribute('data-vt')))
+          .toBe(true);
+        await page.evaluate(
+          () =>
+            new Promise((resolve) => {
+              requestAnimationFrame(() => requestAnimationFrame(resolve));
+            }),
+        );
+        await page.screenshot({ path: `${OUT}/6-release-${locale}-${width}.png` });
+
+        await page.evaluate(() => {
+          for (const animation of document.getAnimations()) {
+            const effect = animation.effect;
+            if (!(effect instanceof KeyframeEffect)) continue;
+            if ((effect.pseudoElement ?? '').startsWith('::view-transition')) animation.play();
+          }
+        });
+        await waitForNavigationIdle(page);
+        await settleMotion(page);
+        await page.screenshot({ path: `${OUT}/6-settle-${locale}-${width}.png` });
       });
 
       // 5. Reduced crossfade at 50% (no panel anywhere).
