@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { durations, eases } from '../../src/lib/motion/tokens';
+import { durations, eases, wipeRelease } from '../../src/lib/motion/tokens';
 
 const css = readFileSync(new URL('../../src/styles/global.css', import.meta.url), 'utf8');
 
@@ -18,6 +18,14 @@ describe('motion tokens', () => {
   it('defines the CSS-only fade and hero durations', () => {
     expect(cssMs('fade')).toBe(320);
     expect(cssMs('hero')).toBe(720);
+  });
+
+  it('defines the Phase 7 navigation tokens (07-02)', () => {
+    expect(cssMs('wipe')).toBe(560);
+    expect(cssMs('wipe')).toBe(durations.wipe * 1000);
+    expect(cssMs('nav-fade')).toBe(320);
+    expect(css).toContain('--wipe-release: 0.7;');
+    expect(wipeRelease).toBe(0.7);
   });
 
   it('defines the three UI-SPEC easing curves', () => {

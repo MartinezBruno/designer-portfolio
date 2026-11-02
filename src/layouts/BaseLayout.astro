@@ -55,6 +55,8 @@ const pathname = Astro.url.pathname;
       <slot />
     </main>
     <SiteFooter locale={locale} />
+    <!-- Phase 7 ink wipe panel (07-02, D-01): parked off-screen, named only under 'on'. -->
+    <div data-wipe-panel aria-hidden="true"></div>
     <CursorFollower locale={locale} />
     <script>
       import '../lib/motion';
