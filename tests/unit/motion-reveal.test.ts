@@ -371,6 +371,15 @@ describe('createReveal lines driver (SplitText)', () => {
     return { ...makeDeps(), loadGsap: vi.fn(load) };
   }
 
+  /** The -12% scroll trigger (the late lines pass is created after it, so `last()` may not be it). */
+  function trigger(): FakeIntersectionObserver {
+    const io = FakeIntersectionObserver.instances.find(
+      (o) => o.init.rootMargin === '0px 0px -12% 0px',
+    );
+    if (!io) throw new Error('no trigger observer');
+    return io;
+  }
+
   function switchTo(state: 'on' | 'reduced'): void {
     setMotion(state);
     dispatchMotionChange(document, state);
@@ -399,11 +408,38 @@ describe('createReveal lines driver (SplitText)', () => {
     cleanup?.();
   });
 
+  it('gives lines armed after GSAP loads their own one-shot viewport pass', async () => {
+    const cleanup = createReveal(withGsap())(document);
+    const main = trigger();
+    await flush();
+    const pass = FakeIntersectionObserver.last();
+    expect(pass).not.toBe(main);
+    expect(pass.init).toEqual({ rootMargin: '0px', threshold: 0 });
+    expect(pass.observed.has(el('h'))).toBe(true);
+    expect(pass.observed.has(el('h2'))).toBe(true);
+    // On screen but inside the trigger's bottom 12%: only the no-margin pass sees it.
+    main.trigger([el('h')], false);
+    pass.trigger([el('h')]);
+    expect(el('h').hasAttribute('data-revealed')).toBe(true);
+    expect(pass.disconnected).toBe(true);
+    expect(el('h2').hasAttribute('data-revealed')).toBe(false);
+    expect(main.observed.has(el('h2'))).toBe(true);
+    cleanup?.();
+  });
+
+  it('cleanup disconnects a late lines pass that never reported', async () => {
+    const cleanup = createReveal(withGsap())(document);
+    await flush();
+    const pass = FakeIntersectionObserver.last();
+    cleanup?.();
+    expect(pass.disconnected).toBe(true);
+  });
+
   it('a lines heading that wraps a link falls back to the CSS reveal', async () => {
     el('h').innerHTML = '<a href="#">Linked</a>';
     const cleanup = createReveal(withGsap())(document);
     await flush();
-    FakeIntersectionObserver.last().trigger([el('h')]);
+    trigger().trigger([el('h')]);
     expect(FakeSplitText.created).toHaveLength(0);
     expect(el('h').hasAttribute('data-revealed')).toBe(true);
     cleanup?.();
@@ -436,7 +472,7 @@ describe('createReveal lines driver (SplitText)', () => {
   it("switching to 'reduced' mid-rise finishes and reverts the split; waiting lines fade", async () => {
     const cleanup = createReveal(withGsap())(document);
     await flush();
-    const io = FakeIntersectionObserver.last();
+    const io = trigger();
     io.trigger([el('h')]);
     const split = FakeSplitText.created[0];
     switchTo('reduced');
@@ -486,7 +522,7 @@ describe('createReveal lines driver (SplitText)', () => {
   it('cleanup reverts the GSAP context (splits restored)', async () => {
     const cleanup = createReveal(withGsap())(document);
     await flush();
-    FakeIntersectionObserver.last().trigger([el('h')]);
+    trigger().trigger([el('h')]);
     cleanup?.();
     expect(fake.revert).toHaveBeenCalledTimes(1);
   });

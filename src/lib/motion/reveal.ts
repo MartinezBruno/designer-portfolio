@@ -219,7 +219,9 @@ export function createReveal(deps: RevealDeps): PageInit {
      * Arms lines headings that waited for a driver. One that the failsafe already showed (in or
      * above the viewport after 1.5s) stays shown instead of blinking out (Pitfall 6).
      */
+    const latePasses = new Set<ReturnType<RevealDeps['createObserver']>>();
     const armWaiting = (): void => {
+      const armed: HTMLElement[] = [];
       for (const el of waitingLines) {
         if (el.hasAttribute('data-revealed')) continue;
         if (shownByFailsafe(el)) {
@@ -229,8 +231,31 @@ export function createReveal(deps: RevealDeps): PageInit {
         el.setAttribute('data-reveal-armed', '');
         pending.add(el);
         observer?.observe(el);
+        armed.push(el);
       }
       waitingLines.clear();
+      if (armed.length === 0) return;
+      // These missed the mount-time viewport pass (06 review WR-01): give them the same one-shot,
+      // no-margin pass, so a heading already on screen inside the bottom 12% reveals now instead
+      // of waiting for a scroll that may never come.
+      let done = false;
+      const pass = deps.createObserver(
+        (entries) => {
+          if (done) return;
+          done = true;
+          pass.disconnect();
+          latePasses.delete(pass);
+          const batch: HTMLElement[] = [];
+          for (const entry of entries) {
+            const target = entry.target as HTMLElement;
+            if (entry.isIntersecting && pending.has(target)) batch.push(target);
+          }
+          if (batch.length > 0) revealBatch(batch);
+        },
+        { rootMargin: '0px', threshold: 0 },
+      );
+      latePasses.add(pass);
+      for (const el of armed) pass.observe(el);
     };
 
     const ensureGsap = (): void => {
@@ -283,6 +308,8 @@ export function createReveal(deps: RevealDeps): PageInit {
     return () => {
       ac.abort();
       mountPass?.disconnect();
+      for (const pass of latePasses) pass.disconnect();
+      latePasses.clear();
       observer?.disconnect();
       splits.clear();
       ctx?.revert();
