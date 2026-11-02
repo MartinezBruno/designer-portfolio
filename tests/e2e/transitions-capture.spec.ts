@@ -302,3 +302,107 @@ for (const { width, height } of WIDTHS) {
     }
   });
 }
+
+// 7 (stack seams, 07-09 D-11a): every seam between two consecutive ImageModules where at least one
+// slides in from the side, at three positions of the moving frame's entry: entering (its top 40 px
+// inside the viewport bottom), mid (about half of its entry range) and settled (the range end).
+// InstaBlogs and Cabrera's are required by the plan; the other detail pages also continue one
+// composition across seams, so they are captured too. EN only (the images are the same).
+// Named 07-stack-{slug}-seam{N}-{position}-{width}.png, N = the lower module's stack index.
+const SEAM_SLUGS = [
+  DETAIL_SLUG,
+  'cabreras-motos-posts',
+  'portfolio-web',
+  'website-reciclick',
+  'purov',
+  'mart',
+] as const;
+const STACK = 'article[aria-labelledby="project-title"] > div.max-w-\\[1400px\\]';
+
+for (const { width, height } of WIDTHS) {
+  test.describe(`7 stack seams ${width}`, () => {
+    test.use({ viewport: { width, height } });
+
+    for (const slug of SEAM_SLUGS) {
+      test(`7 stack seams ${slug}`, async ({ page }) => {
+        test.setTimeout(240_000);
+        const href = expectedProjects('en').find((project) => project.slug === slug)?.href;
+        if (href === undefined) throw new Error(`capture: no project ${slug}`);
+        await page.goto(href);
+        await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+        // Load every lazy image first, so no capture shows an empty frame.
+        await page.evaluate(async () => {
+          for (let y = 0; y < document.documentElement.scrollHeight; y += 600) {
+            window.scrollTo({ top: y, behavior: 'instant' });
+            await new Promise((resolve) => setTimeout(resolve, 40));
+          }
+          await Promise.all(
+            [...document.images].map((image) =>
+              image.complete
+                ? null
+                : new Promise((resolve) => {
+                    image.addEventListener('load', resolve, { once: true });
+                    image.addEventListener('error', resolve, { once: true });
+                  }),
+            ),
+          );
+        });
+        // Seams: [lower stack index, index of the moving module whose entry is captured].
+        const seams = await page.locator(STACK).evaluate((stack) => {
+          const children = [...stack.children];
+          const isImageModule = (element: Element | undefined): boolean =>
+            element !== undefined &&
+            element.querySelectorAll('img').length === 1 &&
+            element.querySelector('[class*="sm:grow-"]') === null;
+          const moves = (element: Element | undefined): boolean =>
+            element?.querySelector('[data-stack-enter]') != null;
+          const result: [number, number][] = [];
+          children.forEach((lower, index) => {
+            const upper = children[index - 1];
+            if (!isImageModule(upper) || !isImageModule(lower)) return;
+            if (moves(lower)) result.push([index, index]);
+            else if (moves(upper)) result.push([index, index - 1]);
+          });
+          return result;
+        });
+        for (const [seam, moving] of seams) {
+          for (const position of ['entering', 'mid', 'settled'] as const) {
+            await page.locator(STACK).evaluate(
+              (stack, [index, where]) => {
+                const frame = stack.children[index]?.querySelector('[data-stack-frame]');
+                if (frame === null || frame === undefined) throw new Error('capture: no frame');
+                const rect = frame.getBoundingClientRect();
+                const top = rect.top + window.scrollY;
+                const vh = window.innerHeight;
+                const pad =
+                  Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) ||
+                  0;
+                const entry = Math.min(rect.height, vh - pad);
+                const frameTop =
+                  where === 'entering'
+                    ? vh - 40
+                    : where === 'mid'
+                      ? vh - 40 - (entry - 40) / 2
+                      : rect.height < vh - pad
+                        ? vh - rect.height
+                        : pad;
+                window.scrollTo({ top: top - frameTop, behavior: 'instant' });
+              },
+              [moving, position] as const,
+            );
+            await page.waitForTimeout(250);
+            await page.evaluate(
+              () =>
+                new Promise((resolve) => {
+                  requestAnimationFrame(() => requestAnimationFrame(resolve));
+                }),
+            );
+            await page.screenshot({
+              path: `${OUT}/07-stack-${slug}-seam${String(seam)}-${position}-${String(width)}.png`,
+            });
+          }
+        }
+      });
+    }
+  });
+}

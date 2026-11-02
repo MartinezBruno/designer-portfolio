@@ -202,6 +202,9 @@ test.describe('side entrance under on (1440)', () => {
         list.slice(1).map((module, index) => {
           const previous = list[index];
           if (previous === undefined) return 0;
+          // A TextModule settles in with its own Phase 6 reveal translate; its pairs are not
+          // part of the image seams this plan touches.
+          if (module.hasAttribute('data-reveal') || previous.hasAttribute('data-reveal')) return 0;
           return module.getBoundingClientRect().top - previous.getBoundingClientRect().bottom;
         }),
       );
@@ -283,6 +286,9 @@ test.describe('side entrance under on (1440)', () => {
     released.forEach((reading, index) => {
       expect(Math.abs(reading.offset - (held[index] ?? Number.NaN))).toBeLessThanOrEqual(0.5);
       expect(reading.viewTransitionNames).toEqual(['none', 'none']);
+      // After a soft navigation each moving image runs exactly one stack-enter animation (the
+      // leak spec's detail page is opted out by data, so this is where the count stays covered).
+      expect(reading.animations).toBe(1);
     });
     expect(record.names.length).toBeGreaterThan(0);
     for (const name of record.names) expect(name).toBe('none');
