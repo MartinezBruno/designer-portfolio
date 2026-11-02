@@ -343,6 +343,24 @@ test.describe('Projects and detail scroll reveals', () => {
   }
 });
 
+// 06 review WR-04: armed but unrevealed content has no failsafe, so print must not drop it.
+test.describe('print shows armed reveals', () => {
+  for (const path of DETAIL_PATHS) {
+    test(`${path} printed before scrolling shows every [data-reveal]`, async ({ page }) => {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto(path);
+      await page.waitForLoadState('load');
+      await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+      // Below-the-fold modules are armed and still hidden on screen.
+      await expect
+        .poll(() => page.locator('[data-reveal][data-reveal-armed]:not([data-revealed])').count())
+        .toBeGreaterThan(0);
+      await page.emulateMedia({ media: 'print' });
+      expect(hiddenCount(await readReveals(page))).toBe(0);
+    });
+  }
+});
+
 test.describe('detail module stack', () => {
   for (const path of DETAIL_PATHS) {
     test(`${path} static stack: no reveal inside, every module image opaque while scrolling`, async ({

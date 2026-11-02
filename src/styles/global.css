@@ -173,6 +173,25 @@
 }
 
 /*
+ * Print and save-as-PDF (06 review WR-04): armed content below the fold has no failsafe, so a
+ * printed page would drop everything the visitor has not scrolled to. Paper gets the end state.
+ * The shutter frame drops its clip; the card mat keeps its own resting inset(0).
+ */
+@media print {
+  [data-reveal],
+  [data-reveal] picture {
+    opacity: 1 !important;
+    translate: none !important;
+    scale: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+  [data-reveal] {
+    clip-path: none !important;
+  }
+}
+
+/*
  * Project imagery hover and focus (MOTN-04, UI-SPEC "Project Imagery Hover and Focus"). Pure CSS,
  * 'on' only; 'reduced' and 'off' have no rules, so nothing changes there (D-14). Layers: the frame
  * owns the reveal clip, the <picture> mat owns the hover clip-path plus the shutter reveal scale,
