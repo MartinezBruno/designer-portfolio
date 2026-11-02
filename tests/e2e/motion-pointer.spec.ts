@@ -251,14 +251,35 @@ test.describe('cursor', () => {
     });
   }
 
-  test('the dot grows over the hero CTA and hides over the message field', async ({ page }) => {
+  test('the dot grows over a link, hides over the hero CTA and the message field', async ({
+    page,
+  }) => {
     await page.goto('/');
     await settled(page);
-    const cta = await centreOf(page.locator(HERO_CTA));
-    await showCursorAt(page, cta.x, cta.y);
+    const nav = await centreOf(
+      page.getByRole('banner').getByRole('link', { name: 'Projects', exact: true }),
+    );
+    await showCursorAt(page, nav.x, nav.y);
     await expect.poll(() => cursorState(page)).toBe('link');
     const dot = page.locator(`${LAYER} [data-cursor-dot]`);
     await expect.poll(() => dot.evaluate((d) => getComputedStyle(d).scale)).toBe('2');
+
+    // 06-10 review decision 3: no accent dot on the accent pill; it returns once the pointer leaves.
+    const cta = await centreOf(page.locator(HERO_CTA));
+    await page.mouse.move(cta.x, cta.y, { steps: 4 });
+    await expect.poll(() => cursorState(page)).toBe('hidden');
+    await expect
+      .poll(() =>
+        page.locator(`${LAYER} [data-cursor-pos]`).evaluate((p) => getComputedStyle(p).opacity),
+      )
+      .toBe('0');
+    await page.mouse.move(cta.x, cta.y - 120, { steps: 4 });
+    await expect.poll(() => cursorState(page)).not.toMatch(/^(none|hidden)$/);
+    await expect
+      .poll(() =>
+        page.locator(`${LAYER} [data-cursor-pos]`).evaluate((p) => getComputedStyle(p).opacity),
+      )
+      .toBe('1');
 
     const field = await centreOf(page.locator('textarea[name="message"]'));
     await page.mouse.move(field.x, field.y);

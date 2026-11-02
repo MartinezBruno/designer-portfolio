@@ -28,6 +28,7 @@ const PAGE = `
   <button id="btn" type="button">Go</button>
   <p id="text">Plain copy</p>
   <textarea id="field"></textarea>
+  <a id="pill" href="#contact" data-magnetic="pill"><span id="pill-face" data-magnetic-face>Let's talk</span></a>
 `;
 
 interface Setter {
@@ -262,6 +263,32 @@ describe('createCursor', () => {
     out(el('card-img'), document.body);
     expect(l.dataset['state']).toBeUndefined();
     expect(l.hasAttribute('data-hidden')).toBe(false);
+    cleanup?.();
+  });
+
+  // 06-10 review decision 3: an accent dot over the accent pill tinted its label.
+  it('hides over an accent pill button and comes back once the pointer leaves it', async () => {
+    const h = harness();
+    const cleanup = createCursor(h.deps)(document);
+    await flush();
+    move(10, 10);
+    const l = layer();
+    expect(l.hasAttribute('data-hidden')).toBe(false);
+
+    over(el('pill-face'));
+    expect(l.hasAttribute('data-hidden')).toBe(true);
+    move(12, 12);
+    expect(l.hasAttribute('data-hidden')).toBe(true);
+
+    out(el('pill-face'), el('text'));
+    expect(l.hasAttribute('data-hidden')).toBe(false);
+    expect(l.dataset['state']).toBeUndefined();
+
+    over(el('pill'));
+    expect(l.hasAttribute('data-hidden')).toBe(true);
+    out(el('pill'), el('btn'));
+    expect(l.hasAttribute('data-hidden')).toBe(false);
+    expect(l.dataset['state']).toBe('link');
     cleanup?.();
   });
 
