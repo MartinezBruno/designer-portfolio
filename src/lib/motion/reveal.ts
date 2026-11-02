@@ -54,6 +54,34 @@ function failsafeFired(el: Element): boolean {
     );
 }
 
+/** Quiet time after the last scroll event that counts as a settled scroll without `scrollend`. */
+const SCROLL_SETTLE_MS = 150;
+
+/**
+ * Calls `cb` when a scroll gesture has settled: on `scrollend` where the browser has it, otherwise
+ * after SCROLL_SETTLE_MS without a `scroll` event (06 review WR-07: older WebKit has no
+ * `scrollend`, and an element stuck inside the bottom 12% at maximum scroll depends on this).
+ */
+export function onScrollSettled(win: Window, cb: () => void, signal: AbortSignal): void {
+  // Reflect.has, not `in`: lib.dom types every Window with onscrollend, which would narrow to never.
+  if (Reflect.has(win, 'onscrollend')) {
+    win.addEventListener('scrollend', cb, { signal });
+    return;
+  }
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  win.addEventListener(
+    'scroll',
+    () => {
+      if (timer !== undefined) clearTimeout(timer);
+      timer = setTimeout(cb, SCROLL_SETTLE_MS);
+    },
+    { passive: true, signal },
+  );
+  signal.addEventListener('abort', () => {
+    if (timer !== undefined) clearTimeout(timer);
+  });
+}
+
 function byDomOrder(a: Element, b: Element): number {
   if (a === b) return 0;
   return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
@@ -232,16 +260,18 @@ export function createReveal(deps: RevealDeps): PageInit {
     );
 
     // Elements near the page end may never cross the -12% trigger line (Pitfall 2).
-    win?.addEventListener(
-      'scrollend',
-      () => {
-        if (pending.size === 0) return;
-        if (win.scrollY + win.innerHeight >= doc.documentElement.scrollHeight - 2) {
-          revealBatch([...pending]);
-        }
-      },
-      { signal: ac.signal },
-    );
+    if (win) {
+      onScrollSettled(
+        win,
+        () => {
+          if (pending.size === 0) return;
+          if (win.scrollY + win.innerHeight >= doc.documentElement.scrollHeight - 2) {
+            revealBatch([...pending]);
+          }
+        },
+        ac.signal,
+      );
+    }
 
     /**
      * Arms lines headings that waited for a driver. One that the failsafe already showed (in or

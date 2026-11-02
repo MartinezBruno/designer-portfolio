@@ -3,7 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { dispatchMotionChange } from '../../src/lib/motion/events';
 import { createLifecycle } from '../../src/lib/motion/lifecycle';
 import type { GsapModules } from '../../src/lib/motion/load-gsap';
-import { createReveal, revealDelay, type RevealDeps } from '../../src/lib/motion/reveal';
+import {
+  createReveal,
+  onScrollSettled,
+  revealDelay,
+  type RevealDeps,
+} from '../../src/lib/motion/reveal';
 import { FakeSplitText, makeGsapFake, type GsapFake } from './helpers/fake-gsap';
 import { FakeIntersectionObserver } from './helpers/fake-io';
 
@@ -125,6 +130,47 @@ describe('revealDelay', () => {
     expect(revealDelay(el('b'), batch)).toBe(140 + 70);
     el('list').dataset['revealStagger'] = 'x';
     expect(revealDelay(el('b'), batch)).toBe(140 + 70);
+  });
+});
+
+describe('onScrollSettled', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('uses scrollend where the browser has it', () => {
+    const win = new EventTarget() as EventTarget & { onscrollend: null };
+    win.onscrollend = null;
+    const cb = vi.fn();
+    const ac = new AbortController();
+    onScrollSettled(win as unknown as Window, cb, ac.signal);
+    win.dispatchEvent(new Event('scroll'));
+    expect(cb).not.toHaveBeenCalled();
+    win.dispatchEvent(new Event('scrollend'));
+    expect(cb).toHaveBeenCalledTimes(1);
+    ac.abort();
+    win.dispatchEvent(new Event('scrollend'));
+    expect(cb).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to 150ms after the last scroll without scrollend support', () => {
+    vi.useFakeTimers();
+    const win = new EventTarget();
+    const cb = vi.fn();
+    const ac = new AbortController();
+    onScrollSettled(win as unknown as Window, cb, ac.signal);
+    win.dispatchEvent(new Event('scroll'));
+    vi.advanceTimersByTime(100);
+    win.dispatchEvent(new Event('scroll'));
+    vi.advanceTimersByTime(100);
+    expect(cb).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(50);
+    expect(cb).toHaveBeenCalledTimes(1);
+
+    win.dispatchEvent(new Event('scroll'));
+    ac.abort();
+    vi.advanceTimersByTime(500);
+    expect(cb).toHaveBeenCalledTimes(1);
   });
 });
 
