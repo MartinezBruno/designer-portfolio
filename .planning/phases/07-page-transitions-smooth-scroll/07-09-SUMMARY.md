@@ -155,7 +155,7 @@ This was run as "a component or a single section" (no draw step, house rules and
 |---|---|
 | `/projects/cabreras-motos-posts/` | 0 FAIL, 5 WARN. `still-page` 14 moving (Phase 6: 13/13/14), not regressed. Same accepted WARNs. |
 | `/es/projects/website-instablogs/` | 1 FAIL `still-page` (6 moving; Phase 6: 5/5/5, the accepted artefact) + same 4 WARNs. Not regressed. |
-| `/projects/website-instablogs/` | See the Self-Check note. The first run printed no report (the 45,800 px page). A re-run was in progress when this summary was written. |
+| `/projects/website-instablogs/` | 1 FAIL `still-page` (6 moving; Phase 6: 5/5/5, the accepted artefact) + WARN `hairline`, `palette-cream`, `first-action`, `no-footage` (all accepted in Phase 6). Not regressed. The first run printed no report on this 45,800 px page; a re-run completed. |
 
   No `overflow`, `clipped-text` or `empty-screens` code was reported on the pages measured.
 - **Critique:**
@@ -227,4 +227,4 @@ None. T-07-23 is mitigated (strict schema plus the unknown-id check, both unit t
 
 - FOUND: src/components/project/StackFrame.astro, tests/e2e/stack-entrance.spec.ts, `@keyframes stack-enter` in src/styles/global.css, `stackMotion` in src/data/project-overrides.json
 - FOUND commits: 3d6aced, 3a03c71, 6d35dd8, 0ff65e8, 172eb8d
-- Open: the EN InstaBlogs inspect.mjs re-run (the project is opted out, so it renders like Phase 6 apart from the stack frames being absent).
+- inspect.mjs results recorded for all three required URLs.
