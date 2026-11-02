@@ -100,10 +100,15 @@ async function inspect(page: Page, cdp: CDPSession, locale: 'en' | 'es'): Promis
     locale === 'en' ? en['cursor.view'] : es['cursor.view'],
   );
   // The pointer move starts finite CSS transitions on the layer; let them end before counting.
+  // Scroll-linked parallax (07-08) never finishes while on screen, so timed ones only.
   await page.evaluate(async () => {
     const finite = document
       .getAnimations()
-      .filter((a) => a.effect?.getComputedTiming().endTime !== Infinity);
+      .filter(
+        (a) =>
+          a.timeline instanceof DocumentTimeline &&
+          a.effect?.getComputedTiming().endTime !== Infinity,
+      );
     await Promise.allSettled(finite.map((a) => a.finished));
   });
 

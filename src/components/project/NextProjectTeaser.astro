@@ -53,10 +53,12 @@ const t = useTranslations(locale);
       data-cursor="view"
       class="group/card relative flex flex-col gap-4 md:col-span-7"
     >
+      {/* Parallax (07-08, D-09): the teaser is never eager, so it always drifts under 'on'. */}
       <div
         data-reveal="shutter"
         data-reveal-delay="140"
-        class="bg-surface-alt aspect-[5/4] overflow-hidden"
+        data-parallax-frame=""
+        class="bg-surface-alt aspect-[5/4] overflow-clip"
       >
         <Picture
           src={next.cover}
@@ -70,6 +72,7 @@ const t = useTranslations(locale);
           decoding="async"
           pictureAttributes={{ 'data-card-mat': '', class: 'block size-full' }}
           data-card-image
+          data-parallax=""
           class="size-full object-cover object-center"
         />
       </div>

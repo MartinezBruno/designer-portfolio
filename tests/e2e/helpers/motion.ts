@@ -15,7 +15,8 @@ export interface SettleOptions {
  * `data-astro-transition` on `html`), because entrance motion is held until then. Waits two frames for the reveal observer's first batch, then for every
  * GSAP line rise to end (split-lines.ts reverts its split on complete, so no `.split-line-mask`
  * left means no rise is running; GSAP tweens are not in `getAnimations()`), then for every finite
- * animation and transition to finish. Infinite ones (the marquee) are ignored. Without
+ * time-based animation and transition to finish. Infinite ones (the marquee) and scroll-linked
+ * ones (07-08 parallax, which never finish while on screen) are ignored. Without
  * `scrollThrough`, elements still waiting below the fold sit at opacity 0, which axe treats as
  * hidden; the no-JS and failsafe e2e prove they become visible.
  */
@@ -60,7 +61,12 @@ export async function settleMotion(page: Page, options: SettleOptions = {}): Pro
   await page.evaluate(async () => {
     const finite = document
       .getAnimations()
-      .filter((a) => a.effect?.getComputedTiming().endTime !== Infinity);
+      // Scroll-linked ones (07-08 parallax) never finish while on screen: timed ones only.
+      .filter(
+        (a) =>
+          a.timeline instanceof DocumentTimeline &&
+          a.effect?.getComputedTiming().endTime !== Infinity,
+      );
     await Promise.allSettled(finite.map((a) => a.finished));
   });
 }

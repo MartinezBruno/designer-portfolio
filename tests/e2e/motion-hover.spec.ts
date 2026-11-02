@@ -90,7 +90,11 @@ async function settle(card: Locator): Promise<void> {
     )
     .toBe(true);
   await card.evaluate(async (article) => {
-    await Promise.all(article.getAnimations({ subtree: true }).map((a) => a.finished));
+    // 07-08 parallax is scroll-linked and never finishes while on screen: wait for timed ones.
+    const timed = article
+      .getAnimations({ subtree: true })
+      .filter((a) => a.timeline instanceof DocumentTimeline);
+    await Promise.all(timed.map((a) => a.finished));
   });
 }
 

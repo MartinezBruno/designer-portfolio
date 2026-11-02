@@ -43,3 +43,65 @@ describe('motion tokens', () => {
     expect(css).not.toMatch(/visibility:\s*hidden|display:\s*none/);
   });
 });
+
+/** The text inside the block whose `{` is at `open`, braces balanced. */
+function blockAt(open: number): string {
+  let depth = 0;
+  for (let i = open; i < css.length; i += 1) {
+    if (css[i] === '{') depth += 1;
+    if (css[i] === '}') {
+      depth -= 1;
+      if (depth === 0) return css.slice(open + 1, i);
+    }
+  }
+  throw new Error('unbalanced braces in global.css');
+}
+
+/** The selector of the innermost rule in `text` that contains `index`. */
+function selectorAt(text: string, index: number): string {
+  const open = text.lastIndexOf('{', index);
+  const before = Math.max(text.lastIndexOf('}', open), text.lastIndexOf('{', open - 1));
+  return text
+    .slice(before + 1, open)
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .trim();
+}
+
+describe('parallax tokens (07-08, UI-SPEC "Parallax")', () => {
+  const supports = css.indexOf('@supports (animation-timeline: view())');
+
+  it('defines the card and teaser overscan and travel on the frame', () => {
+    expect(css).toMatch(/\[data-parallax-frame\]\s*\{[^}]*--px-overscan:\s*4%;[^}]*\}/);
+    expect(css).toMatch(/\[data-parallax-frame\]\s*\{[^}]*--px-travel:\s*3\.5%;[^}]*\}/);
+  });
+
+  it('keeps the travel inside the overscan (3.5% of 108% < 4%)', () => {
+    expect(0.035 * 1.08).toBeLessThan(0.04);
+  });
+
+  it('has one parallax keyframe and the scroll-timeline support gate', () => {
+    expect(css.match(/@keyframes parallax\b/g)).toHaveLength(1);
+    expect(supports).toBeGreaterThan(-1);
+  });
+
+  it('drives every --px timeline under data-motion on, inside the support gate', () => {
+    const gate = blockAt(css.indexOf('{', supports));
+    const outside = css.replace(gate, '');
+    expect(outside).not.toMatch(/(?:animation|view)-timeline:\s*--px/);
+    const uses = [...gate.matchAll(/(?:animation|view)-timeline:\s*--px/g)];
+    expect(uses.length).toBeGreaterThanOrEqual(2);
+    for (const use of uses) {
+      const selector = selectorAt(gate, use.index);
+      for (const part of selector.split(',')) {
+        expect(part.trim().startsWith("[data-motion='on']")).toBe(true);
+      }
+    }
+  });
+
+  it('resets parallax images in print', () => {
+    const print = blockAt(css.indexOf('{', css.indexOf('@media print')));
+    expect(print).toMatch(/\[data-parallax\]\s*\{[^}]*animation:\s*none !important;/);
+    expect(print).toMatch(/\[data-parallax\]\s*\{[^}]*translate:\s*none !important;/);
+    expect(print).toMatch(/\[data-parallax\]\s*\{[^}]*height:\s*100% !important;/);
+  });
+});

@@ -33,7 +33,12 @@ async function finishAnimations(page: Page): Promise<void> {
   await page.evaluate(async () => {
     const finite = document
       .getAnimations()
-      .filter((a) => a.effect?.getComputedTiming().endTime !== Infinity);
+      // Scroll-linked ones (07-08 parallax) never finish while on screen: timed ones only.
+      .filter(
+        (a) =>
+          a.timeline instanceof DocumentTimeline &&
+          a.effect?.getComputedTiming().endTime !== Infinity,
+      );
     await Promise.allSettled(finite.map((a) => a.finished));
   });
 }

@@ -49,11 +49,19 @@ const sizesFor: Record<TileSize, string> = {
 const priority = eager ? { fetchpriority: 'high' as const } : {};
 // The eager cover is the LCP image: it is never clipped or hidden, so it gets no shutter.
 const shutter = eager ? {} : { 'data-reveal': 'shutter' as const };
+// Parallax (07-08, D-09): for the same reason the eager cover never drifts. The frame is
+// overflow-clip so a named view timeline on it drives the image (Research Pitfall 5).
+const parallaxFrame = eager ? {} : { 'data-parallax-frame': '' };
+const parallaxImage = eager ? {} : { 'data-parallax': '' };
 ---
 
 <li class={sizeClasses[size]}>
   <article data-card data-cursor="view" class="group/card relative flex flex-col gap-4">
-    <div class:list={['bg-surface-alt overflow-hidden', aspectClasses[size]]} {...shutter}>
+    <div
+      class:list={['bg-surface-alt overflow-clip', aspectClasses[size]]}
+      {...shutter}
+      {...parallaxFrame}
+    >
       <Picture
         src={project.cover}
         alt={project.coverAlt}
@@ -67,6 +75,7 @@ const shutter = eager ? {} : { 'data-reveal': 'shutter' as const };
         decoding="async"
         pictureAttributes={{ 'data-card-mat': '', class: 'block size-full' }}
         data-card-image
+        {...parallaxImage}
         class="size-full object-cover object-center"
       />
     </div>

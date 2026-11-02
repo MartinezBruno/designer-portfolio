@@ -68,7 +68,6 @@ async function scrollFrame(page: Page, card: Locator, position: Position): Promi
 }
 
 interface Reading {
-  translateY: number;
   translate: string;
   imageTop: number;
   imageBottom: number;
@@ -84,11 +83,9 @@ function read(card: Locator): Promise<Reading> {
     const image = article.querySelector('img');
     if (frame === null || image === null) throw new Error('parallax: card has no frame or image');
     const translate = getComputedStyle(image).translate;
-    const parts = translate === 'none' ? [] : translate.split(/\s+/);
     const f = frame.getBoundingClientRect();
     const i = image.getBoundingClientRect();
     return {
-      translateY: parts.length > 1 ? Number.parseFloat(parts[1] ?? '0') : 0,
       translate,
       imageTop: i.top,
       imageBottom: i.bottom,
@@ -103,7 +100,7 @@ function read(card: Locator): Promise<Reading> {
 /** Scrolls the card into view and waits for its reveal (shutter and picture scale) to end. */
 async function revealed(page: Page, card: Locator): Promise<void> {
   await scrollFrame(page, card, 'centred');
-  await expect(frameOf(card)).toHaveAttribute('data-revealed', '');
+  await expect(frameOf(card)).toHaveAttribute('data-revealed');
   await card.evaluate(async (article) => {
     // Scroll-linked animations never finish while the frame is on screen: wait for time-based ones.
     const timed = article
@@ -133,13 +130,17 @@ async function expectDrift(page: Page, subject: Subject): Promise<void> {
     expectCovers(reading);
     readings.push(reading);
   }
-  const [entering, , leaving] = readings;
-  if (entering === undefined || leaving === undefined) throw new Error('parallax: no readings');
+  const [entering, centred, leaving] = readings;
+  if (entering === undefined || centred === undefined || leaving === undefined) {
+    throw new Error('parallax: no readings');
+  }
   expect(entering.translate).not.toBe(leaving.translate);
-  // Up while entering, down while leaving (from -travel to +travel).
-  expect(entering.translateY).toBeLessThan(0);
-  expect(leaving.translateY).toBeGreaterThan(0);
-  expect(leaving.translateY - entering.translateY).toBeGreaterThan(4);
+  // The image moves down inside its frame as the page scrolls (from -travel to +travel). Measured
+  // in px from the rects: the computed translate is a percentage of the image.
+  const offset = (reading: Reading): number => reading.imageTop - reading.frameTop;
+  expect(offset(entering)).toBeLessThan(offset(centred));
+  expect(offset(centred)).toBeLessThan(offset(leaving));
+  expect(offset(leaving) - offset(entering)).toBeGreaterThan(4);
 }
 
 async function expectStill(page: Page): Promise<void> {
@@ -226,7 +227,10 @@ test.describe('hover composes with drift (D-13)', () => {
       window.scrollBy({ top: 120, behavior: 'instant' });
     });
     await page.waitForTimeout(250);
-    await frameOf(card).hover();
+    // The stretched title link covers the tile, so move the pointer rather than hover() the frame.
+    const box = await frameOf(card).boundingBox();
+    if (box === null) throw new Error('parallax: frame has no box');
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await page.waitForTimeout(600);
     const state = await imageOf(card).evaluate((image) => {
       const style = getComputedStyle(image);
