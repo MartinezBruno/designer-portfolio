@@ -126,6 +126,11 @@ async function inspect(page: Page, cdp: CDPSession, locale: 'en' | 'es'): Promis
         (a) => a instanceof CSSAnimation && a.animationName === 'parallax',
       ).length,
       parallaxElements: document.querySelectorAll('[data-parallax]').length,
+      // 07-09 detail-stack side entrance: one stack-enter animation per moving image, never stale.
+      stackAnimations: animations.filter(
+        (a) => a instanceof CSSAnimation && a.animationName === 'stack-enter',
+      ).length,
+      stackElements: document.querySelectorAll('[data-stack-enter]').length,
       lenisRoots: document.querySelectorAll('html.lenis').length,
       animations: animations.length,
     };
@@ -134,6 +139,7 @@ async function inspect(page: Page, cdp: CDPSession, locale: 'en' | 'es'): Promis
   expect(invariants.splitMasks).toBe(0);
   expect(invariants.projectTitles).toBe(0);
   expect(invariants.parallaxAnimations).toBe(invariants.parallaxElements);
+  expect(invariants.stackAnimations).toBe(invariants.stackElements);
   expect(invariants.lenisRoots).toBeLessThanOrEqual(1);
 
   const listeners = await listenerCounts(cdp);

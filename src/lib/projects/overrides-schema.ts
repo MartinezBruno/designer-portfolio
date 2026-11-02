@@ -26,6 +26,9 @@ export const OverrideSchema = z.strictObject({
   // Per-image alt text keyed by image id (D-09). Unknown keys and the 125-character limit are
   // checked in validateOverrides, against the snapshot's image ids.
   moduleAlt: z.record(z.string().regex(/^\d+$/), localized).optional(),
+  // 07 D-11a: opt out of the detail-stack side entrance: false = whole project, list = image ids.
+  // Unknown ids are checked in validateOverrides, against the snapshot's image ids.
+  stackMotion: z.union([z.literal(false), z.array(z.string().regex(/^\d+$/))]).optional(),
 });
 
 export const OverridesSchema = z.record(z.string().regex(/^\d+$/), OverrideSchema);

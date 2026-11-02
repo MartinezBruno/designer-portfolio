@@ -9,7 +9,8 @@
       "en": "Grid of nine red social posts with motorcycles and Spanish copy about 100% financing and 0 km bikes.",
       "es": "Cuadrícula de nueve posts rojos con motos y textos sobre financiación al 100% y motos 0 km."
     },
-    "category": "social-media"
+    "category": "social-media",
+    "stackMotion": false
   },
   "227934855": {
     "title": { "en": "PuroV", "es": "PuroV" },
@@ -21,7 +22,18 @@
       "en": "Black PuroV wordmark over orange juice being poured into a glass covered in water droplets.",
       "es": "Logotipo negro de PuroV sobre jugo de naranja que se sirve en un vaso con gotas de agua."
     },
-    "category": "graphic-design"
+    "category": "graphic-design",
+    "stackMotion": [
+      "1308199821",
+      "1449250379",
+      "1449250367",
+      "1449250363",
+      "1450079097",
+      "1449250373",
+      "1449250359",
+      "1450083063",
+      "1308206629"
+    ]
   },
   "226450035": {
     "title": { "en": "Reciclick website", "es": "Web de Reciclick" },
@@ -33,7 +45,8 @@
       "en": "Laptop and phone mockups of the ReciClick landing page with green recycling illustrations.",
       "es": "Mockups de portátil y móvil con la landing de ReciClick e ilustraciones verdes de reciclaje."
     },
-    "category": "web-design"
+    "category": "web-design",
+    "stackMotion": false
   },
   "202447185": {
     "title": { "en": "Portfolio website", "es": "Portfolio web" },
@@ -45,7 +58,8 @@
       "en": "Monitor and phone mockups of a yellow and cream portfolio landing page with an illustrated avatar.",
       "es": "Mockups de monitor y móvil con una landing de portfolio en amarillo y crema y un avatar ilustrado."
     },
-    "category": "web-design"
+    "category": "web-design",
+    "stackMotion": false
   },
   "185594991": {
     "title": { "en": "Visual system", "es": "Sistema visual" },
@@ -69,7 +83,8 @@
       "en": "Desktop, tablet and phone mockups of a remote collaboration landing page on a bright yellow background.",
       "es": "Mockups de escritorio, tablet y móvil con una landing de colaboración remota sobre fondo amarillo."
     },
-    "category": "web-design"
+    "category": "web-design",
+    "stackMotion": false
   },
   "172473551": {
     "title": { "en": "Mart", "es": "Mart" },
@@ -81,6 +96,7 @@
       "en": "White Mart serif logotype with a tulip symbol over a blue-tinted photo of desktop monitors.",
       "es": "Logotipo blanco de Mart con un tulipán sobre una foto azulada de monitores de escritorio."
     },
-    "category": "graphic-design"
+    "category": "graphic-design",
+    "stackMotion": ["1237399189", "1077690335", "1077686211", "1282321591"]
   }
 }

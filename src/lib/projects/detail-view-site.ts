@@ -44,6 +44,16 @@ export function toModuleViews(project: Project, locale: Locale, title: string): 
     return { alt, eager: n === 1 };
   };
   const contentLang = project.contentLang === locale ? null : project.contentLang;
+  // Side entrance (07 D-11a). Only ImageModules move. The count covers eligible images only, in
+  // DOM order, starting at left, and never resets after a collection, text or embed, so two
+  // neighbouring moving images never enter from the same side.
+  const optedOut = project.stackMotion === false ? null : new Set(project.stackMotion);
+  let moving = 0;
+  const entranceOf = (image: SourceImage, eager: boolean): 'left' | 'right' | null => {
+    if (eager || optedOut === null || optedOut.has(image.id)) return null;
+    moving += 1;
+    return moving % 2 === 1 ? 'left' : 'right';
+  };
 
   const views = project.modules.map((module): ModuleView => {
     switch (module.kind) {
@@ -58,6 +68,7 @@ export function toModuleViews(project: Project, locale: Locale, title: string): 
           caption: module.caption === '' ? null : module.caption,
           captionLang: module.caption === '' ? null : contentLang,
           eager,
+          entrance: entranceOf(module.image, eager),
         };
       }
       case 'collection': {

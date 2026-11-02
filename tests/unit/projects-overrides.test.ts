@@ -105,6 +105,31 @@ describe('parseOverrides', () => {
     );
   });
 
+  it('accepts stackMotion false, an id list, an empty list and absence (D-11a)', () => {
+    expect(parseOverrides({ '238078789': { stackMotion: false } })['238078789']?.stackMotion).toBe(
+      false,
+    );
+    expect(
+      parseOverrides({ '238078789': { stackMotion: ['123', '456'] } })['238078789']?.stackMotion,
+    ).toEqual(['123', '456']);
+    expect(parseOverrides({ '238078789': { stackMotion: [] } })['238078789']?.stackMotion).toEqual(
+      [],
+    );
+    expect(parseOverrides({ '238078789': {} })['238078789']?.stackMotion).toBeUndefined();
+  });
+
+  it('rejects stackMotion true', () => {
+    expect(() => parseOverrides({ '238078789': { stackMotion: true } })).toThrow(
+      /^project-overrides: 238078789\.stackMotion: .+\. Fix src\/data\/project-overrides\.json$/,
+    );
+  });
+
+  it('rejects a non-digit stackMotion id', () => {
+    expect(() => parseOverrides({ '238078789': { stackMotion: ['abc'] } })).toThrow(
+      /^project-overrides: 238078789\.stackMotion/,
+    );
+  });
+
   it('rejects a moduleAlt value without es', () => {
     expect(() =>
       parseOverrides({ '238078789': { moduleAlt: { '1450079099': { en: 'A' } } } }),
@@ -206,6 +231,34 @@ describe('validateOverrides', () => {
   });
 });
 
+describe('validateOverrides stackMotion', () => {
+  it('accepts stackMotion ids that match the project images', () => {
+    expect(() =>
+      validateOverrides(sources, { '238078789': { stackMotion: ['1450079100'] } }),
+    ).not.toThrow();
+    expect(() => validateOverrides(sources, { '238078789': { stackMotion: false } })).not.toThrow();
+  });
+
+  it('throws on a stackMotion id that matches no image, even without moduleAlt', () => {
+    expect(() =>
+      validateOverrides(sources, { '238078789': { stackMotion: ['1350000001'] } }),
+    ).toThrow(
+      'project-overrides: stackMotion id 1350000001 for 238078789 matches no image in the snapshot. Fix or remove it in src/data/project-overrides.json',
+    );
+  });
+
+  it('checks stackMotion ids alongside moduleAlt', () => {
+    expect(() =>
+      validateOverrides(sources, {
+        '238078789': {
+          moduleAlt: { '1450079099': alt('A') },
+          stackMotion: ['999'],
+        },
+      }),
+    ).toThrow('project-overrides: stackMotion id 999 for 238078789');
+  });
+});
+
 describe('missingModuleAlts', () => {
   it('counts the images without a moduleAlt entry per project', () => {
     const result = missingModuleAlts(sources, {
@@ -254,6 +307,7 @@ describe('applyOverrides', () => {
       order: 2,
       contentLang: 'en',
       moduleAlt: {},
+      stackMotion: [],
     });
   });
 
@@ -271,6 +325,7 @@ describe('applyOverrides', () => {
       order: null,
       contentLang: 'es',
       moduleAlt: {},
+      stackMotion: [],
     });
   });
 
@@ -281,6 +336,16 @@ describe('applyOverrides', () => {
     expect(first?.moduleAlt).toEqual(moduleAlt);
     expect(first?.moduleAlt).not.toBe(moduleAlt);
     expect(first?.moduleAlt['1450079099']).not.toBe(moduleAlt['1450079099']);
+  });
+
+  it('copies stackMotion: false, a fresh id list, or [] when absent (D-11a)', () => {
+    const ids = ['1450079100'];
+    const listed = applyOverrides(sources, { '238078789': { stackMotion: ids } });
+    expect(listed[0]?.stackMotion).toEqual(ids);
+    expect(listed[0]?.stackMotion).not.toBe(ids);
+    expect(listed[1]?.stackMotion).toEqual([]);
+    const off = applyOverrides(sources, { '238078789': { stackMotion: false } });
+    expect(off[0]?.stackMotion).toBe(false);
   });
 
   it('hidden projects are excluded by sortProjects', () => {

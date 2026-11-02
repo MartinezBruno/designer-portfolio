@@ -26,6 +26,7 @@ const { module, behanceUrl, locale } = Astro.props;
     caption={module.caption}
     captionLang={module.captionLang}
     eager={module.eager}
+    entrance={module.entrance}
   />
 ) : module.kind === 'collection' ? (
   <CollectionModule rows={module.rows} />

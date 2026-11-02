@@ -1,0 +1,20 @@
+---
+/**
+ * Side-entrance clip frame for one detail image (07 D-11a). With `frame` null it renders its slot
+ * alone, so a static image keeps the exact Phase 4/6 markup; otherwise it wraps the slot in an
+ * overflow-clip div carrying the frame attributes (data-stack-frame, intrinsic aspect ratio).
+ */
+interface Props {
+  frame: { 'data-stack-frame': ''; style: string } | null;
+}
+
+const { frame } = Astro.props;
+---
+
+{frame === null ? (
+  <slot />
+) : (
+  <div class="bg-surface-alt overflow-clip" {...frame}>
+    <slot />
+  </div>
+)}
