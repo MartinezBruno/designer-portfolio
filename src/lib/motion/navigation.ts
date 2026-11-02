@@ -46,9 +46,20 @@ declare global {
 /** Hard cap after the swap: a stalled transition must never strand held content (T-07-10). */
 export const RELEASE_CAP_MS = 1200;
 
+/**
+ * Vestibular limit (UI-SPEC "Vestibular", WCAG 2.3.1): at most three ink passes in any one second.
+ * The router aborts a running navigation but still starts a fresh wipe for each click, so rapid
+ * clicking measured five passes in 0.9 s (07-04 e2e). A fourth inside the window is skipped: the
+ * swap lands as an instant cut with no panel. The window carries 100 ms of margin because a pass
+ * is counted at the swap, slightly before its animations start.
+ */
+export const WIPE_LIMIT = 3;
+export const WIPE_WINDOW_MS = 1100;
+
 export interface NavigationDeps {
   setTimeout?: (cb: () => void, ms: number) => number;
   clearTimeout?: (id: number) => void;
+  now?: () => number;
 }
 
 export interface NavigationHandle {
@@ -72,9 +83,14 @@ export function bindNavigation(doc: Document, deps: NavigationDeps = {}): Naviga
     ((id: number): void => {
       window.clearTimeout(id);
     });
+  const now = deps.now ?? ((): number => performance.now());
   const holdMs = Math.round(durations.wipe * wipeRelease * 1000);
+  // Swap times of the wipe passes inside the current vestibular window.
+  let wipeStarts: number[] = [];
 
   let pending: PendingTransition | undefined;
+  // The transition still animating; it outlives the release (D-18 skips it until it finishes).
+  let running: ViewTransition | undefined;
 
   function preventOffNavigation(event: TransitionBeforePreparationEvent): void {
     if (currentMotionState(doc) === 'off') event.preventDefault();
@@ -90,9 +106,19 @@ export function bindNavigation(doc: Document, deps: NavigationDeps = {}): Naviga
 
   function markWipe(event: TransitionBeforeSwapEvent): void {
     if (currentMotionState(doc) !== 'on') return;
-    event.newDocument.documentElement.dataset['wipe'] = 'out';
     // `viewTransition` is typed as always present, but fake events in tests may omit it.
     const transition: ViewTransition | undefined = event.viewTransition;
+    if (transition !== undefined) {
+      const at = now();
+      wipeStarts = wipeStarts.filter((start) => at - start < WIPE_WINDOW_MS);
+      if (wipeStarts.length >= WIPE_LIMIT) {
+        // Skipped inside the update callback: no pseudo-elements are built, so no panel shows.
+        transition.skipTransition();
+        return;
+      }
+      wipeStarts.push(at);
+    }
+    event.newDocument.documentElement.dataset['wipe'] = 'out';
     if (transition === undefined) return;
     wipeOwner = transition;
     void transition.finished
@@ -148,10 +174,15 @@ export function bindNavigation(doc: Document, deps: NavigationDeps = {}): Naviga
       transition.finished.then(settle, settle);
     });
     pending = entry;
+    running = transition;
+    const clearRunning = (): void => {
+      if (running === transition) running = undefined;
+    };
+    transition.finished.then(clearRunning, clearRunning);
   }
 
   function skipOnMotionChange(state: MotionState): void {
-    if (state !== 'on') pending?.transition.skipTransition();
+    if (state !== 'on') running?.skipTransition();
   }
 
   doc.addEventListener('astro:before-preparation', preventOffNavigation, { signal });

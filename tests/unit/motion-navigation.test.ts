@@ -310,6 +310,27 @@ describe('bindNavigation release gate', () => {
     expect(transition.skipTransition).toHaveBeenCalledTimes(1);
   });
 
+  it('still skips after release while the wipe is running (D-18)', async () => {
+    setLiveState('on');
+    const transition = fakeTransition();
+    swap(transition);
+    transition.makeReady();
+    await vi.advanceTimersByTimeAsync(400);
+    expect(document.documentElement.hasAttribute('data-vt')).toBe(false);
+    dispatchMotionChange(document, 'reduced');
+    expect(transition.skipTransition).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not skip a transition that has finished', async () => {
+    setLiveState('on');
+    const transition = fakeTransition();
+    swap(transition);
+    transition.finish();
+    await vi.advanceTimersByTimeAsync(0);
+    dispatchMotionChange(document, 'reduced');
+    expect(transition.skipTransition).not.toHaveBeenCalled();
+  });
+
   it('does not skip when motion changes to on', () => {
     setLiveState('reduced');
     const transition = fakeTransition();
@@ -325,5 +346,52 @@ describe('bindNavigation release gate', () => {
     navigation.unbind();
     dispatchMotionChange(document, 'reduced');
     expect(transition.skipTransition).not.toHaveBeenCalled();
+  });
+});
+
+// 07-04 (UI-SPEC "Vestibular", WCAG 2.3.1): at most three wipe passes in any one-second window.
+describe('bindNavigation wipe rate limit', () => {
+  let now = 0;
+  let navigation: NavigationHandle;
+
+  beforeEach(() => {
+    now = 0;
+    navigation = bindNavigation(document, { now: () => now });
+    setLiveState('on');
+  });
+
+  afterEach(() => {
+    navigation.unbind();
+    delete document.documentElement.dataset['motion'];
+    delete document.documentElement.dataset['wipe'];
+    delete document.documentElement.dataset['vt'];
+  });
+
+  function navigateAt(at: number): FakeTransition {
+    now = at;
+    const transition = fakeTransition();
+    beforeSwap(parse(ARRIVING_WITHOUT_TOGGLE), transition);
+    return transition;
+  }
+
+  it('lets three wipes through and skips a fourth inside the window', () => {
+    const passes = [0, 200, 400].map(navigateAt);
+    for (const transition of passes) expect(transition.skipTransition).not.toHaveBeenCalled();
+    const fourth = navigateAt(600);
+    expect(fourth.skipTransition).toHaveBeenCalledTimes(1);
+  });
+
+  it('a skipped navigation does not count, and the window slides', () => {
+    [0, 200, 400].map(navigateAt);
+    navigateAt(600);
+    // 1150 ms after the first pass: only two passes (200, 400) remain inside the window.
+    const later = navigateAt(1300);
+    expect(later.skipTransition).not.toHaveBeenCalled();
+  });
+
+  it('never limits reduced crossfades (no panel, no flash)', () => {
+    setLiveState('reduced');
+    const fades = [0, 100, 200, 300, 400].map(navigateAt);
+    for (const transition of fades) expect(transition.skipTransition).not.toHaveBeenCalled();
   });
 });
