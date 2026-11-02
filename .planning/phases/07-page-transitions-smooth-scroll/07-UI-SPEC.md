@@ -1,10 +1,11 @@
 ---
 phase: 7
 slug: page-transitions-smooth-scroll
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-11-02
+reviewed_at: 2026-11-02
 ---
 
 # Phase 7 — UI Design Contract
