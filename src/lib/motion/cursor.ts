@@ -16,8 +16,12 @@ const FOLLOW_S = 0.25;
 
 const VIEW = '[data-cursor="view"]';
 const LINK = 'a[href],button,[role="button"],summary,label[for]';
-/** Fields keep their I-beam alone; iframes swallow pointer events, so the dot would freeze. */
-const HIDE_OVER = 'input,textarea,select,iframe';
+/**
+ * Fields keep their I-beam alone; iframes swallow pointer events, so the dot would freeze. The
+ * accent pill hides it too (06-10 review): an accent dot on the accent face tinted the label, and
+ * the face's own pull and hover fill already answer the pointer.
+ */
+const HIDE_OVER = 'input,textarea,select,iframe,[data-magnetic="pill"]';
 
 type Zone = 'view' | 'link' | 'hide' | 'rest';
 

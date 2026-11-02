@@ -174,6 +174,78 @@ describe('createReveal', () => {
     cleanup?.();
   });
 
+  // 06-10 review decision 10: card tops inside the first screen but within the -12% band stayed
+  // blank until the first scroll. A one-shot observer with no margin reveals them at mount.
+  describe('mount-time viewport pass', () => {
+    function mountObserver(): FakeIntersectionObserver {
+      const io = FakeIntersectionObserver.instances.find((o) => o.init.rootMargin === '0px');
+      if (!io) throw new Error('no mount observer');
+      return io;
+    }
+
+    it('observes every armed element with no margin, beside the -12% trigger', () => {
+      const cleanup = createReveal(makeDeps())(document);
+      const mount = mountObserver();
+      expect(mount.init.threshold).toBe(0);
+      expect(FakeIntersectionObserver.last().init.rootMargin).toBe('0px 0px -12% 0px');
+      for (const node of all()) {
+        if (node.dataset['reveal'] === 'lines') continue; // lines wait for GSAP under 'on'
+        expect(mount.observed.has(node)).toBe(true);
+      }
+      cleanup?.();
+    });
+
+    it('reveals what is already in the viewport as one staggered batch, then disconnects', () => {
+      const cleanup = createReveal(makeDeps())(document);
+      const mount = mountObserver();
+      const main = FakeIntersectionObserver.last();
+      mount.trigger([el('cover2'), el('cover1'), el('text1'), el('text2')]);
+      expect(el('cover1').hasAttribute('data-revealed')).toBe(true);
+      expect(el('cover1').hasAttribute('data-reveal-instant')).toBe(false);
+      expect(el('cover1').style.getPropertyValue('--reveal-delay')).toBe('0ms');
+      expect(el('text1').style.getPropertyValue('--reveal-delay')).toBe('70ms');
+      expect(el('cover2').style.getPropertyValue('--reveal-delay')).toBe('90ms');
+      expect(el('text2').style.getPropertyValue('--reveal-delay')).toBe('160ms');
+      expect(main.observed.has(el('cover1'))).toBe(false);
+      expect(mount.disconnected).toBe(true);
+      cleanup?.();
+    });
+
+    it('leaves elements outside the viewport armed for the scroll trigger', () => {
+      const cleanup = createReveal(makeDeps())(document);
+      const mount = mountObserver();
+      const main = FakeIntersectionObserver.last();
+      mount.trigger([el('a')]);
+      mount.trigger([el('b')]); // ignored: the pass runs once
+      expect(el('a').hasAttribute('data-revealed')).toBe(true);
+      expect(el('b').hasAttribute('data-revealed')).toBe(false);
+      expect(el('b').hasAttribute('data-reveal-armed')).toBe(true);
+      expect(main.observed.has(el('b'))).toBe(true);
+      main.trigger([el('b')]);
+      expect(el('b').hasAttribute('data-revealed')).toBe(true);
+      cleanup?.();
+    });
+
+    it('does not reveal twice when both observers report the same element', () => {
+      const cleanup = createReveal(makeDeps())(document);
+      const mount = mountObserver();
+      const main = FakeIntersectionObserver.last();
+      main.trigger([el('a')]);
+      const delay = el('a').style.getPropertyValue('--reveal-delay');
+      mount.trigger([el('a'), el('b')]);
+      expect(el('a').style.getPropertyValue('--reveal-delay')).toBe(delay);
+      expect(el('b').hasAttribute('data-revealed')).toBe(true);
+      cleanup?.();
+    });
+
+    it('cleanup disconnects the mount observer', () => {
+      const cleanup = createReveal(makeDeps())(document);
+      const mount = mountObserver();
+      cleanup?.();
+      expect(mount.disconnected).toBe(true);
+    });
+  });
+
   it('ignores non-intersecting entries', () => {
     const cleanup = createReveal(makeDeps())(document);
     const io = FakeIntersectionObserver.last();
@@ -268,9 +340,11 @@ describe('createReveal', () => {
       lifecycle.mount();
     }
     expect(lifecycle.activeCleanups).toBe(1);
+    // One scroll trigger, plus the current mount's one-shot viewport pass (its callback has not run).
     const live = FakeIntersectionObserver.instances.filter((io) => !io.disconnected);
-    expect(live).toHaveLength(1);
+    expect(live.map((io) => io.init.rootMargin).sort()).toEqual(['0px', '0px 0px -12% 0px']);
     lifecycle.unmount();
+    expect(FakeIntersectionObserver.instances.every((io) => io.disconnected)).toBe(true);
   });
 });
 

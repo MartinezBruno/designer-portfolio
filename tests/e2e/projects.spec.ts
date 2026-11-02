@@ -4,6 +4,7 @@ import { site } from '../../src/data/site';
 import { interpolate } from '../../src/i18n/t';
 import { en } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
+import { settleMotion } from './helpers/motion';
 import { expectedProjects } from './helpers/projects';
 
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -136,6 +137,8 @@ for (const { path, lang, dict, canonical, otherHref } of cases) {
 
     test('has zero WCAG 2.2 AA axe violations', async ({ page }) => {
       await page.goto(path);
+      // Phase 6: the h1 line rise and first card reveals run on load; axe judges the settled page.
+      await settleMotion(page);
       const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       expect(violations).toEqual([]);
     });

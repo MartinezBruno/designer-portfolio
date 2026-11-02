@@ -14,6 +14,7 @@ import {
   type ExpectedDetail,
   type ExpectedProject,
 } from './helpers/projects';
+import { settleMotion } from './helpers/motion';
 
 // Detail pages under axe: one with prose links, one with an embed, one image-led. The slugs are
 // resolved through the helper (snapshot + overrides), so a renamed or hidden project fails here.
@@ -31,6 +32,20 @@ function detailPaths(): string[] {
 
 const detailPages = detailPaths();
 
+// Phase 6 motion-state axe runs (V-18): Home, Projects and one detail page per locale.
+const MOTION_DETAIL_SLUG = 'website-instablogs';
+const motionStateCases = [
+  { path: '/', dict: en },
+  { path: '/es/', dict: es },
+  { path: '/projects/', dict: en },
+  { path: '/es/projects/', dict: es },
+  ...(['en', 'es'] as const).map((locale) => {
+    const detail = expectedDetails(locale).find((entry) => entry.slug === MOTION_DETAIL_SLUG);
+    if (detail === undefined) throw new Error(`a11y: no visible project "${MOTION_DETAIL_SLUG}"`);
+    return { path: detail.href, dict: locale === 'en' ? en : es };
+  }),
+];
+
 const pages = [
   '/',
   '/es/',
@@ -40,30 +55,6 @@ const pages = [
   '/es/404/',
   ...detailPages,
 ];
-
-/**
- * Waits until the page has settled before an axe scan: above-the-fold reveals (Phase 6 D-04) and
- * the hero load sequence fade in on load, and axe blends a mid-fade opacity into its contrast
- * maths. Waits two frames for the reveal observer's first batch, then for every finite animation
- * and transition to finish. Infinite ones (the marquee) are ignored. Elements still waiting below
- * the fold sit at opacity 0, which axe treats as hidden; the no-JS and failsafe e2e prove they
- * become visible.
- */
-async function settleMotion(page: Page): Promise<void> {
-  await page.waitForLoadState('load');
-  await page.evaluate(
-    () =>
-      new Promise((resolve) => {
-        requestAnimationFrame(() => requestAnimationFrame(resolve));
-      }),
-  );
-  await page.evaluate(async () => {
-    const finite = document
-      .getAnimations()
-      .filter((a) => a.effect?.getComputedTiming().endTime !== Infinity);
-    await Promise.allSettled(finite.map((a) => a.finished));
-  });
-}
 
 for (const path of pages) {
   test(`${path} has zero WCAG 2.2 AA axe violations`, async ({ page }) => {
@@ -402,6 +393,7 @@ for (const { href, dict } of embedAxeCases) {
   }) => {
     await page.goto(href);
     await activateFacade(page, dict);
+    await settleMotion(page);
     const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
     expect(violations).toEqual([]);
   });
@@ -417,6 +409,7 @@ test.describe('with prefers-reduced-motion: reduce', () => {
       await page.goto(href);
       await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
       await activateFacade(page, dict);
+      await settleMotion(page);
       const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       expect(violations).toEqual([]);
     });
@@ -426,6 +419,8 @@ test.describe('with prefers-reduced-motion: reduce', () => {
     test(`${path} has zero WCAG 2.2 AA axe violations under reduced motion`, async ({ page }) => {
       await page.goto(path);
       await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
+      // Phase 6 gate (V-18): every reveal has faded in, so axe sees the whole page settled.
+      await settleMotion(page, { scrollThrough: true });
       const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       expect(violations).toEqual([]);
     });
@@ -453,11 +448,132 @@ test.describe('with prefers-reduced-motion: reduce', () => {
     test(`${path} has zero WCAG 2.2 AA axe violations under reduced motion`, async ({ page }) => {
       await page.goto(path);
       await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
+      await settleMotion(page, { scrollThrough: true });
+      const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+      expect(violations).toEqual([]);
+    });
+  }
+
+  // OS-locked toggle (D-18) with its hint tooltip open by keyboard focus: the tooltip is
+  // aria-hidden, the hint reaches assistive tech through aria-describedby.
+  for (const { path, dict } of motionStateCases) {
+    test(`${path} has zero axe violations with the OS-locked toggle tooltip open`, async ({
+      page,
+    }) => {
+      await page.goto(path);
+      await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
+      await settleMotion(page);
+      const toggle = page.getByRole('button', { name: dict['motion.toggle'], exact: true });
+      await expect(toggle).toHaveAttribute('aria-disabled', 'true');
+      // Keyboard focus, so :focus-visible matches and the tooltip shows as it would for a user.
+      await toggle.focus();
+      await page.keyboard.press('Shift+Tab');
+      await page.keyboard.press('Tab');
+      await expect(toggle).toBeFocused();
+      const tooltip = page.locator('[data-motion-tooltip]');
+      await expect(tooltip).toBeVisible();
+      await expect(tooltip.getByText(dict['motion.osLocked'], { exact: true })).toBeVisible();
       await settleMotion(page);
       const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       expect(violations).toEqual([]);
     });
   }
+});
+
+// Phase 6 gate (V-18), 'on': scroll the whole page so every reveal, line rise and shutter has run
+// and finished, then scan. No exclusions: WCAG evaluates the settled state.
+for (const { path } of motionStateCases) {
+  test(`${path} has zero axe violations in 'on' after every reveal settled`, async ({ page }) => {
+    await page.goto(path);
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+    await settleMotion(page, { scrollThrough: true });
+    const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+    expect(violations).toEqual([]);
+  });
+}
+
+/**
+ * Serves `path` with every <script> removed from the document and every script request aborted,
+ * so no site code runs (no head gate, no reveal, no toggle). axe itself needs JavaScript to
+ * inject, so `javaScriptEnabled: false` cannot host it; this reproduces the same page state while
+ * keeping Playwright's own evaluation available. The site has no <noscript> or `scripting` media
+ * query, so nothing else differs from a real JS-off visit (motion.spec.ts covers that one).
+ */
+async function gotoWithoutSiteScripts(page: Page, path: string): Promise<void> {
+  await page.route('**/*', async (route) => {
+    const request = route.request();
+    if (request.resourceType() === 'script') {
+      await route.abort();
+      return;
+    }
+    if (request.resourceType() !== 'document') {
+      await route.continue();
+      return;
+    }
+    const response = await route.fetch();
+    const body = (await response.text()).replace(/<script\b[\s\S]*?<\/script>/gi, '');
+    await route.fulfill({ response, body });
+  });
+  await page.goto(path);
+}
+
+// Phase 6 gate (V-18), JS off: the markup default 'off' shows everything static.
+test.describe('with JavaScript off (site scripts stripped)', () => {
+  for (const { path } of motionStateCases) {
+    test(`${path} has zero axe violations with JS off`, async ({ page }) => {
+      await gotoWithoutSiteScripts(page, path);
+      await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
+      await expect(page.locator('[data-motion-toggle-root]')).toBeHidden();
+      await expect(page.locator('[data-reveal-armed], [data-revealed]')).toHaveCount(0);
+      const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+      expect(violations).toEqual([]);
+    });
+  }
+});
+
+// The stripped-script runs above stand in for JS off; this pins that a real JS-off visit lands in
+// the same state they assert (markup default 'off', toggle not rendered, nothing armed).
+test.describe('with javaScriptEnabled: false (state the stripped runs mirror)', () => {
+  test.use({ javaScriptEnabled: false });
+
+  for (const { path } of motionStateCases) {
+    test(`${path} with JS off is 'off' with no toggle and nothing armed`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
+      await expect(page.locator('[data-motion-toggle-root]')).toBeHidden();
+      await expect(page.locator('[data-reveal-armed], [data-revealed]')).toHaveCount(0);
+    });
+  }
+});
+
+// Mid-reveal sample (UI-SPEC Accessibility Contract): 200ms after scrolling to Services. WCAG
+// judges the settled state (gated strictly above), so a mid-fade contrast finding here is only
+// recorded as transient (the nodes go into a test annotation for the phase SUMMARY). Any rule other
+// than color-contrast fails.
+test(`/ mid-reveal sample (200ms after scrolling to Services) has only transient findings`, async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+  await settleMotion(page);
+  await page.locator('#services-title').evaluate((el) => {
+    el.scrollIntoView({ block: 'start', behavior: 'instant' });
+  });
+  await page.waitForTimeout(200);
+  const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+  const transient = violations.flatMap((violation) =>
+    violation.nodes.map((node) => ({ id: violation.id, target: node.target.join(' ') })),
+  );
+  test.info().annotations.push({
+    type: 'mid-reveal axe',
+    description:
+      transient.length === 0
+        ? 'no findings'
+        : transient.map((entry) => `${entry.id}: ${entry.target}`).join('; '),
+  });
+  expect(
+    violations.map((violation) => violation.id).filter((id) => id !== 'color-contrast'),
+  ).toEqual([]);
 });
 
 for (const [path] of keyboardCases) {
