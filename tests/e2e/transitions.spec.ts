@@ -71,7 +71,8 @@ test.describe('soft navigation between pages', () => {
     );
 
     const language = page.getByRole('navigation', { name: en['lang.label'], exact: true });
-    await softNavigate(page, language.getByRole('link', { name: en['lang.es'], exact: true }));
+    // The link's name is "ES Español" (visible code plus language name), as in i18n.spec.
+    await softNavigate(page, language.getByRole('link', { name: en['lang.es'] }));
     await expect(page).toHaveURL(new RegExp(`/es/projects/${DETAIL_SLUG}/$`));
     await expectSoftArrival(
       page,

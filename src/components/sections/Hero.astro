@@ -28,7 +28,11 @@ const contactHref = `${getRelativeLocaleUrl(locale, '/')}#contact`;
   <div class="grid gap-8 lg:grid-cols-12 lg:items-center">
     <div class="flex flex-col gap-8 lg:col-span-7">
       <!-- Greeting is the headline: always exactly two lines, never an eyebrow above it. -->
-      <h1 id="hero-title" class="font-display text-display -ml-[0.04em] font-semibold">
+      <h1
+        id="hero-title"
+        tabindex="-1"
+        class="font-display text-display -ml-[0.04em] font-semibold"
+      >
         <span class="block" data-hero-line>
           <span class="block" data-hero-line-inner>
             {t('hero.greeting')}

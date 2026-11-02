@@ -62,7 +62,8 @@ test.describe('reduced motion survives soft navigation', () => {
     await expect(page.locator('main h1')).toBeFocused();
 
     const language = page.getByRole('navigation', { name: en['lang.label'], exact: true });
-    await softNavigate(page, language.getByRole('link', { name: en['lang.es'], exact: true }));
+    // The link's name is "ES Español" (visible code plus language name), as in i18n.spec.
+    await softNavigate(page, language.getByRole('link', { name: en['lang.es'] }));
     await expect(html).toHaveAttribute('data-motion', 'reduced');
     await expect(html).toHaveAttribute('lang', 'es');
     await expect(page.locator('main h1')).toBeFocused();

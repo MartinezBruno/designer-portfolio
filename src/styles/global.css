@@ -173,6 +173,15 @@
 }
 
 /*
+ * Programmatic focus targets (07 D-14): after a soft navigation focus moves to the arriving h1,
+ * #main or an anchored section. They are non-interactive, so they take focus without a ring;
+ * every interactive control keeps its own focus-visible ring.
+ */
+:is(h1, main, section)[tabindex='-1']:focus {
+  outline: none;
+}
+
+/*
  * Print and save-as-PDF (06 review WR-04): armed content below the fold has no failsafe, so a
  * printed page would drop everything the visitor has not scrolled to. Paper gets the end state.
  * The shutter frame drops its clip; the card mat keeps its own resting inset(0).
