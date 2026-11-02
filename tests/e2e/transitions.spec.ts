@@ -721,3 +721,174 @@ test.describe('arrival after the wipe (07-04)', () => {
     await expect(page.locator('main h1')).toBeFocused();
   });
 });
+
+// 07-06: card title -> detail h1 morph (D-02; UI-SPEC "Title Morph"; Research Pattern 4, Pitfall 8).
+
+interface MorphRecord {
+  /** Elements named `project-title` in the live (old) document at each before-swap. */
+  liveAtSwap: number[];
+  /** `.split-line-mask` nodes ever inserted into the arriving `#project-title`. */
+  masks: number;
+}
+
+declare global {
+  interface Window {
+    __morph?: MorphRecord;
+  }
+}
+
+/** Counts `project-title` names at before-swap and watches the arriving h1 for a line split. */
+async function recordMorph(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const record: MorphRecord = { liveAtSwap: [], masks: 0 };
+    window.__morph = record;
+    document.addEventListener('astro:before-swap', () => {
+      let count = 0;
+      for (const element of document.querySelectorAll('*')) {
+        if (getComputedStyle(element).viewTransitionName === 'project-title') count += 1;
+      }
+      record.liveAtSwap.push(count);
+    });
+    document.addEventListener('astro:after-swap', () => {
+      const title = document.getElementById('project-title');
+      if (title === null) return;
+      record.masks += title.querySelectorAll('.split-line-mask').length;
+      new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            if (!(node instanceof Element)) continue;
+            if (node.matches('.split-line-mask')) record.masks += 1;
+            record.masks += node.querySelectorAll('.split-line-mask').length;
+          }
+        }
+      }).observe(title, { childList: true, subtree: true });
+    });
+  });
+}
+
+async function morphRecord(page: Page): Promise<MorphRecord> {
+  return page.evaluate(() => window.__morph ?? { liveAtSwap: [], masks: 0 });
+}
+
+async function restingTitleNames(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    let count = 0;
+    for (const element of document.querySelectorAll('*')) {
+      if (getComputedStyle(element).viewTransitionName === 'project-title') count += 1;
+    }
+    return count;
+  });
+}
+
+/** One morph: one name per state, the group pseudo ran, the h1 landed instantly, none at rest. */
+async function expectMorph(page: Page): Promise<void> {
+  const record = await vtRecord(page);
+  expect(record.count).toBe(1);
+  expect(record.pseudos).toContain('::view-transition-group(project-title)');
+  expect(record.names.filter((name) => name === 'project-title')).toHaveLength(1);
+  const morph = await morphRecord(page);
+  expect(morph.liveAtSwap).toEqual([1]);
+  expect(morph.masks).toBe(0);
+  const title = page.locator('#project-title');
+  await expect(title).toHaveAttribute('data-revealed', '');
+  await expect(title).toHaveAttribute('data-reveal-instant', '');
+  expect(await restingTitleNames(page)).toBe(0);
+}
+
+async function expectNoMorph(page: Page): Promise<void> {
+  const record = await vtRecord(page);
+  expect(record.pseudos).not.toContain('::view-transition-group(project-title)');
+  expect(record.names).not.toContain('project-title');
+  expect(await restingTitleNames(page)).toBe(0);
+}
+
+test.describe('morph: card title into the detail h1 (07-06, D-02)', () => {
+  test.beforeEach(async ({ page }) => {
+    await recordViewTransitions(page);
+    await recordMorph(page);
+  });
+
+  test('morph from a Projects full card', async ({ page }) => {
+    await page.goto('/projects/');
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+    await softNavigate(page, page.locator(`main article a[href="/projects/${DETAIL_SLUG}/"]`));
+    await expect(page).toHaveURL(new RegExp(`/projects/${DETAIL_SLUG}/$`));
+    await expectMorph(page);
+    await expect(page.locator('#project-title')).toHaveText(detailTitle('en'));
+  });
+
+  test('morph from a Home compact card', async ({ page }) => {
+    await page.goto('/');
+    const link = page.locator('section[aria-labelledby="work-title"] article h3 a').first();
+    await softNavigate(page, link);
+    await expect(page).toHaveURL(/\/projects\/[^/]+\/$/);
+    await expectMorph(page);
+  });
+
+  test('morph from the Next-project teaser', async ({ page }) => {
+    await page.goto(`/es/projects/${DETAIL_SLUG}/`);
+    const link = page.locator('section[aria-labelledby="next-project-title"] article h3 a');
+    const href = await link.getAttribute('href');
+    await softNavigate(page, link);
+    await expect(page).toHaveURL(new RegExp(`${href ?? 'missing'}$`));
+    await expectMorph(page);
+  });
+
+  test('no morph for a nav link, the EN/ES switch or back', async ({ page }) => {
+    await page.goto(`/projects/${DETAIL_SLUG}/`);
+    const nav = page.getByRole('navigation', { name: en['nav.label'], exact: true });
+    await softNavigate(page, nav.getByRole('link', { name: en['nav.projects'], exact: true }));
+    await expectNoMorph(page);
+
+    await softNavigate(page, page.locator(`main article a[href="/projects/${DETAIL_SLUG}/"]`));
+    await resetVtRecord(page);
+    const language = page.getByRole('navigation', { name: en['lang.label'], exact: true });
+    await softNavigate(page, language.getByRole('link', { name: en['lang.es'] }));
+    await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+    await expectNoMorph(page);
+
+    // Back from the ES detail to the EN detail, then back again from the detail to Projects.
+    await page.goBack();
+    await expect(page).toHaveURL(new RegExp(`/projects/${DETAIL_SLUG}/$`));
+    await waitForNavigationIdle(page);
+    await resetVtRecord(page);
+    await page.goBack();
+    await expect(page).toHaveURL(/\/projects\/$/);
+    await expect.poll(async () => (await vtRecord(page)).count).toBe(1);
+    await waitForNavigationIdle(page);
+    await expectNoMorph(page);
+  });
+
+  test('no morph under reduced motion', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/projects/');
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
+    await softNavigate(page, page.locator(`main article a[href="/projects/${DETAIL_SLUG}/"]`));
+    await expectNoMorph(page);
+  });
+
+  test('a hovered card title keeps its underline (no static wrapper)', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/projects/');
+    await settleMotion(page);
+    const link = page.locator(`main article a[href="/projects/${DETAIL_SLUG}/"]`);
+    await link.hover();
+    const paint = await link.evaluate((anchor) => {
+      const walker = document.createTreeWalker(anchor, NodeFilter.SHOW_TEXT);
+      let text: Node | null = walker.nextNode();
+      while (text !== null && (text.textContent ?? '').trim() === '') text = walker.nextNode();
+      const atomic: string[] = [];
+      for (
+        let el = text?.parentElement ?? null;
+        el !== null && el !== anchor;
+        el = el.parentElement
+      ) {
+        const display = getComputedStyle(el).display;
+        if (display.startsWith('inline-')) atomic.push(display);
+      }
+      return { line: getComputedStyle(anchor).textDecorationLine, atomic };
+    });
+    expect(paint.line).toContain('underline');
+    expect(paint.atomic).toEqual([]);
+  });
+});
