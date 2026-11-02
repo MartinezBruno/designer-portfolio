@@ -30,8 +30,17 @@ function setMotion(state: string): void {
   document.documentElement.dataset['motion'] = state;
 }
 
-function fireAnimationEnd(target: Element): void {
-  target.dispatchEvent(new Event('animationend', { bubbles: true }));
+function fireAnimationEnd(target: Element, type = 'animationend'): void {
+  target.dispatchEvent(new Event(type, { bubbles: true }));
+}
+
+/** happy-dom runs no CSS animations: stub each element's own animation state. */
+function animating(...selectors: string[]): void {
+  for (const selector of selectors) {
+    const el = document.querySelector(selector);
+    if (!el) throw new Error(`fixture ${selector} missing`);
+    el.getAnimations = () => [{ pending: false, playState: 'running' } as Animation];
+  }
 }
 
 describe('createHeroPlayed', () => {
@@ -47,25 +56,57 @@ describe('createHeroPlayed', () => {
   it('returns undefined when there is no hero', () => {
     document.body.innerHTML = '';
     setMotion('on');
-    expect(createHeroPlayed({ now: () => 0 })(document)).toBeUndefined();
+    expect(createHeroPlayed()(document)).toBeUndefined();
   });
 
   it.each(['reduced', 'off'])('marks the hero played at once under %s', (state) => {
     setMotion(state);
-    createHeroPlayed({ now: () => 0 })(document);
+    createHeroPlayed()(document);
     expect(hero().hasAttribute('data-hero-played')).toBe(true);
   });
 
-  it('marks the hero played at once when it mounts after 1000ms under on', () => {
+  it('marks the hero played at once when its animations already ended under on', () => {
     setMotion('on');
-    createHeroPlayed({ now: () => 1000 })(document);
+    const finished = [{ pending: false, playState: 'finished' } as Animation];
+    cta().getAnimations = () => finished;
+    createHeroPlayed()(document);
     expect(hero().hasAttribute('data-hero-played')).toBe(true);
+  });
+
+  it('waits only for the elements still animating at mount', () => {
+    setMotion('on');
+    animating('[data-hero-cta]');
+    const cleanup = createHeroPlayed()(document);
+    expect(hero().hasAttribute('data-hero-played')).toBe(false);
+    fireAnimationEnd(cta());
+    expect(hero().hasAttribute('data-hero-played')).toBe(true);
+    cleanup?.();
+  });
+
+  it('counts a pending animation (not yet started) as still to run', () => {
+    setMotion('on');
+    cta().getAnimations = () => [{ pending: true, playState: 'idle' } as Animation];
+    const cleanup = createHeroPlayed()(document);
+    expect(hero().hasAttribute('data-hero-played')).toBe(false);
+    cleanup?.();
+  });
+
+  it('treats animationcancel like animationend', () => {
+    setMotion('on');
+    animating('[data-hero-cta]', '[data-hero-portrait]');
+    const cleanup = createHeroPlayed()(document);
+    fireAnimationEnd(cta(), 'animationcancel');
+    const portrait = document.querySelector('[data-hero-portrait]');
+    if (portrait) fireAnimationEnd(portrait, 'animationcancel');
+    expect(hero().hasAttribute('data-hero-played')).toBe(true);
+    cleanup?.();
   });
 
   it('waits for the CTA animationend when it mounts early under on', () => {
     setMotion('on');
     document.querySelector('[data-hero-portrait]')?.remove();
-    const cleanup = createHeroPlayed({ now: () => 120 })(document);
+    animating('[data-hero-cta]');
+    const cleanup = createHeroPlayed()(document);
     expect(hero().hasAttribute('data-hero-played')).toBe(false);
 
     // Another hero element finishing does not end the sequence.
@@ -80,7 +121,8 @@ describe('createHeroPlayed', () => {
 
   it('also waits for the portrait, which finishes last (960ms), before marking played', () => {
     setMotion('on');
-    const cleanup = createHeroPlayed({ now: () => 120 })(document);
+    animating('[data-hero-cta]', '[data-hero-portrait]');
+    const cleanup = createHeroPlayed()(document);
     fireAnimationEnd(cta());
     expect(hero().hasAttribute('data-hero-played')).toBe(false);
 
@@ -97,7 +139,8 @@ describe('createHeroPlayed', () => {
 
   it('ignores an animationend that bubbles up from inside the CTA row', () => {
     setMotion('on');
-    const cleanup = createHeroPlayed({ now: () => 0 })(document);
+    animating('[data-hero-cta]');
+    const cleanup = createHeroPlayed()(document);
     const link = cta().querySelector('a');
     if (link) fireAnimationEnd(link);
     expect(hero().hasAttribute('data-hero-played')).toBe(false);
@@ -106,7 +149,8 @@ describe('createHeroPlayed', () => {
 
   it('marks the hero played on any motion:change while waiting', () => {
     setMotion('on');
-    const cleanup = createHeroPlayed({ now: () => 0 })(document);
+    animating('[data-hero-cta]');
+    const cleanup = createHeroPlayed()(document);
     dispatchMotionChange(document, 'reduced');
     expect(hero().hasAttribute('data-hero-played')).toBe(true);
     cleanup?.();
@@ -114,14 +158,15 @@ describe('createHeroPlayed', () => {
 
   it('cleanup removes listeners and keeps data-hero-played', () => {
     setMotion('on');
-    const cleanup = createHeroPlayed({ now: () => 0 })(document);
+    animating('[data-hero-cta]');
+    const cleanup = createHeroPlayed()(document);
     cleanup?.();
     fireAnimationEnd(cta());
     dispatchMotionChange(document, 'reduced');
     expect(hero().hasAttribute('data-hero-played')).toBe(false);
 
     hero().setAttribute('data-hero-played', '');
-    const again = createHeroPlayed({ now: () => 0 })(document);
+    const again = createHeroPlayed()(document);
     again?.();
     expect(hero().hasAttribute('data-hero-played')).toBe(true);
   });

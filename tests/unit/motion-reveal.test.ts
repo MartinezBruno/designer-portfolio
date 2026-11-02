@@ -36,11 +36,17 @@ function all(): HTMLElement[] {
   return [...document.querySelectorAll<HTMLElement>('[data-reveal]')];
 }
 
-function makeDeps(now = 100): RevealDeps {
+function makeDeps(): RevealDeps {
   return {
-    now: () => now,
     createObserver: (cb, init) => new FakeIntersectionObserver(cb, init),
   };
+}
+
+/** happy-dom runs no CSS animations: make every element report a finished CSS failsafe. */
+function failsafeFinished(): void {
+  vi.spyOn(Element.prototype, 'getAnimations').mockReturnValue([
+    { animationName: 'reveal-failsafe', playState: 'finished' } as unknown as Animation,
+  ]);
 }
 
 function setMotion(state: string): void {
@@ -265,7 +271,8 @@ describe('createReveal', () => {
       const top = inGrid ? 1200 : 100;
       return { top, bottom: top + 50, left: 0, right: 100, width: 100, height: 50 } as DOMRect;
     });
-    const cleanup = createReveal(makeDeps(4000))(document);
+    failsafeFinished();
+    const cleanup = createReveal(makeDeps())(document);
     const io = FakeIntersectionObserver.last();
     for (const id of ['h', 'a', 'b', 'c']) {
       expect(el(id).hasAttribute('data-revealed')).toBe(true);
@@ -277,6 +284,33 @@ describe('createReveal', () => {
       expect(el(id).hasAttribute('data-reveal-armed')).toBe(true);
       expect(io.observed.has(el(id))).toBe(true);
     }
+    cleanup?.();
+  });
+
+  it('arms in-view elements whose failsafe has not fired, whatever the page clock says', () => {
+    // A soft navigation mounts with performance.now() far past 1.5s, but the new page's failsafe
+    // is still waiting: everything must be armed, nothing shown instantly.
+    vi.spyOn(performance, 'now').mockReturnValue(60_000);
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(800);
+    vi.spyOn(Element.prototype, 'getAnimations').mockReturnValue([
+      { animationName: 'reveal-failsafe', playState: 'running' } as unknown as Animation,
+    ]);
+    const cleanup = createReveal(makeDeps())(document);
+    for (const id of ['a', 'b', 'c', 'cover1']) {
+      expect(el(id).hasAttribute('data-revealed')).toBe(false);
+      expect(el(id).hasAttribute('data-reveal-armed')).toBe(true);
+    }
+    cleanup?.();
+  });
+
+  it('ignores finished animations other than the failsafe', () => {
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(800);
+    vi.spyOn(Element.prototype, 'getAnimations').mockReturnValue([
+      { animationName: 'hero-settle', playState: 'finished' } as unknown as Animation,
+    ]);
+    const cleanup = createReveal(makeDeps())(document);
+    expect(el('a').hasAttribute('data-revealed')).toBe(false);
+    expect(el('a').hasAttribute('data-reveal-armed')).toBe(true);
     cleanup?.();
   });
 

@@ -6,10 +6,9 @@ import { canSplit, splitAndRise, type SplitHandle } from './split-lines';
 
 /**
  * Everything the reveal effect needs from outside the DOM, injected so unit tests can drive the
- * clock and the observer (happy-dom's IntersectionObserver never calls back).
+ * observer (happy-dom's IntersectionObserver never calls back).
  */
 export interface RevealDeps {
-  now(): number;
   createObserver(
     cb: IntersectionObserverCallback,
     init: IntersectionObserverInit,
@@ -24,8 +23,8 @@ export interface RevealDeps {
 const SELECTOR = '[data-reveal]';
 const PENDING = '[data-reveal]:not([data-revealed])';
 const isLines = (el: HTMLElement): boolean => el.dataset['reveal'] === 'lines';
-/** The CSS failsafe shows unarmed elements at 1500ms; a later mount must not hide them again. */
-const FAILSAFE_MS = 1500;
+/** The CSS failsafe keyframes (global.css): unarmed elements show themselves at 1500ms. */
+const FAILSAFE_ANIMATION = 'reveal-failsafe';
 const MAX_BASE_MS = 600;
 const MAX_STEP_MS = 90;
 const DEFAULT_STEP_MS = 70;
@@ -36,6 +35,23 @@ const MAX_INDEX = 4;
 function parseMs(value: string | undefined, max: number, fallback: number): number {
   if (value === undefined || !/^\d+$/.test(value.trim())) return fallback;
   return Math.min(Number.parseInt(value, 10), max);
+}
+
+/**
+ * Whether the CSS failsafe has already shown `el`. Asks the element's own animation instead of
+ * the page clock (06 review WR-05): the failsafe starts at first style resolution, and a future
+ * soft navigation restarts it on the new page while performance.now() keeps growing. Without
+ * getAnimations() the answer is unknown, so the element is armed as on an early mount.
+ */
+function failsafeFired(el: Element): boolean {
+  if (typeof el.getAnimations !== 'function') return false;
+  return el
+    .getAnimations()
+    .some(
+      (a) =>
+        (a as Partial<CSSAnimation>).animationName === FAILSAFE_ANIMATION &&
+        a.playState === 'finished',
+    );
 }
 
 function byDomOrder(a: Element, b: Element): number {
@@ -136,10 +152,10 @@ export function createReveal(deps: RevealDeps): PageInit {
       for (const el of sorted) finish(el, false, revealDelay(el, sorted));
     };
 
-    // Late mount: the failsafe already showed everything, so whatever is in (or above) the
-    // viewport stays shown; only elements below the fold get armed. One layout read, at mount.
+    // Late mount: the failsafe already showed these, so whatever is in (or above) the viewport
+    // stays shown; only elements below the fold get armed. Layout is read only for those.
     const shownByFailsafe = (el: HTMLElement): boolean =>
-      deps.now() > FAILSAFE_MS && el.getBoundingClientRect().top < (win?.innerHeight ?? 0);
+      failsafeFired(el) && el.getBoundingClientRect().top < (win?.innerHeight ?? 0);
     const showInstantly = (el: HTMLElement): void => {
       el.setAttribute('data-revealed', '');
       el.setAttribute('data-reveal-instant', '');

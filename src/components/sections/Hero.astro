@@ -78,5 +78,5 @@ const contactHref = `${getRelativeLocaleUrl(locale, '/')}#contact`;
 <script>
   import { lifecycle } from '../../lib/motion';
   import { createHeroPlayed } from '../../lib/motion/hero';
-  lifecycle.register(createHeroPlayed({ now: () => performance.now() }));
+  lifecycle.register(createHeroPlayed());
 </script>
