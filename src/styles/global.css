@@ -378,6 +378,11 @@ html[data-motion='reduced']::view-transition-new(root) {
     top: auto !important;
     height: 100% !important;
   }
+  /* Paper gets the still Phase 4/6 detail image: no side entrance (07-09). */
+  [data-stack-enter] {
+    animation: none !important;
+    translate: none !important;
+  }
 }
 
 /*
@@ -469,7 +474,18 @@ html[data-motion='reduced']::view-transition-new(root) {
     animation-range: cover 0% cover 100%;
   }
 
-  /* Later scroll-linked image rules (the 07-09 detail side entrance) join this gate below. */
+  /* Detail-stack side entrance (07-09, D-11a): see the block below the parallax keyframes. */
+  [data-motion='on'] [data-stack-frame] {
+    view-timeline: --stack block;
+  }
+  /* Longhands only, for the same minifier reason as parallax above. */
+  [data-motion='on'] [data-stack-frame] [data-stack-enter] {
+    animation-name: stack-enter;
+    animation-timing-function: var(--ease-reveal);
+    animation-fill-mode: both;
+    animation-timeline: --stack;
+    animation-range: entry 0% entry 100%;
+  }
 }
 
 /*
@@ -483,6 +499,40 @@ html[data-motion='reduced']::view-transition-new(root) {
   }
   to {
     translate: 0 var(--px-travel);
+  }
+}
+
+/*
+ * Detail-stack side entrance (MOTN-06; 07 D-11a, D-10, D-12, D-18; UI-SPEC "Detail-stack side
+ * entrance"; Research Pattern 7, Pitfall 5). Zero JS. Each eligible detail image slides in
+ * horizontally inside its own `overflow: clip` frame ([data-stack-frame], aspect ratio = the
+ * image's, so the stack stays seamless, Phase 4 D-01) while the frame enters the viewport, scrubbed
+ * by scroll, under 'on' only (the gated rules sit in the @supports block above). Sides alternate
+ * left/right over eligible images (set at build time in detail-view-site.ts).
+ *
+ * Arithmetic (UI-SPEC): a one-way travel of 7% of the image's own width (about 101 px full bleed
+ * at 1440, 76 px padded, 27 px at 390), eased out over `entry 0%` to `entry 100%`, settled at
+ * exactly 0. No overscan and no top/height override: once settled nothing is cropped. In 'reduced',
+ * 'off', print and browsers without scroll timelines the image is exactly its Phase 4/6 box.
+ */
+[data-stack-frame] {
+  --stack-travel: 7%;
+}
+
+[data-stack-enter='left'] {
+  --stack-from: -1;
+}
+
+[data-stack-enter='right'] {
+  --stack-from: 1;
+}
+
+@keyframes stack-enter {
+  from {
+    translate: calc(var(--stack-from) * var(--stack-travel)) 0;
+  }
+  to {
+    translate: 0 0;
   }
 }
 

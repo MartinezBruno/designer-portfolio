@@ -2,14 +2,21 @@
 /**
  * One mirrored Behance image (D-01, D-05, D-06). Local file only, square corners, no frame.
  * `block` on picture and img removes the inline baseline gap so the stack is seamless.
+ *
+ * Side entrance (07 D-11a, Phase 4 D-01): an eligible image (entrance not null) sits in its own
+ * overflow-clip frame, inside the padding, sized by the image's intrinsic aspect ratio so the
+ * frame height always equals the image height and the stack stays seamless. The img carries the
+ * side it slides in from; global.css animates it under 'on' only. A static image (eager, opted
+ * out) renders exactly the Phase 4/6 markup.
  */
 import { Picture } from 'astro:assets';
+import StackFrame from './StackFrame.astro';
 import type { ModuleView } from '../../lib/projects/model';
 import { pictureFormat } from '../../lib/ui/picture-format';
 
 type Props = Omit<Extract<ModuleView, { kind: 'image' }>, 'kind'>;
 
-const { image, alt, widths, fullBleed, caption, captionLang, eager } = Astro.props;
+const { image, alt, widths, fullBleed, caption, captionLang, eager, entrance } = Astro.props;
 
 // Literal class strings so Tailwind can see them (UI-SPEC ImageModule).
 const frameClasses = {
@@ -20,28 +27,21 @@ const frame = frameClasses[fullBleed ? 'bleed' : 'padded'];
 // Spreads so lazy images carry no fetchpriority and Spanish-only captions alone get lang.
 const priority = eager ? { fetchpriority: 'high' as const } : {};
 const captionLangAttr = captionLang === null ? {} : { lang: captionLang };
+// Side entrance hooks: data-stack-*, never the parallax hooks, so the 07-03 parallax leak count
+// stays exact.
+const stackFrame =
+  entrance === null
+    ? null
+    : {
+        'data-stack-frame': '' as const,
+        style: `aspect-ratio: ${String(image.width)} / ${String(image.height)}`,
+      };
+const stackImage = entrance === null ? {} : { 'data-stack-enter': entrance };
 ---
 
 {caption === null ? (
   <div class={frame}>
-    <Picture
-      src={image}
-      alt={alt}
-      {...pictureFormat}
-      widths={[...widths]}
-      sizes="(min-width: 1400px) 1400px, 100vw"
-      width={image.width}
-      height={image.height}
-      loading={eager ? 'eager' : 'lazy'}
-      {...priority}
-      decoding="async"
-      pictureAttributes={{ class: 'block' }}
-      class="bg-surface-alt block h-auto w-full"
-    />
-  </div>
-) : (
-  <figure class="m-0">
-    <div class={frame}>
+    <StackFrame frame={stackFrame}>
       <Picture
         src={image}
         alt={alt}
@@ -52,10 +52,33 @@ const captionLangAttr = captionLang === null ? {} : { lang: captionLang };
         height={image.height}
         loading={eager ? 'eager' : 'lazy'}
         {...priority}
+        {...stackImage}
         decoding="async"
         pictureAttributes={{ class: 'block' }}
         class="bg-surface-alt block h-auto w-full"
       />
+    </StackFrame>
+  </div>
+) : (
+  <figure class="m-0">
+    <div class={frame}>
+      <StackFrame frame={stackFrame}>
+        <Picture
+          src={image}
+          alt={alt}
+          {...pictureFormat}
+          widths={[...widths]}
+          sizes="(min-width: 1400px) 1400px, 100vw"
+          width={image.width}
+          height={image.height}
+          loading={eager ? 'eager' : 'lazy'}
+          {...priority}
+          {...stackImage}
+          decoding="async"
+          pictureAttributes={{ class: 'block' }}
+          class="bg-surface-alt block h-auto w-full"
+        />
+      </StackFrame>
     </div>
     <figcaption
       {...captionLangAttr}

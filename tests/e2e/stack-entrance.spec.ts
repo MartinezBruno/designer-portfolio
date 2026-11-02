@@ -16,6 +16,11 @@ const MOVING = 'img[data-stack-enter]';
 
 let subjectHref: string | null = null;
 
+interface Hold {
+  held: number[][];
+  names: string[];
+}
+
 /**
  * The first EN detail page with at least two side-entrance images, so the spec survives the
  * Task 3 opt-outs. Computed once per worker.
@@ -231,29 +236,34 @@ test.describe('side entrance under on (1440)', () => {
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
     await settleMotion(page);
     await page.evaluate(() => {
-      const record: { held: number[][]; names: string[] } = { held: [], names: [] };
-      (window as unknown as { __stackHold: typeof record }).__stackHold = record;
+      const record: Hold = { held: [], names: [] };
+      (window as unknown as { __stackHold: Hold }).__stackHold = record;
+      const sample = (): number[] =>
+        [...document.querySelectorAll('img[data-stack-enter]')].map((image) => {
+          const frame = image.closest('[data-stack-frame]');
+          return image.getBoundingClientRect().left - (frame?.getBoundingClientRect().left ?? 0);
+        });
       const original = document.startViewTransition?.bind(document);
       if (original === undefined) return;
       document.startViewTransition = ((callback?: ViewTransitionUpdateCallback) => {
         const transition = original(callback);
         void transition.ready
           .then(() => {
-            if (!document.documentElement.hasAttribute('data-vt')) return;
-            const images = [...document.querySelectorAll('img[data-stack-enter]')];
-            record.held.push(
-              images.map((image) => {
-                const frame = image.closest('[data-stack-frame]');
-                return (
-                  image.getBoundingClientRect().left - (frame?.getBoundingClientRect().left ?? 0)
-                );
+            const html = document.documentElement;
+            if (!html.hasAttribute('data-vt')) return;
+            for (const element of document.querySelectorAll(
+              '[data-stack-frame], [data-stack-enter]',
+            )) {
+              record.names.push(getComputedStyle(element).viewTransitionName);
+            }
+            // Offsets two frames later, still under the hold (released at 70% of --t-wipe at the
+            // earliest). At `ready` itself the new view timelines have not been sampled yet, so
+            // every image still reads 0 for that one frame, under the ink panel.
+            requestAnimationFrame(() =>
+              requestAnimationFrame(() => {
+                if (html.hasAttribute('data-vt')) record.held.push(sample());
               }),
             );
-            for (const image of images) {
-              const frame = image.closest('[data-stack-frame]');
-              record.names.push(getComputedStyle(image).viewTransitionName);
-              if (frame !== null) record.names.push(getComputedStyle(frame).viewTransitionName);
-            }
           })
           .catch(() => undefined);
         return transition;
@@ -263,8 +273,7 @@ test.describe('side entrance under on (1440)', () => {
     expect(new URL(page.url()).pathname).toBe(href);
     await expect(page.locator('html')).not.toHaveAttribute('data-vt', /.*/);
     const record = await page.evaluate(
-      () =>
-        (window as unknown as { __stackHold: { held: number[][]; names: string[] } }).__stackHold,
+      () => (window as unknown as { __stackHold: Hold }).__stackHold,
     );
     expect(record.held).toHaveLength(1);
     const held = record.held[0] ?? [];
@@ -275,6 +284,7 @@ test.describe('side entrance under on (1440)', () => {
       expect(Math.abs(reading.offset - (held[index] ?? Number.NaN))).toBeLessThanOrEqual(0.5);
       expect(reading.viewTransitionNames).toEqual(['none', 'none']);
     });
+    expect(record.names.length).toBeGreaterThan(0);
     for (const name of record.names) expect(name).toBe('none');
   });
 });
