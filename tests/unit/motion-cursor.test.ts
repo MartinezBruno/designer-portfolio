@@ -23,6 +23,7 @@ const TEMPLATE = `
 
 const PAGE = `
   ${TEMPLATE}
+  <div data-cursor-host data-astro-transition-persist="cursor"></div>
   <article id="card" data-cursor="view"><a id="card-link" href="/p/"><img id="card-img" alt="" /></a></article>
   <a id="cta" href="#contact"><span id="cta-face">Contact</span></a>
   <button id="btn" type="button">Go</button>
@@ -103,7 +104,9 @@ function el(id: string): HTMLElement {
 }
 
 function layers(): HTMLElement[] {
-  return [...document.body.querySelectorAll<HTMLElement>(':scope > [data-cursor-layer]')];
+  // The layer lives in the persisted host, never directly in the swapped body (07 D-05).
+  expect(document.body.querySelectorAll(':scope > [data-cursor-layer]')).toHaveLength(0);
+  return [...document.querySelectorAll<HTMLElement>('[data-cursor-host] > [data-cursor-layer]')];
 }
 
 function layer(): HTMLElement {
@@ -132,6 +135,20 @@ function out(target: Element, related: Element | null): void {
   target.dispatchEvent(event);
 }
 
+/** Fires the router's before-swap with an arriving document whose template pill reads `label`. */
+function beforeSwap(label: string): void {
+  const newDocument = document.implementation.createHTMLDocument('next');
+  newDocument.body.innerHTML = TEMPLATE;
+  const pill = newDocument
+    .querySelector<HTMLTemplateElement>('template[data-cursor-template]')
+    ?.content.querySelector('[data-cursor-pill]');
+  if (!pill) throw new Error('fixture pill missing');
+  pill.textContent = label;
+  const event = new Event('astro:before-swap');
+  Object.defineProperty(event, 'newDocument', { value: newDocument });
+  document.dispatchEvent(event);
+}
+
 describe('createCursor', () => {
   beforeEach(() => {
     document.body.innerHTML = PAGE;
@@ -146,6 +163,13 @@ describe('createCursor', () => {
 
   it('does nothing without the template', () => {
     document.body.innerHTML = '<a href="#">plain</a>';
+    const h = harness();
+    expect(createCursor(h.deps)(document)).toBeUndefined();
+    expect(h.loadGsap).not.toHaveBeenCalled();
+  });
+
+  it('does nothing without the persisted host', () => {
+    document.body.innerHTML = TEMPLATE;
     const h = harness();
     expect(createCursor(h.deps)(document)).toBeUndefined();
     expect(h.loadGsap).not.toHaveBeenCalled();
@@ -393,5 +417,69 @@ describe('createCursor', () => {
     }
     expect(lifecycle.activeCleanups).toBe(0);
     expect(h.gsap.revert).toHaveBeenCalledTimes(10);
+  });
+
+  // 07 D-05 / Research Security: the persisted pill must speak the arriving page's language.
+  it('resyncs the pill label from the arriving document on astro:before-swap', async () => {
+    const h = harness();
+    const cleanup = createCursor(h.deps)(document);
+    await flush();
+    const pill = layer().querySelector('[data-cursor-pill]');
+    beforeSwap('Ver');
+    expect(pill?.textContent).toBe('Ver');
+    expect(layer().querySelector('[data-cursor-pill]')).toBe(pill);
+    // textContent only (T-07-08): markup in the label stays inert text.
+    beforeSwap('<img src=x onerror=alert(1)>');
+    expect(pill?.textContent).toBe('<img src=x onerror=alert(1)>');
+    expect(pill?.querySelector('img')).toBeNull();
+    cleanup?.();
+  });
+
+  it('mounts a later session with the arriving page label', async () => {
+    const h = harness();
+    const cleanup = createCursor(h.deps)(document);
+    await flush();
+    setMotion('reduced');
+    dispatchMotionChange(document, 'reduced');
+    // A swap replaces the body (template included) but keeps the persisted host.
+    const host = document.querySelector('[data-cursor-host]');
+    document.querySelector('template[data-cursor-template]')?.remove();
+    document.body.insertAdjacentHTML('afterbegin', TEMPLATE.replace('View', 'Ver'));
+    expect(document.querySelector('[data-cursor-host]')).toBe(host);
+    setMotion('on');
+    dispatchMotionChange(document, 'on');
+    await flush();
+    expect(layer().querySelector('[data-cursor-pill]')?.textContent).toBe('Ver');
+    cleanup?.();
+  });
+
+  it('returns to rest when a navigation starts', async () => {
+    const h = harness();
+    const cleanup = createCursor(h.deps)(document);
+    await flush();
+    move(10, 10);
+    const l = layer();
+    over(el('card-img'));
+    expect(l.dataset['state']).toBe('view');
+    document.dispatchEvent(new Event('astro:before-preparation'));
+    expect(l.dataset['state']).toBeUndefined();
+    expect(l.hasAttribute('data-hidden')).toBe(false);
+
+    over(el('field'));
+    expect(l.hasAttribute('data-hidden')).toBe(true);
+    document.dispatchEvent(new Event('astro:before-preparation'));
+    expect(l.dataset['state']).toBeUndefined();
+    expect(l.hasAttribute('data-hidden')).toBe(false);
+    cleanup?.();
+  });
+
+  it('ignores router events once torn down', async () => {
+    const h = harness();
+    const cleanup = createCursor(h.deps)(document);
+    await flush();
+    const pill = layer().querySelector('[data-cursor-pill]');
+    cleanup?.();
+    beforeSwap('Ver');
+    expect(pill?.textContent).toBe('View');
   });
 });
