@@ -310,7 +310,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 07-01-PLAN.md — ClientRouter soft navigation: motion-state carry, toggle sync, off full loads, focus to new h1, title/SEO after EN/ES
+- [x] 07-01-PLAN.md — ClientRouter soft navigation: motion-state carry, toggle sync, off full loads, focus to new h1, title/SEO after EN/ES
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -369,5 +369,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
-| 7. Page Transitions & Smooth Scroll | 0/TBD | Not started | - |
+| 7. Page Transitions & Smooth Scroll | 1/10 | In Progress|  |
 | 8. Quality Verification | 0/TBD | Not started | - |
