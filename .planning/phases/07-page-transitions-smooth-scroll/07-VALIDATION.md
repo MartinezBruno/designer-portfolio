@@ -76,7 +76,7 @@ Filled by the planner (2026-11-02) with plan task IDs; statuses are updated by 0
 - [ ] `tests/e2e/helpers/navigation.ts` — `softNavigate(page, href)`, CDP listener counter
 - [ ] e2e specs: transitions, smooth-scroll, parallax, navigation-leaks, transitions-reduced
 - [ ] `settleMotion` helper extended to wait for VT attributes to clear
-- [ ] Wave 0 spike (scratch, deleted after): wipe + morph CSS in real layout, Chromium screenshots, manual Safari/Firefox check
+- [ ] Wave 0 spike (folded into plans): Chromium wipe/morph captures in 07-02 and 07-06; manual Safari/Firefox check in 07-10 Task 3
 
 ---
 
