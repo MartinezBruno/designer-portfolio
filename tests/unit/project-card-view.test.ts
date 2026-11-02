@@ -25,6 +25,7 @@ function project(overrides: Partial<Project> = {}): Project {
     hidden: false,
     contentLang: 'es',
     moduleAlt: {},
+    stackMotion: [],
     ...overrides,
   };
 }

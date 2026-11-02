@@ -44,6 +44,7 @@ describe('applyOverrides with no overrides', () => {
       order: null,
       contentLang: 'es',
       moduleAlt: {},
+      stackMotion: [],
     });
   });
 

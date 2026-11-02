@@ -25,6 +25,7 @@ function project(overrides: Partial<Project> = {}): Project {
     hidden: false,
     contentLang: 'es',
     moduleAlt: {},
+    stackMotion: [],
     ...overrides,
   };
 }
@@ -348,6 +349,58 @@ describe('toDetailView modules', () => {
         iframeTitle: 'Cabrera´s motos, Posts — interactive Figma prototype',
       },
     ]);
+  });
+
+  describe('stack side entrance (D-11a)', () => {
+    const img = (id: string): Project['modules'][number] => ({
+      kind: 'image',
+      image: { id, image: wide },
+      fullBleed: true,
+      caption: '',
+    });
+    const pair: Project['modules'][number] = {
+      kind: 'collection',
+      images: [
+        { id: '90', image: wide },
+        { id: '91', image: tall },
+      ],
+    };
+    const entrances = (view: View): ('left' | 'right' | null)[] =>
+      (byKind(view, 'image') as ImageView[]).map((module) => module.entrance);
+    const build = (overrides: Partial<Project>): View =>
+      toDetailView(project(overrides), 'en', categoryTitles, toolIcons, none);
+
+    it('keeps the eager image static and alternates the rest from the left', () => {
+      expect(entrances(build({ modules: [img('1'), img('2'), img('3')] }))).toEqual([
+        null,
+        'left',
+        'right',
+      ]);
+    });
+
+    it('never resets the alternation after a collection, which has no entrance', () => {
+      const view = build({ modules: [img('1'), pair, img('2'), img('3')] });
+      expect(entrances(view)).toEqual([null, 'left', 'right']);
+      const [collection] = byKind(view, 'collection');
+      expect(collection).not.toHaveProperty('entrance');
+    });
+
+    it('does not count opted-out images', () => {
+      const view = build({
+        modules: [img('1'), img('2'), img('3'), img('4')],
+        stackMotion: ['3'],
+      });
+      expect(entrances(view)).toEqual([null, 'left', null, 'right']);
+    });
+
+    it('keeps every image static when the project opts out', () => {
+      const view = build({ modules: [img('1'), img('2'), img('3')], stackMotion: false });
+      expect(entrances(view)).toEqual([null, null, null]);
+    });
+
+    it('starts at left when the eager image sits in a leading collection', () => {
+      expect(entrances(build({ modules: [pair, img('2'), img('3')] }))).toEqual(['left', 'right']);
+    });
   });
 
   it('keeps unknown modules and gives a project with zero modules one unknown note', () => {
