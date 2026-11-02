@@ -23,6 +23,7 @@ Visitors (potential clients) immediately feel her design sensibility through a s
 - [x] Consent documented, `pnpm sync:behance` committed snapshot, fail-loud sync, offline build, local overrides, source-agnostic model (DATA-01..06) — Validated in Phase 3: Real Behance Work
 - [x] Project detail pages mirror the Behance content (image stack, collections, sanitized text, click-to-load Figma embed) with tools/category, "View on Behance", next/previous and a contact CTA, EN/ES, with localized share previews (PROJ-02, PROJ-03) — Validated in Phase 4: Project Detail & Discovery
 - [x] Contact section on Home with a working, spam-protected form (honeypot + Turnstile siteverify), localized validation and feedback, typed text kept on failure, "Ask about this" service pre-selection from cards, and a no-JS `mailto:` fallback, EN/ES (CONT-01..05, HOME-08). The local v1 build logs the email through the console mailer, and the Resend provider is ready for deploy — Validated in Phase 5: Contact
+- [x] Motion layer: scroll reveals, masked headline line rises, hero load sequence, playful cursor with "View" pill, magnetic buttons, image hover mat/zoom; reduced motion falls back to fades and an on-page header toggle switches motion live and persists (MOTN-01..04, 07, 08). GSAP is lazy-loaded only; eager homepage JS 14,643 B gzip (+6,107 B over the Phase 5 baseline) — Validated in Phase 6: Scroll & Interaction Motion
 
 ### Active
 
@@ -30,8 +31,8 @@ Visitors (potential clients) immediately feel her design sensibility through a s
 - [ ] Search + filtering ("a plus") — N/A while the catalog has fewer than 8 projects (Phase 4, D-16; currently 7). Revisit when `pnpm sync:behance` reports ≥8 (`NOTICE_AT`); dimensions would be category and tool (year dropped, D-17)
 
 **Cross-cutting**
-- [ ] Motion: scroll reveals, bold/playful interactions (cursor effects, magnetic buttons, image hover effects), page transitions, smooth/inertial scroll with parallax
-- [ ] Respects `prefers-reduced-motion` and remains accessible (semantic HTML, ARIA where needed, focus management)
+- [ ] Motion: page transitions, smooth/inertial scroll with parallax (Phase 7; reveals, cursor, magnetic and hover effects validated in Phase 6)
+- [ ] Respects `prefers-reduced-motion` and remains accessible for transitions and smooth scroll (Phase 7; Phase 6 motion verified with axe in every motion state)
 
 ### Out of Scope
 
@@ -97,4 +98,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-29 after Phase 5 (Contact): spam-protected EN/ES contact form on Home (Astro Action on Cloudflare Workers, honeypot + Turnstile, console mailer locally, Resend ready), service pre-select from cards, no-JS mailto fallback; review warnings WR-01..04 fixed, verification 6/6 (deploy items in 05-HUMAN-UAT.md), security review clean*
+*Last updated: 2026-11-02 after Phase 6 (Scroll & Interaction Motion): three-state motion gate with header toggle, scroll reveals, SplitText line rises, CSS hero sequence, hover mat/zoom, magnetic buttons, cursor follower; gsap 3.15.0 lazy-loaded; code review CR-01 and WR-01..05/07 fixed (WR-06 kept per spec); verification passed with human UAT; security review clean*
