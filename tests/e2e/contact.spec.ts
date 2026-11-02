@@ -6,6 +6,7 @@ import { interpolate } from '../../src/i18n/t';
 import { en } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
 import type { Dictionary } from '../../src/i18n/ui.en';
+import { settleMotion } from './helpers/motion';
 
 // Home Contact section (D-01..D-04, CONT-05). Later Phase 5 plans extend this spec with the form.
 const cases = [
@@ -430,6 +431,8 @@ test.describe('contact form validation @network', () => {
       await openForm(page, path);
       await page.getByRole('button', { name: dict['contact.submit'] }).click();
       await expect(page.locator('[data-contact-summary]')).toBeVisible();
+      // Chip and block colour transitions must finish, or axe blends a mid-fade colour.
+      await settleMotion(page);
       const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       expect(violations).toEqual([]);
     });
@@ -507,6 +510,8 @@ test.describe('contact form failure @network', () => {
       await page.route(ACTION_ROUTE, (route) => route.fulfill({ status: 500, body: '' }));
       await page.getByRole('button', { name: dict['contact.submit'] }).click();
       await expectFailureBlock(page, dict);
+      // Chip and block colour transitions must finish, or axe blends a mid-fade colour.
+      await settleMotion(page);
       const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       expect(violations).toEqual([]);
     });
