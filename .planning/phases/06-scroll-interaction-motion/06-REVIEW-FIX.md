@@ -104,3 +104,7 @@ Options for the user: keep the current spec, switch the two h1s to `settle`, or 
 _Fixed: 2026-11-02_
 _Fixer: Claude (gsd-code-fixer)_
 _Iteration: 1_
+
+## User decision: WR-06 (2026-11-02)
+
+**Keep the spec.** The Projects and detail-page h1s keep waiting for the lazy GSAP chunk (1.5 s CSS failsafe), as UI-SPEC rows 232/263/273 and D-05 require. Accepted as designed; not a defect.
