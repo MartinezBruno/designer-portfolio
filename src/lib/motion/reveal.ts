@@ -109,11 +109,22 @@ export function createReveal(deps: RevealDeps): PageInit {
       observer?.unobserve(el);
       if (!instant && isLines(el) && splitReady() && canSplit(el)) {
         const mods = gsapMods as GsapModules;
+        let handle: SplitHandle | undefined;
         // Inside the context, so cleanup's ctx.revert() restores the heading's original markup.
+        // The catch sits inside the callback so GSAP still restores its current context.
         ctx?.add(() => {
-          splits.add(splitAndRise(el, mods));
+          try {
+            handle = splitAndRise(el, mods);
+          } catch {
+            handle = undefined;
+          }
         });
-        return;
+        if (handle !== undefined) {
+          splits.add(handle);
+          return;
+        }
+        // The split threw (06 review WR-03): the heading is no longer pending, so nothing else
+        // could reveal it. Take the CSS reveal instead of staying armed and invisible (D-05).
       }
       if (instant) el.setAttribute('data-reveal-instant', '');
       else el.style.setProperty('--reveal-delay', `${String(delay)}ms`);

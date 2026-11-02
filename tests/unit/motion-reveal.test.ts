@@ -459,6 +459,21 @@ describe('createReveal lines driver (SplitText)', () => {
     cleanup?.();
   });
 
+  it('falls back to the CSS reveal when the split throws', async () => {
+    vi.spyOn(FakeSplitText, 'create').mockImplementation(() => {
+      throw new Error('unexpected DOM');
+    });
+    const cleanup = createReveal(withGsap())(document);
+    await flush();
+    const io = trigger();
+    expect(() => {
+      io.trigger([el('h')]);
+    }).not.toThrow();
+    expect(el('h').hasAttribute('data-revealed')).toBe(true);
+    expect(io.observed.has(el('h'))).toBe(false);
+    cleanup?.();
+  });
+
   it('shows every unrevealed lines heading instantly when GSAP fails to load', async () => {
     const cleanup = createReveal(withGsap(() => Promise.reject(new Error('chunk 404'))))(document);
     await flush();
