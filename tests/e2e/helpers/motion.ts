@@ -11,7 +11,8 @@ export interface SettleOptions {
 /**
  * Waits until the page has settled before an axe scan or a screenshot: above-the-fold reveals
  * (Phase 6 D-04) and the hero load sequence fade in on load, and axe blends a mid-fade opacity
- * into its contrast maths. Waits two frames for the reveal observer's first batch, then for every
+ * into its contrast maths. First waits for any Phase 7 page transition to end (no `data-vt` or
+ * `data-astro-transition` on `html`), because entrance motion is held until then. Waits two frames for the reveal observer's first batch, then for every
  * GSAP line rise to end (split-lines.ts reverts its split on complete, so no `.split-line-mask`
  * left means no rise is running; GSAP tweens are not in `getAnimations()`), then for every finite
  * animation and transition to finish. Infinite ones (the marquee) are ignored. Without
@@ -37,6 +38,18 @@ export async function settleMotion(page: Page, options: SettleOptions = {}): Pro
       .poll(() => page.locator('[data-reveal]:not([data-revealed])').count(), { timeout: 5000 })
       .toBe(0);
   }
+  // Phase 7: a soft navigation may still be mid view transition (data-vt hold or Astro's own
+  // data-astro-transition); entrance motion only starts once it ends.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const html = document.documentElement;
+          return !html.hasAttribute('data-vt') && !html.hasAttribute('data-astro-transition');
+        }),
+      { timeout: 5000 },
+    )
+    .toBe(true);
   await page.evaluate(
     () =>
       new Promise((resolve) => {
