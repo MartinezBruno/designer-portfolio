@@ -19,7 +19,8 @@ function finalSlug(source: SourceRef, overrides: Overrides): string {
 
 /**
  * Fails loudly on overrides the build cannot honour: unknown ids, titles over the two-line limit,
- * moduleAlt keys that match no image of that project, moduleAlt values over 125 characters, and
+ * moduleAlt keys and stackMotion ids that match no image of that project, moduleAlt values over
+ * 125 characters, and
  * duplicate final slugs across every source, hidden ones included (a hidden project keeps its URL
  * reserved). Lengths are counted in code points.
  */
@@ -42,8 +43,18 @@ export function validateOverrides(sources: readonly SourceRef[], overrides: Over
         }
       }
     }
-    if (override.moduleAlt === undefined) continue;
     const images = new Set(source.imageIds);
+    // Checked before the moduleAlt early continue: a project may set stackMotion alone (D-11a).
+    if (Array.isArray(override.stackMotion)) {
+      for (const key of override.stackMotion) {
+        if (!images.has(key)) {
+          throw new Error(
+            `project-overrides: stackMotion id ${key} for ${id} matches no image in the snapshot. Fix or remove it in src/data/project-overrides.json`,
+          );
+        }
+      }
+    }
+    if (override.moduleAlt === undefined) continue;
     for (const [key, value] of Object.entries(override.moduleAlt)) {
       if (!images.has(key)) {
         throw new Error(
@@ -75,6 +86,12 @@ function copyModuleAlt(
     result[id] = { en: alt.en, es: alt.es };
   }
   return result;
+}
+
+/** `false` (project opted out), a fresh id list, or `[]` when nothing is opted out (D-11a). */
+function copyStackMotion(value: false | readonly string[] | undefined): false | string[] {
+  if (value === false) return false;
+  return value === undefined ? [] : [...value];
 }
 
 function copyLocalized(value: Localized<string> | undefined): Localized<string> | null {
@@ -110,6 +127,7 @@ export function applyOverrides(sources: readonly SourceProject[], overrides: Ove
       // Her Behance copy is written in Spanish.
       contentLang: override?.contentLang ?? 'es',
       moduleAlt: copyModuleAlt(override?.moduleAlt),
+      stackMotion: copyStackMotion(override?.stackMotion),
     };
   });
 }

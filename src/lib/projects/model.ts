@@ -60,6 +60,11 @@ export interface Project extends SourceProject, OrderFields {
   contentLang: Locale;
   /** Curated per-image alt text keyed by image id (D-09). Empty when none is curated. */
   moduleAlt: Readonly<Record<string, Localized<string>>>;
+  /**
+   * Detail-stack side entrance opt-out (07 D-11a): false = the whole project stays static, a list
+   * = those image ids stay static. `[]` = nothing opted out.
+   */
+  stackMotion: false | readonly string[];
 }
 
 export interface ProjectCardView {
@@ -108,6 +113,11 @@ export type ModuleView =
       caption: string | null;
       captionLang: Locale | null;
       eager: boolean;
+      /**
+       * Side the image slides in from as its frame enters the viewport (07 D-11a). null = static:
+       * the eager image, an opted-out image, or a project with stackMotion false.
+       */
+      entrance: 'left' | 'right' | null;
     }
   | { kind: 'collection'; rows: readonly (readonly CollectionItemView[])[] }
   | { kind: 'text'; html: string; lang: Locale | null }
