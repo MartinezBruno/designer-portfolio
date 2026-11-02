@@ -28,9 +28,15 @@ Phase 7 makes moving through the site feel fluid. It adds animated page transiti
 - **D-08: Content anchors glide; the skip link jumps.** In-page anchors (for example a CTA to `#contact`) glide with Lenis and move focus to the target when the glide finishes (MOTN-06). The skip-to-content link always jumps instantly and moves focus. Keyboard scrolling (arrows, Page Up/Down, Space, Home/End) and find-in-page must keep working.
 
 ### Parallax
-- **D-09: Parallax targets: project card covers** (Home and Projects), **the detail image stack**, and **the Next-project teaser thumbnail**. The **hero portrait does not** get parallax.
+- **D-09: Parallax targets: project card covers** (Home and Projects), **the detail image stack**, and **the Next-project teaser thumbnail**. The **hero portrait does not** get parallax. *(Revised 2026-11-02: the detail image stack gets the side entrance of D-11a instead of vertical drift. Cards and the teaser keep parallax.)*
 - **D-10: Gentle strength**, about 5–10% travel inside each image's clipped frame. Use transform only, with no layout shift (CLS) and minimal overscan, so her work is barely cropped.
-- **D-11: Detail stack: per-image drift inside each frame, gentle.** Each image moves inside its own frame, so the seamless edge-to-edge stack never opens gaps (Phase 4 D-01). The user accepts that seams between consecutive images may shift slightly at gentle travel. **Verify visually with the taste skill on real projects (for example InstaBlogs and Cabrera's).** If a seam visibly breaks, remove stack parallax for that case rather than raising the travel.
+- ~~**D-11: Detail stack: per-image drift inside each frame, gentle.**~~ **SUPERSEDED on 2026-11-02 by D-11a. The original text is kept for traceability:** Each image moves inside its own frame, so the seamless edge-to-edge stack never opens gaps (Phase 4 D-01). The user accepts that seams between consecutive images may shift slightly at gentle travel. **Verify visually with the taste skill on real projects (for example InstaBlogs and Cabrera's).** If a seam visibly breaks, remove stack parallax for that case rather than raising the travel.
+- **D-11a (revised 2026-11-02, replaces D-11's vertical drift for the detail stack): images enter from the sides as the visitor scrolls.** User request, verbatim: "vamos a agragr en la pagina de detalle de proyecto, que las imagenes salgan de los costados a medida que vamos deslizando". Reconciliation option the user chose, verbatim: "Reemplazar 07-09 (Recomendado)": "Rehago el plan 07-09 para que cada imagen entre desde un costado (alternando izquierda y derecha, con travel moderado) dentro de un marco con overflow-clip, así la pila no abre huecos. Se mantienen el opt-out por proyecto o imagen, la revisión con taste-skill de InstaBlogs y Cabrera's, y la versión estática bajo reduced/off." Direction chosen: "Alternando izq./der." What that means:
+  - Under `on`, each eligible detail `ImageModule` image slides horizontally into its own `overflow: clip` frame as the frame scrolls into view. The slide is **scroll-linked (scrubbed)**, not a one-shot timed reveal ("a medida que vamos deslizando"). It is CSS scroll-driven (zero JS), behind the same `@supports (animation-timeline: view())` gate as card parallax. Unsupported browsers get the static image.
+  - **Alternating left and right:** the first moving image enters from the left, the next from the right, and so on. Travel is moderate (token in UI-SPEC). The image rests at exactly its Phase 4/6 position once the frame has fully entered, so a settled image is never cropped.
+  - **Seamless stack (Phase 4 D-01):** frames keep the image's exact intrinsic aspect-ratio height. The stack stays edge-to-edge with no gaps and the same total height. Only the image moves inside its frame.
+  - **Kept from D-11:** the eager (LCP) image, `CollectionModule` grids, embeds, text and unknown modules never move. Under `reduced` and `off`, every image is exactly its Phase 4/6 box. Opting out happens in data (`src/data/project-overrides.json`, whole project or per image id), and unknown ids fail the build. The taste skill checks the seams of **InstaBlogs** and **Cabrera's** at 1440 and 390, at three scroll positions per seam. **Seam integrity still matters more than the effect:** if a horizontal slide visibly breaks a composition that continues across a seam, the fix is an opt-out in data, never more travel.
+  - It must not interfere with the card-to-detail title morph (D-02) or the arrival hold (D-16). Under the wipe, each image just sits at the state its scroll position gives it. It is never a timed animation that plays under the ink.
 - **D-12: Parallax runs on touch too**, driven by native scroll position (no Lenis on touch). It's active only in the `on` motion state and off in `reduced` and `off`.
 - **D-13: Card parallax must coexist with the Phase 6 mat/zoom hover** on the same `<picture>` (Phase 6 D-06, and the "one transition declaration per layer" rule from 06-06). Use a separate transform layer or property so the hover scale, the reveal shutter and the parallax translate never fight.
 
@@ -112,7 +118,7 @@ Phase 7 makes moving through the site feel fluid. It adds animated page transiti
 - The signature moment is opening a project: the card title flies into the detail heading while the ink panel sweeps.
 - The ink panel echoes the Phase 6 shutter reveals, so the motion language stays one family.
 - The inertia is "subtle premium", not "awards-site floaty".
-- Seam integrity in the detail stack matters more than parallax drama. Drop the effect before cropping her compositions visibly.
+- Seam integrity in the detail stack matters more than parallax drama. Drop the effect before cropping her compositions visibly. (Still true under D-11a: drop the side entrance for an image or project before letting it break a composition.)
 
 </specifics>
 
@@ -127,3 +133,4 @@ None. The discussion stayed within phase scope.
 
 *Phase: 07-page-transitions-smooth-scroll*
 *Context gathered: 2026-11-02*
+*Amended: 2026-11-02 (D-11a, detail stack side entrance replaces D-11 drift)*

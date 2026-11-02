@@ -6,6 +6,7 @@ shadcn_initialized: false
 preset: none
 created: 2026-11-02
 reviewed_at: 2026-11-02
+amended: 2026-11-02 (D-11a detail-stack side entrance)
 ---
 
 # Phase 7 — UI Design Contract
@@ -19,12 +20,12 @@ reviewed_at: 2026-11-02
 - the `reduced` crossfade and the `off` full page load (D-04, SC4)
 - arrival: focus, title, announcement, the Phase 6 entrance after the wipe, back/forward (D-14..D-16)
 - smooth scroll on fine pointers, anchor glides, the skip link, keyboard and find-in-page (MOTN-06, D-06..D-08)
-- parallax on project covers, the Next-project thumbnail and the detail image stack (D-09..D-13)
+- parallax on project covers and the Next-project thumbnail (D-09, D-10, D-12, D-13), and a scroll-linked side entrance for the detail image stack (D-11a, revised 2026-11-02; it replaces the detail-stack drift of D-11)
 - live behaviour when the motion toggle changes (D-18), the leak contract (MOTN-09, D-17) and the bundle record
 
 **Out of scope:** WebGL or displacement effects (MOTN-10, v2), the measured Lighthouse budget and the full axe/keyboard pass (Phase 8), a reverse morph from detail back to a card (see Open Questions), parallax on the hero portrait (D-09).
 
-**Inheritance:** `01-UI-SPEC.md` through `06-UI-SPEC.md` (all approved) still apply where this document is silent. That covers the colour tokens, the type scale, the 4px spacing scale, the accent focus ring, 44px touch targets, the pill and text-link patterns, the stretched-link card, the three motion states, the motion tokens, the reveal vocabulary, the hero sequence, the card mat/zoom hover, the cursor follower, magnetic targets and the motion toggle. **Phase 7 adds no colour, no type size, no spacing token and no copy string.** It adds three motion tokens, two parallax tokens and the transition choreography.
+**Inheritance:** `01-UI-SPEC.md` through `06-UI-SPEC.md` (all approved) still apply where this document is silent. That covers the colour tokens, the type scale, the 4px spacing scale, the accent focus ring, 44px touch targets, the pill and text-link patterns, the stretched-link card, the three motion states, the motion tokens, the reveal vocabulary, the hero sequence, the card mat/zoom hover, the cursor follower, magnetic targets and the motion toggle. **Phase 7 adds no colour, no type size, no spacing token and no copy string.** It adds three motion tokens, two parallax tokens, one detail-stack entrance token (`--stack-travel`, added 2026-11-02 for D-11a) and the transition choreography.
 
 **Provenance labels:**
 - `[CONTEXT D-nn]`: a locked decision in `07-CONTEXT.md`.
@@ -57,6 +58,7 @@ reviewed_at: 2026-11-02
 | Transition rendering | Native same-document View Transitions, styled with hand-written `::view-transition-*` CSS in `src/styles/global.css`, keyed off `html[data-motion]` `[Research: Pattern 3]` |
 | Smooth scroll | `lenis@1.3.27`, dynamically imported only for `(hover: hover) and (pointer: fine)` under `on` `[Research: Pattern 6]` |
 | Parallax | CSS scroll-driven animations (named `view-timeline` on each frame, `translate` keyframes), behind `@supports (animation-timeline: view())`. 0 B of JS. No ScrollTrigger `[Research: Pattern 7]` |
+| Detail-stack side entrance | The same engine and the same `@supports` gate: a named `view-timeline` (`--stack`) on each detail image frame and a horizontal `translate` keyframe (`stack-enter`) on the image. 0 B of JS `[CONTEXT D-11a]` |
 | New packages | `lenis@1.3.27` only `[Research: Standard Stack]` |
 | Icon library | `@tabler/icons`, explicit per-file imports. No new icon in this phase `[Upstream: FND-03]` |
 | Font | Display: Bricolage Grotesque (`font-display`). Body/UI: Inter (`font-sans`). Unchanged `[Codebase]` |
@@ -148,6 +150,7 @@ No colour token changes. Light theme only.
 | Content anchor glide | yes (Lenis on fine pointer, native smooth on touch) | instant jump | instant jump |
 | Skip link | instant jump, always | instant jump | instant jump |
 | Parallax | yes, touch included | no, `translate: none`, no overscan | no |
+| Detail-stack side entrance (D-11a) | yes, touch included, scrubbed by scroll position | no, `translate: none` (exact Phase 4/6 box) | no |
 | Focus to new h1 after navigation | yes | yes | n/a (full load starts at the top of the document) |
 | Phase 6 entrances after arrival | full path, after the wipe releases | fade path, after the crossfade | static |
 
@@ -171,12 +174,17 @@ Added next to the Phase 6 tokens in `global.css` and mirrored in `src/lib/motion
 | `--t-wipe` | **560ms** | The panel's full pass and the title morph (same duration, so they read as one gesture) |
 | `--wipe-release` | **0.7** (× `--t-wipe` = 392ms) | Fraction of the wipe after which the arriving page's entrances are released (see Arrival) |
 | `--t-nav-fade` | **320ms** (= `--t-fade`) | The `reduced` root crossfade. Reuses the Phase 6 fade duration so "reduced = opacity fades" has one tempo `[CONTEXT D-04; Upstream: 06 --t-fade]` |
-| `--px-overscan` | **4%** (cards, teaser) / **3%** (detail stack) | How far the image extends past each top and bottom edge of its frame, as a share of the frame's height |
-| `--px-travel` | **3.5%** (cards, teaser) / **2.6%** (detail stack) | Peak `translate` in each direction, as a share of the image's own height |
+| `--px-overscan` | **4%** (cards, teaser). ~~3% (detail stack)~~ superseded 2026-11-02 by D-11a | How far the image extends past each top and bottom edge of its frame, as a share of the frame's height |
+| `--px-travel` | **3.5%** (cards, teaser). ~~2.6% (detail stack)~~ superseded 2026-11-02 by D-11a | Peak `translate` in each direction, as a share of the image's own height |
+| `--stack-travel` | **7%** (detail stack only, D-11a) | Horizontal start offset of a detail image entering its frame, as a share of the image's own width. Direction comes from `[data-stack-enter='left' \| 'right']`; the image ends at `translate: 0 0` |
 
-Easing: the panel and the morph use **`--ease-travel`** (`cubic-bezier(0.76, 0, 0.24, 1)`), the Phase 6 shutter curve: they are things that travel while visible. Parallax is `linear` (scroll-linked). Nothing in this phase uses bounce, elastic or back. The CSS keywords `ease-in` and `ease-in-out` must not appear anywhere in source, including comments, because `lint.mjs` flags the substring. Use the tokens. `[Taste: motion.md §2 question 3; lint ease-in]`
+*Note on the superseded stack values:* plan 07-08 still lands `[data-parallax-frame='stack'] { --px-overscan: 3%; --px-travel: 2.6% }` as written. Plan 07-09 removes that rule and its token test, because no detail frame uses parallax any more.
 
-**Check on the parallax numbers** `[Verified: arithmetic]`: cards image height = 108% of the frame; 3.5% of 108 = 3.78% of the frame, below the 4% overscan, so an image edge never enters the frame. Total travel ≈ 7.6% of the frame. Detail stack: image = 106% of the frame; 2.6% of 106 = 2.76%, below 3%. Total travel ≈ 5.5%. Both sit inside D-10's "about 5–10%" and under the skill's "under 8% of the element". `[CONTEXT D-10; Taste: motion.md "Scroll-linked progress"]`
+Easing: the panel and the morph use **`--ease-travel`** (`cubic-bezier(0.76, 0, 0.24, 1)`), the Phase 6 shutter curve: they are things that travel while visible. Parallax is `linear` (scroll-linked). The detail-stack side entrance is an entrance, so its scrubbed keyframe uses **`--ease-reveal`** (`cubic-bezier(0.22, 1, 0.36, 1)`, the project's ease-out). Most of the travel happens while the frame's top edge is still low in the viewport, and the image settles gently as the frame finishes entering `[Taste: motion.md §2 question 3, "entering: ease-out"]`. Nothing in this phase uses bounce, elastic or back. The CSS keywords `ease-in` and `ease-in-out` must not appear anywhere in source, including comments, because `lint.mjs` flags the substring. Use the tokens. `[Taste: motion.md §2 question 3; lint ease-in]`
+
+**Check on the parallax numbers** `[Verified: arithmetic]`: cards image height = 108% of the frame; 3.5% of 108 = 3.78% of the frame, below the 4% overscan, so an image edge never enters the frame. Total travel ≈ 7.6% of the frame. ~~Detail stack: image = 106% of the frame; 2.6% of 106 = 2.76%, below 3%. Total travel ≈ 5.5%.~~ (superseded 2026-11-02). Cards sit inside D-10's "about 5–10%" and under the skill's "under 8% of the element".
+
+**Check on the stack entrance (D-11a)** `[Verified: arithmetic]`: the image is 100% of its frame, with no overscan. It starts offset by 7% of its width toward its entry side and ends at 0. That is a single one-way travel of 7%, inside D-10's "about 5–10%" and under the skill's "under 8% of the element" for scroll-linked image moves. At its peak, a 7%-wide `surface-alt` strip shows on the trailing side of the frame and 7% of the image is clipped on the leading side, but only while the frame is entering. At rest, nothing is cropped. Concrete widths: a full-bleed image at 1440 starts about 101 px off, a padded `max-w-6xl` image about 76 px off, and a 390 px phone image about 27 px off. That reads clearly as "from the side" on desktop and stays quiet on a phone. **Moderate is the ceiling:** the taste review may lower the value (not below 5%) if it reads loud, but it never raises it. A broken seam is fixed with an opt-out, never with more travel. `[CONTEXT D-10, D-11a; Taste: motion.md "Scroll-linked progress"]` `[CONTEXT D-10; Taste: motion.md "Scroll-linked progress"]`
 
 Animate `transform`-family properties (`translate`, `scale`), `opacity` and `clip-path` only. Name the properties; never `transition-all`. `will-change` only while a tween runs. `[Taste: motion.md §6]`
 
@@ -352,9 +360,9 @@ The Home hero keeps its full timing because D-16 says entrances play "as they do
 |--------|----------------------------------------|--------------|--------|
 | Project card covers (Home `compact`, Projects `full`) | the existing `bg-surface-alt` aspect frame, changed from `overflow-hidden` to **`overflow-clip`** | the `<img>` (`translate`) | 4% / 3.5% |
 | Next-project teaser thumbnail | its `aspect-[5/4]` frame, `overflow-clip` | the `<img>` | 4% / 3.5% |
-| Detail `ImageModule` images | a **new** frame per image: `bg-surface-alt overflow-clip`, aspect ratio from the image's own width/height, so the stack keeps its exact height and stays seamless | the `<img>` | 3% / 2.6% |
+| ~~Detail `ImageModule` images~~ | ~~drift frame, 3% / 2.6%~~. **Superseded 2026-11-02 by D-11a:** detail images no longer get parallax. See "Detail-stack side entrance" below | | |
 
-**Not parallaxed:** the hero portrait (D-09), the eager LCP card cover on Projects (it is never altered, as in Phase 6), `CollectionModule` grid images `[Default: cells drifting independently read as jitter and multiply seams. See Open Questions]`, `EmbedFacade`, `UnknownModule`, text modules, and anything in `reduced` or `off`.
+**Not parallaxed:** the hero portrait (D-09), the eager LCP card cover on Projects (it is never altered, as in Phase 6), every detail `ImageModule` image (they get the side entrance instead, D-11a), `CollectionModule` grid images `[Default: cells drifting independently read as jitter and multiply seams. See Open Questions]`, `EmbedFacade`, `UnknownModule`, text modules, and anything in `reduced` or `off`.
 
 ### Layering (one property per layer, extends the Phase 6 table) `[CONTEXT D-13]`
 
@@ -374,11 +382,26 @@ The Home hero keeps its full timing because D-16 says entrances play "as they do
 - No layout shift: the frame's box never changes in any state. Only the image moves inside the clip. `[CONTEXT D-10]`
 - Lenis scrolls the real document, so the timelines follow its glide. `[Assumption A7: no visible stepping; checked in the taste review at 1440 on a 60Hz and a 120Hz display if available]`
 
-### Seam rule for the detail stack (D-11)
+### Detail-stack side entrance (`on`, all pointers) `[CONTEXT D-11a, revised 2026-11-02; replaces the D-11 drift]`
 
-- Edge-to-edge images may show a slight shift at a seam while scrolling. That is accepted at these values.
-- The taste review checks **InstaBlogs** and **Cabrera's** (and any project whose images continue a composition across a seam) at 1440 and 390, at three scroll positions per seam. If a seam visibly breaks a composition, **parallax is removed for that project's stack** (minimum granularity: project; preferred: module), never compensated by raising travel. The opt-out lives in the local overrides data, not in component code. `[CONTEXT D-11]`
-- Images that carry text near the top or bottom edge are checked for cropped text; any crop of text means an opt-out for that module.
+| Target | Frame (owns the timeline and the clip) | Moving layer | Token |
+|--------|----------------------------------------|--------------|-------|
+| Eligible detail `ImageModule` images | a **new** frame per eligible image: `data-stack-frame`, `bg-surface-alt overflow-clip`, inline `aspect-ratio: <width> / <height>` from the image's own metadata, so the stack keeps its exact height and stays seamless | the `<img>`, carrying `data-stack-enter="left"` or `"right"` | `--stack-travel` 7% |
+
+- **Eligible:** a detail `ImageModule` image that is not the eager (LCP) image, whose project is not opted out, and whose image id is not listed in the opt-out. Never moving: the eager image, `CollectionModule` grids, `EmbedFacade`, text, unknown modules, and anything in `reduced`, `off`, print or browsers without scroll timelines. Images that never move render exactly the Phase 4/6 markup, with no extra frame.
+- **Alternation rule:** the direction counts **eligible images only**, in DOM order across the whole page. It starts at `left`, and it does **not** reset after a `CollectionModule`, text or embed. Static modules are transparent to the count, so the moving images always read left, right, left... with no two neighbours entering from the same side, even when an opted-out or eager image sits between them. `[Proposed; recorded in 07-09]`
+- **Mechanics:** under `html[data-motion='on']` and `@supports (animation-timeline: view())`, the frame sets `view-timeline: --stack block`. The image runs `@keyframes stack-enter` from `translate: calc(var(--stack-from) * var(--stack-travel)) 0` to `translate: 0 0`, with `--stack-from: -1` for `left` and `1` for `right`, `animation-timing-function: var(--ease-reveal)`, `fill: both`, `animation-timeline: --stack` (declared **after** the `animation` shorthand, which would otherwise reset it), and `animation-range: entry 0% entry 100%`. The image is fully settled once the frame has fully entered the viewport, or, for a frame taller than the viewport, once its top reaches the viewport top. The taste review may end the range earlier (not before `entry 60%`), never later.
+- **Scroll-linked, never timed:** the position depends only on scroll position. There is no IntersectionObserver, no class toggle, no lifecycle registration, and nothing to leak. During the 07-04 arrival hold (`html[data-vt]`) and under the wipe, each image simply sits at the state its scroll position gives it, so nothing "plays" under the ink and release causes no jump. Back/forward restores scroll first, so images are correct on the first frame (D-15).
+- **No interference with the morph:** frames and images never carry a `view-transition-name`. Only the clicked card's title and the h1 take part in the 07-06 morph. The first image under the intro is the eager image, which never moves.
+- **No layout shift, no page overflow:** the frame's box never changes in any state. `overflow: clip` keeps the horizontal travel inside the frame, so the document never gains horizontal scroll.
+- **Layering:** detail images have no hover, mat or reveal shutter, so `translate` is the only animated property on the `<img>`. It does not collide with card parallax (a different attribute, a different keyframe name and a different timeline name).
+- **Print:** `[data-stack-enter]` gets `animation: none !important; translate: none !important`.
+
+### Seam rule for the detail stack (D-11a, keeps the D-11 spirit)
+
+- While a frame is entering, its image is offset sideways against the settled image above it, so a composition that continues across that seam is visibly broken **during the slide**. It is whole again at rest. That is the effect the user asked for, and it is acceptable for images that each stand alone.
+- The taste review checks **InstaBlogs** and **Cabrera's** (and any project whose images continue one composition across a seam, judged from a full-page screenshot) at 1440 and 390, at three scroll positions per seam: entering (the lower frame's top just inside the viewport), mid (about half of its entry range) and settled (range end). If a horizontal slide visibly breaks a composition that continues across a seam (for example one long website mockup sliced into several images), **the side entrance is removed for those images** (preferred: list the image ids; whole project with `stackMotion: false` only if most seams break). It is never compensated by raising travel. The opt-out lives in the local overrides data (`stackMotion` in `src/data/project-overrides.json`), not in component code. `[CONTEXT D-11a]`
+- Images that carry text near the left or right edge are checked at the entering position. Text that is clipped mid-slide and readable at rest is accepted. Text that is still cropped at rest is a bug, because the image must rest at 0.
 
 ---
 
@@ -391,7 +414,7 @@ The Home hero keeps its full timing because D-16 says entrances play "as they do
 
 - The header is **re-rendered** on every swap (locale- and page-specific links), never persisted, and looks still through its VT group. `[Research: Anti-pattern]`
 - Turnstile and the contact form keep working after Home → Projects → Home. `[Research: Pitfall 10]`
-- **Leak contract (SC3):** after one warm-up cycle, 10 navigations across Home, Projects, a detail page and their ES twins give, per URL: equal CDP `window`/`document` listener counts, exactly one cursor layer, zero `.split-line-mask` after settle, equal `document.getAnimations()` counts, a parallax animation count equal to the `[data-parallax]` count, and zero `view-transition-name: project-title` elements at rest. `[Research: Validation Architecture, Pitfall 6]`
+- **Leak contract (SC3):** after one warm-up cycle, 10 navigations across Home, Projects, a detail page and their ES twins give, per URL: equal CDP `window`/`document` listener counts, exactly one cursor layer, zero `.split-line-mask` after settle, equal `document.getAnimations()` counts, a parallax animation count equal to the `[data-parallax]` count, a `stack-enter` animation count equal to the `[data-stack-enter]` count (added for D-11a), and zero `view-transition-name: project-title` elements at rest. `[Research: Validation Architecture, Pitfall 6]`
 
 ---
 
@@ -405,7 +428,8 @@ The Home hero keeps its full timing because D-16 says entrances play "as they do
 | Skip link | as Phase 1 | instant jump, focus `#main` | same | same |
 | Content anchor | as Phase 6 | glide, then focus target | instant, focus target | instant, focus target |
 | Arriving h1 | ink text, no ring | receives focus at release, no ring | same at crossfade end | not script-focused |
-| Project images | static frame | parallax drift while scrolling | static | static |
+| Project card and teaser images | static frame | parallax drift while scrolling | static | static |
+| Detail stack images (eligible, D-11a) | at rest at 0 once their frame has entered | slide in from the left or right, scrubbed by scroll | static | static |
 | Wheel / trackpad | native | Lenis glide (fine pointer) | native | native |
 
 ---
@@ -428,9 +452,9 @@ The Home hero keeps its full timing because D-16 says entrances play "as they do
 - **SC1:** after every soft navigation in `on` and `reduced`, `document.activeElement` is the arriving `main h1` (or the hash target, or `#main`), `document.title` matches the page, and `<html lang>`, canonical and hreflang (en, es, x-default) are correct, including after EN/ES switches. Programmatic focus shows no outline. The next Tab reaches the first interactive element after the h1 in DOM order.
 - **SC2:** in `on` with a fine pointer, PageDown, Space, End and Home change `scrollY`; Tab order is unchanged from Phase 6 (`expectedOrderFor`); the `#contact` anchor glides, sets the hash and focuses the target after `scrollend`; the skip link focuses `#main` instantly; `window.find('<text>')` (Chromium proxy for find-in-page) scrolls to the match and `scrollY` is stable 500ms later. The real find bar is a manual UAT step in Chrome, Safari and Firefox.
 - **SC3:** the leak contract above.
-- **SC4:** with `reducedMotion: 'reduce'` and with the toggle pressed: no `wipe` or `project-title` pseudo-element animations (root crossfade only), no `html.lenis`, computed `translate` on every `[data-parallax]` is `none`, and switching the toggle live (no reload) destroys Lenis and stops parallax. In `off` (`matchMedia` stubbed out), a navigation creates a new `navigation` performance entry (full load).
+- **SC4:** with `reducedMotion: 'reduce'` and with the toggle pressed: no `wipe` or `project-title` pseudo-element animations (root crossfade only), no `html.lenis`, computed `translate` on every `[data-parallax]` and every `[data-stack-enter]` is `none`, and switching the toggle live (no reload) destroys Lenis and stops parallax. In `off` (`matchMedia` stubbed out), a navigation creates a new `navigation` performance entry (full load).
 - **No hidden content:** with JS disabled, nothing in this phase applies (no panel name, no overscan, no Lenis). With the motion chunk blocked after the gate, the Phase 6 failsafe still shows everything by 1.6s, and a soft navigation that never releases is released by the 1200ms cap.
-- **Vestibular:** the panel is a single flat pass of 560ms; it never flashes: one dark field per navigation. `[Inference]` Rapid clicking cannot exceed three flashes per second (WCAG 2.3.1), because a new navigation aborts the running one; the e2e clicks five links within one second and counts wipe animations to confirm. Parallax travel stays under 8% of the image. All of it is off in `reduced`.
+- **Vestibular:** the panel is a single flat pass of 560ms; it never flashes: one dark field per navigation. `[Inference]` Rapid clicking cannot exceed three flashes per second (WCAG 2.3.1), because a new navigation aborts the running one; the e2e clicks five links within one second and counts wipe animations to confirm. Parallax travel stays under 8% of the image, and the detail-stack side entrance is a single one-way 7% that ends at rest. All of it is off in `reduced`.
 - **axe:** zero WCAG 2.2 AA violations on every audited page and locale after a soft navigation (`settleMotion` also waits for `data-vt` and `data-astro-transition` to clear), in `on`, `reduced` and JS off. Phase 1–6 suites stay green under the router.
 - **Bundle:** the SUMMARY records, from a fresh `pnpm build`, the eager gzip JS on `/` against the Phase 6 baseline (14,643 B) and the router cost (+5,655 B) `[Research: Verified build]`. Proposed Phase 7 eager ceiling: **22,000 B gzip** `[Research: Open Question 1; to be confirmed by the user at planning]`. Lenis lazy chunk ≤ **6,000 B gzip** (measured 5,419 B). `scripts/measure-bundle.ts` fails if "GreenSock" or "lenisVersion" appears in an eager chunk.
 
@@ -460,7 +484,7 @@ node /Users/bmartinez/.claude/plugins/cache/taste-skill/taste-skill/2.0.0/skills
 4. EN → ES switch on a detail page at 50% (header still, labels switched)
 5. `reduced` crossfade at 50% (no panel visible anywhere)
 6. the arriving detail page at release and at settle (no element animating under the panel)
-7. parallax: one card and one detail seam per project checked (InstaBlogs, Cabrera's) at three scroll positions each
+7. parallax: one card at three scroll positions; detail-stack side entrance (D-11a): every seam of InstaBlogs and Cabrera's at three scroll positions (entering, mid, settled), at 1440 and 390
 8. the detail page with an embed, mid-glide over the embed (1440)
 
 Review them and the inspector's `.taste-skill/inspect/` screenshots with `references/critique.md`, and write the critique in the plan SUMMARY.
@@ -478,7 +502,7 @@ Review them and the inspector's `.taste-skill/inspect/` screenshots with `refere
   - the header never moves, fades or flickers, in either locale
   - the morphing title is readable at every sampled frame and lands exactly on the h1, with no jump at the end
   - nothing on the arriving page animates while still covered
-  - parallax never shows an empty frame edge, never crops text, and never opens a gap in the detail stack
+  - card parallax never shows an empty frame edge or crops text; the detail-stack side entrance never opens a vertical gap, settles every image at exactly 0, and no seam that continues a composition keeps the effect (opt-out in data)
   - `reduced` shows only fades: no panel, no morph, no drift
   - the smooth scroll feels subtle (record the final `lerp` and the reason)
 
