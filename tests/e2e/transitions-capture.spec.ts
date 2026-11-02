@@ -4,10 +4,11 @@ import { en, type Dictionary } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
 import { wipeRelease } from '../../src/lib/motion/tokens';
 import { settleMotion } from './helpers/motion';
+import { expectedProjects, type ExpectedProject } from './helpers/projects';
 import { softNavigate, waitForNavigationIdle } from './helpers/navigation';
 
 // Opt-in capture of the Phase 7 navigation-transition screenshots (07 UI-SPEC "Verification",
-// extra items 1, 4, 5 and 6) for the taste-skill review. The behaviour itself is gated by
+// extra items 1 to 6) for the taste-skill review. The behaviour itself is gated by
 // transitions.spec.ts and transitions-reduced.spec.ts. Run with
 //   CAPTURE_TRANSITIONS=1 pnpm exec playwright test tests/e2e/transitions-capture.spec.ts
 // PNGs go to .taste-skill/transitions/ (gitignored), named {item}-{locale}-{width}-{pct}.png.
@@ -35,7 +36,26 @@ const WIDTHS = [
 ] as const;
 
 const FRACTIONS = [0.25, 0.5, 0.7, 1] as const;
+const MORPH_FRACTIONS = [0, 0.3, 0.5, 0.7, 1] as const;
 const DETAIL_SLUG = 'website-instablogs';
+
+/**
+ * Item 2 subjects (07-06): InstaBlogs and the visible project whose ES title is longest, read from
+ * the committed overrides at capture time (the one-line card title that may land on two lines).
+ */
+function morphSubjects(locale: 'en' | 'es'): { key: string; href: string }[] {
+  const visible = (l: 'en' | 'es'): ExpectedProject[] =>
+    expectedProjects(l).filter((project) => !project.hidden);
+  const longest = [...visible('es')].sort((a, b) => b.title.length - a.title.length)[0];
+  const local = visible(locale);
+  const insta = local.find((project) => project.slug === DETAIL_SLUG);
+  const long = local.find((project) => project.id === longest?.id);
+  if (insta === undefined || long === undefined) throw new Error('capture: no morph subjects');
+  return [
+    { key: 'instablogs', href: insta.href },
+    { key: 'longest-es', href: long.href },
+  ];
+}
 
 /**
  * Pauses the next view transition at `window.__captureAt` (a fraction of each animation's own
@@ -120,6 +140,35 @@ for (const { width, height } of WIDTHS) {
           await shoot(page, `1-back-${locale}-${width}-${pct(fraction)}`);
         });
       }
+
+      // 2. Projects card -> detail title morph (07-06, D-02) for InstaBlogs and the project with
+      //    the longest ES title, at 0/30/50/70/100% of the flight.
+      for (const { key, href } of morphSubjects(locale)) {
+        test(`2 morph ${key}`, async ({ page }) => {
+          for (const fraction of MORPH_FRACTIONS) {
+            await pauseTransitions(page);
+            await page.goto(`${home}projects/`);
+            const link = page.locator(`main article a[href="${href}"]`).first();
+            await link.scrollIntoViewIfNeeded();
+            await settleMotion(page);
+            await armCapture(page, fraction);
+            await link.click();
+            await shoot(page, `2-${key}-${locale}-${width}-${pct(fraction)}`);
+          }
+        });
+      }
+
+      // 3. Home compact card -> detail morph at 50% (the 16px -> 36px case).
+      test('3 home card morph at 50%', async ({ page }) => {
+        await pauseTransitions(page);
+        await page.goto(home);
+        const link = page.locator('section[aria-labelledby="work-title"] article h3 a').first();
+        await link.scrollIntoViewIfNeeded();
+        await settleMotion(page);
+        await armCapture(page, 0.5);
+        await link.click();
+        await shoot(page, `3-${locale}-${width}-50`);
+      });
 
       // 4. Language switch on the InstaBlogs detail page at 50% (header still, labels switched).
       test('4 language switch at 50%', async ({ page }) => {
