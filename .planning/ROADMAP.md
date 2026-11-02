@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Real Behance Work** - Consent, a typed project model, a fail-loud snapshot sync, latest 3 on Home, and the Projects list page (completed 2026-10-17)
 - [x] **Phase 4: Project Detail & Discovery** - Mirrored detail pages with metadata and navigation, plus conditional filter/search (completed 2026-10-19)
 - [x] **Phase 5: Contact** - Working spam-protected contact form (logging mailer in v1), service pre-selection, and a mailto fallback (completed 2026-10-29)
-- [ ] **Phase 6: Scroll & Interaction Motion** - Reveals, text splits, cursor/magnetic buttons, card hover effects, reduced-motion support, and a motion toggle
+- [x] **Phase 6: Scroll & Interaction Motion** - Reveals, text splits, cursor/magnetic buttons, card hover effects, reduced-motion support, and a motion toggle (completed 2026-11-02)
 - [ ] **Phase 7: Page Transitions & Smooth Scroll** - Animated navigation with focus management, inertial scroll and parallax, no lifecycle leaks
 - [ ] **Phase 8: Quality Verification** - Measured performance budget, full axe/keyboard pass in both languages, and Spanish copy ready for review
 
@@ -289,7 +289,7 @@ Plans:
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [ ] 06-10-PLAN.md — Phase gate: axe across motion states, final bundle numbers, full taste gate, user review
+- [x] 06-10-PLAN.md — Phase gate: axe across motion states, final bundle numbers, full taste gate, user review
 
 **UI hint**: yes
 
@@ -337,6 +337,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 3. Real Behance Work | 10/10 | Complete   | 2026-10-17 |
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
-| 6. Scroll & Interaction Motion | 9/10 | In Progress|  |
+| 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
 | 7. Page Transitions & Smooth Scroll | 0/TBD | Not started | - |
 | 8. Quality Verification | 0/TBD | Not started | - |
