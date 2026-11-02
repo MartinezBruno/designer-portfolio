@@ -324,8 +324,8 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 07-06-PLAN.md — Card title -> detail h1 morph (click-time naming, invert/difference blend), morph captures reviewed
-- [ ] 07-07-PLAN.md — Anchors glide/jump with focus, instant skip link, Ask-about-this without page swap
+- [x] 07-06-PLAN.md — Card title -> detail h1 morph (click-time naming, invert/difference blend), morph captures reviewed
+- [x] 07-07-PLAN.md — Anchors glide/jump with focus, instant skip link, Ask-about-this without page swap
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
@@ -369,5 +369,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
-| 7. Page Transitions & Smooth Scroll | 5/10 | In Progress|  |
+| 7. Page Transitions & Smooth Scroll | 7/10 | In Progress|  |
 | 8. Quality Verification | 0/TBD | Not started | - |
