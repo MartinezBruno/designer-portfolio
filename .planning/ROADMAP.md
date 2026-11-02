@@ -319,8 +319,8 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 07-04-PLAN.md — Arrival choreography: release gate (70%/finished/1200 ms), entrances and focus after the wipe, back/forward restore, live-toggle skip, flash limit
-- [ ] 07-05-PLAN.md — lenis@1.3.27 approval checkpoint, lazy page-scoped smooth wheel scroll (fine pointer + on), keyboard/find/touch e2e
+- [x] 07-04-PLAN.md — Arrival choreography: release gate (70%/finished/1200 ms), entrances and focus after the wipe, back/forward restore, live-toggle skip, flash limit
+- [x] 07-05-PLAN.md — lenis@1.3.27 approval checkpoint, lazy page-scoped smooth wheel scroll (fine pointer + on), keyboard/find/touch e2e
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -369,5 +369,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
-| 7. Page Transitions & Smooth Scroll | 3/10 | In Progress|  |
+| 7. Page Transitions & Smooth Scroll | 5/10 | In Progress|  |
 | 8. Quality Verification | 0/TBD | Not started | - |
