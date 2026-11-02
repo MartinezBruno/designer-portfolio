@@ -329,7 +329,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 07-08-PLAN.md — CSS scroll-driven parallax on card covers and Next-project teaser (overflow-clip frames, D-13 coexistence)
+- [x] 07-08-PLAN.md — CSS scroll-driven parallax on card covers and Next-project teaser (overflow-clip frames, D-13 coexistence)
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
@@ -369,5 +369,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
-| 7. Page Transitions & Smooth Scroll | 7/10 | In Progress|  |
+| 7. Page Transitions & Smooth Scroll | 8/10 | In Progress|  |
 | 8. Quality Verification | 0/TBD | Not started | - |
