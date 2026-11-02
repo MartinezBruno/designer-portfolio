@@ -1,7 +1,12 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { dispatchMotionChange } from '../../src/lib/motion/events';
-import { bindNavigation, type NavigationHandle } from '../../src/lib/motion/navigation';
+import {
+  bindNavigation,
+  MORPH_NAME,
+  wrapForMorph,
+  type NavigationHandle,
+} from '../../src/lib/motion/navigation';
 
 // 07-01: app-scope router hooks (MOTN-05, 07 D-04, D-05; Research Pattern 1, Pitfalls 1, 2, 9).
 
@@ -393,5 +398,206 @@ describe('bindNavigation wipe rate limit', () => {
     setLiveState('reduced');
     const fades = [0, 100, 200, 300, 400].map(navigateAt);
     for (const transition of fades) expect(transition.skipTransition).not.toHaveBeenCalled();
+  });
+});
+
+// 07-06: card title -> detail h1 morph (D-02; UI-SPEC "Title Morph"; Research Pattern 4, Pitfall 8).
+describe('bindNavigation title morph', () => {
+  let navigation: NavigationHandle;
+
+  const CARD = `<article data-card><h2><a href="/projects/a/">Insta<em>Blogs</em></a></h2></article>`;
+  const LANG_CARD = `<article data-card><h3><a href="/projects/b/"><span lang="es">Fotografía</span></a></h3></article>`;
+  const TEASER = `<article data-card><h3><a href="/projects/c/"><span class="sr-only">Next project:</span> <span lang="es">Señales</span></a></h3></article>`;
+  const NAV = `<nav><a href="/projects/">Projects</a></nav>`;
+  const DETAIL =
+    '<!doctype html><html data-motion="off"><body><main><h1 id="project-title" data-reveal="lines" tabindex="-1"><span lang="es">Señales</span></h1></main></body></html>';
+
+  function mount(html: string): HTMLAnchorElement {
+    document.body.innerHTML = html;
+    const link = document.body.querySelector('a');
+    if (link === null) throw new Error('no link');
+    return link;
+  }
+
+  function prepare(sourceElement?: Element): Event {
+    const event = Object.assign(new Event('astro:before-preparation', { cancelable: true }), {
+      sourceElement,
+    });
+    document.dispatchEvent(event);
+    return event;
+  }
+
+  function named(root: ParentNode): HTMLElement[] {
+    return [...root.querySelectorAll<HTMLElement>('[style]')].filter(
+      (el) => el.style.getPropertyValue('view-transition-name') === MORPH_NAME,
+    );
+  }
+
+  beforeEach(() => {
+    navigation = bindNavigation(document);
+    setLiveState('on');
+  });
+
+  afterEach(() => {
+    navigation.unbind();
+    document.body.innerHTML = '';
+    delete document.documentElement.dataset['motion'];
+    delete document.documentElement.dataset['wipe'];
+    delete document.documentElement.dataset['vt'];
+  });
+
+  it('wrapForMorph moves the qualifying nodes into one fit-content inline-block span', () => {
+    const link = mount(TEASER);
+    const before = link.textContent;
+    const span = wrapForMorph(
+      link,
+      (node) => node instanceof Element && node.classList.contains('sr-only'),
+    );
+    expect(span.hasAttribute('data-morph-title')).toBe(true);
+    expect(span.style.getPropertyValue('display')).toBe('inline-block');
+    expect(span.style.getPropertyValue('width')).toBe('fit-content');
+    expect(span.style.getPropertyValue('view-transition-name')).toBe(MORPH_NAME);
+    expect(span.childNodes).toHaveLength(2);
+    expect(span.previousElementSibling?.classList.contains('sr-only')).toBe(true);
+    expect(link.textContent).toBe(before);
+  });
+
+  it('names the clicked card title link under on, exactly once', () => {
+    const link = mount(CARD);
+    const before = link.textContent;
+    prepare(link);
+    const spans = named(document);
+    expect(spans).toHaveLength(1);
+    const span = spans[0];
+    expect(span?.parentElement).toBe(link);
+    expect(span?.hasAttribute('data-morph-title')).toBe(true);
+    expect(span?.style.getPropertyValue('display')).toBe('inline-block');
+    expect(span?.style.getPropertyValue('width')).toBe('fit-content');
+    expect(link.textContent).toBe(before);
+    expect(link.querySelector('em')?.parentElement).toBe(span);
+  });
+
+  it('wraps a lang title without touching its lang span', () => {
+    const link = mount(LANG_CARD);
+    prepare(link);
+    const span = named(document)[0];
+    expect(span?.firstElementChild?.getAttribute('lang')).toBe('es');
+    expect(link.textContent).toBe('Fotografía');
+  });
+
+  it('leaves the teaser sr-only prefix and its whitespace outside the wrapper', () => {
+    const link = mount(TEASER);
+    const before = link.textContent;
+    prepare(link);
+    const span = named(document)[0];
+    expect(span?.textContent).toBe('Señales');
+    expect(link.firstElementChild?.classList.contains('sr-only')).toBe(true);
+    expect(span?.querySelector('.sr-only')).toBeNull();
+    expect(link.textContent).toBe(before);
+  });
+
+  it('names a card title when the click lands on a node inside the link', () => {
+    const link = mount(CARD);
+    const inner = link.querySelector('em');
+    if (inner === null) throw new Error('no inner');
+    prepare(inner);
+    expect(named(document)).toHaveLength(1);
+  });
+
+  it('names nothing for a link outside a card, without a source, or under reduced', () => {
+    prepare(mount(NAV));
+    expect(named(document)).toHaveLength(0);
+    mount(CARD);
+    prepare();
+    expect(named(document)).toHaveLength(0);
+    setLiveState('reduced');
+    prepare(mount(CARD));
+    expect(named(document)).toHaveLength(0);
+    expect(document.querySelector('[data-morph-title]')).toBeNull();
+  });
+
+  it('names nothing when motion is off (the navigation becomes a full load)', () => {
+    setLiveState('off');
+    prepare(mount(CARD));
+    expect(named(document)).toHaveLength(0);
+  });
+
+  it('names the arriving h1 and reveals it instantly after a named source', () => {
+    prepare(mount(CARD));
+    const next = parse(DETAIL);
+    beforeSwap(next, fakeTransition());
+    const title = next.getElementById('project-title');
+    expect(title?.hasAttribute('data-revealed')).toBe(true);
+    expect(title?.hasAttribute('data-reveal-instant')).toBe(true);
+    const spans = named(next);
+    expect(spans).toHaveLength(1);
+    expect(spans[0]?.parentElement).toBe(title);
+    expect(spans[0]?.style.getPropertyValue('display')).toBe('inline-block');
+    expect(title?.textContent).toBe('Señales');
+    expect(spans[0]?.firstElementChild?.getAttribute('lang')).toBe('es');
+  });
+
+  it('does not touch the arriving h1 without a named source (nav link, back)', () => {
+    prepare(mount(NAV));
+    const next = parse(DETAIL);
+    beforeSwap(next, fakeTransition());
+    const title = next.getElementById('project-title');
+    expect(title?.hasAttribute('data-revealed')).toBe(false);
+    expect(named(next)).toHaveLength(0);
+  });
+
+  it('adds nothing when the arriving document has no #project-title', () => {
+    prepare(mount(CARD));
+    const next = parse(ARRIVING_WITHOUT_TOGGLE);
+    beforeSwap(next, fakeTransition());
+    expect(next.querySelector('[data-morph-title]')).toBeNull();
+    expect(next.querySelector('[data-revealed]')).toBeNull();
+  });
+
+  it('clears both names when the transition finishes and restores the source link', async () => {
+    const link = mount(CARD);
+    const markup = link.innerHTML;
+    prepare(link);
+    const next = parse(DETAIL);
+    const transition = fakeTransition();
+    beforeSwap(next, transition);
+    transition.finish();
+    await transition.finished;
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(named(next)).toHaveLength(0);
+    expect(named(document)).toHaveLength(0);
+    expect(link.innerHTML).toBe(markup);
+    expect(next.getElementById('project-title')?.textContent).toBe('Señales');
+  });
+
+  it('a new navigation clears a leftover name first (aborted transition)', () => {
+    const first = mount(CARD);
+    const markup = first.innerHTML;
+    prepare(first);
+    expect(named(document)).toHaveLength(1);
+    prepare();
+    expect(named(document)).toHaveLength(0);
+    expect(first.innerHTML).toBe(markup);
+  });
+
+  it('only the latest clicked title carries the name', () => {
+    document.body.innerHTML = CARD + LANG_CARD;
+    const [a, b] = [...document.querySelectorAll('a')];
+    if (a === undefined || b === undefined) throw new Error('no links');
+    prepare(a);
+    prepare(b);
+    const spans = named(document);
+    expect(spans).toHaveLength(1);
+    expect(spans[0]?.parentElement).toBe(b);
+  });
+
+  it('a fallback swap without a view transition does not mark the h1', () => {
+    prepare(mount(CARD));
+    const next = parse(DETAIL);
+    beforeSwap(next);
+    expect(next.getElementById('project-title')?.hasAttribute('data-revealed')).toBe(false);
+    expect(named(next)).toHaveLength(0);
+    expect(named(document)).toHaveLength(0);
   });
 });

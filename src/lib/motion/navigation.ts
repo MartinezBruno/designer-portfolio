@@ -73,6 +73,55 @@ interface PendingTransition {
   release: Promise<void>;
 }
 
+/** The one shared view-transition name of the card title -> detail h1 morph (07 D-02). */
+export const MORPH_NAME = 'project-title';
+
+/**
+ * Moves `el`'s child nodes, except those `skip` rejects, into a new `span[data-morph-title]` set
+ * to `display: inline-block; width: fit-content` and named MORPH_NAME (07 D-02, UI-SPEC "Title
+ * Morph"). The span is the morph's box: the stretched link's `::after` covers the whole tile, so
+ * the link itself must never carry the name, and an atomic inline box keeps the link's hover
+ * underline and focus ring out of the snapshot. Nodes are moved, never re-parsed (T-07-15), so
+ * text, `lang` spans and listeners are untouched. Created through `el.ownerDocument`, so it also
+ * works on the router's DOMParser document.
+ */
+export function wrapForMorph(el: Element, skip: (node: Node) => boolean): HTMLSpanElement {
+  const span = el.ownerDocument.createElement('span');
+  span.setAttribute('data-morph-title', '');
+  span.style.setProperty('display', 'inline-block');
+  span.style.setProperty('width', 'fit-content');
+  span.style.setProperty('view-transition-name', MORPH_NAME);
+  const nodes = [...el.childNodes].filter((node) => !skip(node));
+  el.insertBefore(span, nodes[0] ?? null);
+  span.append(...nodes);
+  return span;
+}
+
+/** Puts a wrapper's children back where it stood and removes it. */
+function unwrap(span: HTMLElement): void {
+  span.replaceWith(...span.childNodes);
+}
+
+const isScreenReaderOnly = (node: Node | null): boolean =>
+  node instanceof Element && node.classList.contains('sr-only');
+
+/**
+ * The teaser link reads "<sr-only prefix> <title>": the prefix and the whitespace beside it stay
+ * outside the morph box, so only the visible title flies (UI-SPEC "Title Morph").
+ */
+function isTitleChrome(node: Node): boolean {
+  if (isScreenReaderOnly(node)) return true;
+  if (node.nodeType !== Node.TEXT_NODE || (node.textContent ?? '').trim() !== '') return false;
+  return isScreenReaderOnly(node.previousSibling) || isScreenReaderOnly(node.nextSibling);
+}
+
+interface Morph {
+  /** The wrapper inside the clicked card title link, in the live (old) document. */
+  source: HTMLSpanElement;
+  /** The wrapper inside the arriving `#project-title`, once the swap is prepared. */
+  target?: HTMLSpanElement;
+}
+
 export function bindNavigation(doc: Document, deps: NavigationDeps = {}): NavigationHandle {
   const ac = new AbortController();
   const { signal } = ac;
@@ -185,12 +234,73 @@ export function bindNavigation(doc: Document, deps: NavigationDeps = {}): Naviga
     if (state !== 'on') running?.skipTransition();
   }
 
+  let morph: Morph | undefined;
+
+  /**
+   * Ends the morph: the source link gets its original children back (an aborted navigation leaves
+   * the visitor on the card, whose hover underline needs the bare text), and the arriving h1 only
+   * loses the name. Its wrapper stays so the landed title keeps the exact box the new snapshot
+   * was taken from, with no reflow at the end. Afterwards no element is named (Pitfall 8).
+   */
+  function clearMorph(): void {
+    if (morph === undefined) return;
+    unwrap(morph.source);
+    morph.target?.style.removeProperty('view-transition-name');
+    morph = undefined;
+  }
+
+  /**
+   * 07 D-02, Research Pattern 4: under `on` a click on a card's title link (`event.sourceElement`
+   * inside `[data-card]`) names that title only, before the router captures the old state. Nav
+   * links, the EN/ES switch, back/forward (no source element), `reduced` and `off` name nothing.
+   * Any leftover from an aborted navigation is cleared first, so names stay unique (T-07-16).
+   */
+  function nameMorphSource(event: TransitionBeforePreparationEvent): void {
+    clearMorph();
+    if (event.defaultPrevented || currentMotionState(doc) !== 'on') return;
+    const source: Element | undefined = event.sourceElement;
+    const card = source?.closest('[data-card]');
+    const link = source?.closest('a');
+    if (card == null || link == null || !card.contains(link)) return;
+    if (link.closest('h1, h2, h3, h4, h5, h6') === null) return;
+    morph = { source: wrapForMorph(link, isTitleChrome) };
+  }
+
+  /**
+   * The arriving `#project-title` gets the same name around its children, and lands revealed
+   * (`data-revealed data-reveal-instant`), so the Phase 6 line rise never splits or replays it
+   * under the flying title (UI-SPEC "Title Morph"). Both names are cleared once the transition
+   * settles, whether it finished, was skipped or was aborted.
+   */
+  function nameMorphTarget(event: TransitionBeforeSwapEvent): void {
+    if (morph === undefined || morph.target !== undefined) return;
+    const transition: ViewTransition | undefined = event.viewTransition;
+    if (transition === undefined || currentMotionState(doc) !== 'on') {
+      clearMorph();
+      return;
+    }
+    const entry = morph;
+    const title = event.newDocument.getElementById('project-title');
+    if (title !== null) {
+      entry.target = wrapForMorph(title, () => false);
+      title.setAttribute('data-revealed', '');
+      title.setAttribute('data-reveal-instant', '');
+    }
+    void transition.finished
+      .catch(() => undefined)
+      .finally(() => {
+        if (morph === entry) clearMorph();
+      });
+  }
+
   doc.addEventListener('astro:before-preparation', preventOffNavigation, { signal });
   doc.addEventListener('astro:before-preparation', clearStaleWipe, { signal });
+  doc.addEventListener('astro:before-preparation', nameMorphSource, { signal });
   doc.addEventListener('astro:before-swap', carryMotionState, { signal });
   doc.addEventListener('astro:before-swap', syncMotionToggle, { signal });
   doc.addEventListener('astro:before-swap', markWipe, { signal });
   doc.addEventListener('astro:before-swap', holdArrival, { signal });
+  doc.addEventListener('astro:before-swap', nameMorphTarget, { signal });
   onMotionChange(doc, skipOnMotionChange, signal);
 
   return {
