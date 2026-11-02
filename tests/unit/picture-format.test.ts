@@ -89,6 +89,7 @@ describe('rendered picture markup', () => {
         caption: null,
         captionLang: null,
         eager: false,
+        entrance: null,
       },
     });
     expectAvifSourceAndWebpImg(html);

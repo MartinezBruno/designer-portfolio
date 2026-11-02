@@ -105,3 +105,60 @@ describe('parallax tokens (07-08, UI-SPEC "Parallax")', () => {
     expect(print).toMatch(/\[data-parallax\]\s*\{[^}]*height:\s*100% !important;/);
   });
 });
+
+describe('detail-stack side entrance (07-09, D-11a, UI-SPEC "Detail-stack side entrance")', () => {
+  const supports = css.indexOf('@supports (animation-timeline: view())');
+
+  it('defines the travel token and the side factors', () => {
+    expect(css).toMatch(/\[data-stack-frame\]\s*\{[^}]*--stack-travel:\s*7%;[^}]*\}/);
+    expect(css).toMatch(/\[data-stack-enter='left'\]\s*\{[^}]*--stack-from:\s*-1;[^}]*\}/);
+    expect(css).toMatch(/\[data-stack-enter='right'\]\s*\{[^}]*--stack-from:\s*1;[^}]*\}/);
+  });
+
+  it('has one stack-enter keyframe that ends at rest', () => {
+    expect(css.match(/@keyframes stack-enter\b/g)).toHaveLength(1);
+    const keyframes = blockAt(css.indexOf('{', css.indexOf('@keyframes stack-enter')));
+    expect(keyframes).toMatch(
+      /from\s*\{[^}]*translate:\s*calc\(var\(--stack-from\) \* var\(--stack-travel\)\) 0;/,
+    );
+    expect(keyframes).toMatch(/to\s*\{[^}]*translate:\s*0 0;/);
+  });
+
+  it('runs on the --stack view timeline over the entry range, inside the gate, under on', () => {
+    const gate = blockAt(css.indexOf('{', supports));
+    const outside = css.replace(gate, '');
+    expect(outside).not.toMatch(/(?:animation|view)-timeline:\s*--stack/);
+    expect(gate).toContain('view-timeline: --stack block');
+    expect(gate).toContain('animation-range: entry 0% entry 100%');
+    const uses = [...gate.matchAll(/(?:animation|view)-timeline:\s*--stack/g)];
+    expect(uses.length).toBeGreaterThanOrEqual(2);
+    for (const use of uses) {
+      const selector = selectorAt(gate, use.index);
+      for (const part of selector.split(',')) {
+        expect(part.trim().startsWith("[data-motion='on']")).toBe(true);
+      }
+    }
+  });
+
+  it('writes the stack animation with longhands only (the minifier drops a shorthand)', () => {
+    const open = css.indexOf('{', supports);
+    const gate = blockAt(open);
+    const at = gate.indexOf('animation-name: stack-enter');
+    expect(at).toBeGreaterThan(-1);
+    const rule = blockAt(open + 1 + gate.lastIndexOf('{', at));
+    expect(rule).not.toMatch(/(^|[\s;])animation:/);
+    expect(rule).toContain('animation-fill-mode: both');
+    expect(rule).toContain('animation-timing-function: var(--ease-reveal)');
+    expect(rule).toContain('animation-timeline: --stack');
+  });
+
+  it('resets stack images in print', () => {
+    const print = blockAt(css.indexOf('{', css.indexOf('@media print')));
+    expect(print).toMatch(/\[data-stack-enter\]\s*\{[^}]*animation:\s*none !important;/);
+    expect(print).toMatch(/\[data-stack-enter\]\s*\{[^}]*translate:\s*none !important;/);
+  });
+
+  it('drops the superseded stack parallax tokens', () => {
+    expect(css).not.toContain("[data-parallax-frame='stack']");
+  });
+});

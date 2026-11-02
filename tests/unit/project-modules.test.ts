@@ -23,6 +23,7 @@ const imageProps: ImageProps = {
   caption: null,
   captionLang: null,
   eager: false,
+  entrance: null,
 };
 
 async function container(): Promise<AstroContainer> {
@@ -91,6 +92,47 @@ describe('ImageModule', () => {
     expect(out).toMatch(/<figcaption lang="es"[^>]*>\s*Pie de foto\s*<\/figcaption>/);
     const bare = await c.renderToString(ImageModule, { props: imageProps });
     expect(bare).not.toContain('<figure');
+  });
+});
+
+describe('ImageModule side entrance (07 D-11a)', () => {
+  it('wraps a moving image in a clip frame with its aspect ratio and side', async () => {
+    const c = await container();
+    for (const side of ['left', 'right'] as const) {
+      const out = await c.renderToString(ImageModule, {
+        props: { ...imageProps, entrance: side },
+      });
+      const frame = /<div\b[^>]*data-stack-frame[^>]*>/.exec(out)?.[0] ?? '';
+      expect(frame).toContain('class="bg-surface-alt overflow-clip"');
+      expect(frame).toContain(
+        `aspect-ratio: ${String(portrait.width)} / ${String(portrait.height)}`,
+      );
+      const [img] = imgTags(out);
+      expect(img).toContain(`data-stack-enter="${side}"`);
+      expect(out).not.toContain('data-parallax');
+    }
+  });
+
+  it('wraps the captioned figure branch the same way', async () => {
+    const c = await container();
+    const out = await c.renderToString(ImageModule, {
+      props: { ...imageProps, caption: 'Pie', captionLang: 'es', entrance: 'right' },
+    });
+    expect(out).toMatch(/<figure\b/);
+    expect(out).toContain('data-stack-frame');
+    expect(imgTags(out)[0]).toContain('data-stack-enter="right"');
+  });
+
+  it('renders the unchanged markup for a static image', async () => {
+    const c = await container();
+    for (const caption of [null, 'Pie']) {
+      const out = await c.renderToString(ImageModule, { props: { ...imageProps, caption } });
+      expect(out).not.toContain('data-stack-frame');
+      expect(out).not.toContain('data-stack-enter');
+      expect(out).not.toContain('overflow-clip');
+      expect(out).not.toContain('data-parallax');
+      expect(out.match(/<div\b/g)).toHaveLength(1);
+    }
   });
 });
 
