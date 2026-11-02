@@ -129,7 +129,9 @@ test.describe('same-page anchors', () => {
     await page.goto('/');
     await settleMotion(page);
     const start = await scrollY(page);
-    await pressInPlace(page.locator('[data-hero-cta]'));
+    await pressInPlace(
+      page.locator('[data-hero-cta]').getByRole('link', { name: en['hero.cta'], exact: true }),
+    );
     await page.waitForTimeout(120);
     const mid = await scrollY(page);
     const end = await waitForScrollRest(page);
