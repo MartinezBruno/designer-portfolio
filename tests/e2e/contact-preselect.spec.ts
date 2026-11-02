@@ -77,6 +77,8 @@ for (const { locale, prefix, dict } of cases) {
       await page.goto(prefix);
       await page.getByRole('link', { name: branding.name, exact: true }).click();
       await expect(page.locator('#contact-service-branding')).toBeChecked();
+      // 07-07: on Home the link stays on the page and #contact takes focus when the glide ends.
+      await expect(page.locator('section#contact')).toBeFocused();
       await page.keyboard.press('Tab');
       const inside = await page.evaluate(
         () => document.activeElement?.closest('section#contact') !== null,

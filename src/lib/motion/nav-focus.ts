@@ -4,7 +4,10 @@
  * screen-reader users would be stranded. After each swap focus moves to the arriving page's
  * anchor target, else its main h1, else `#main`. All three carry `tabindex="-1"`, are
  * non-interactive and show no ring (global.css). `preventScroll` leaves scrolling to the router.
+ * The same binding also moves focus for same-page anchors (07-07, bindAnchorFocus below).
  */
+import { applyServicePreselect } from '../ui/service-preselect';
+import { currentMotionState } from './events';
 
 export interface NavFocusOptions {
   /** Resolves when the arriving page may take focus (a later plan holds it during the wipe). */
@@ -35,9 +38,151 @@ export function pickFocusTarget(doc: Document, hash: string): HTMLElement | null
   return main instanceof HTMLElement ? main : null;
 }
 
+/** Upper bound on waiting for `scrollend` after a smooth glide (T-07-20: focus is never lost). */
+const GLIDE_FOCUS_FALLBACK_MS = 1200;
+
+/** Hash targets the anchor hook leaves alone: form controls and links keep their own handling. */
+const SKIPPED_TARGETS = 'input, select, textarea, button, a[href]';
+
+/**
+ * Resolves true when the scroll has landed: on `scrollend`, or after the fallback (1200 ms for a
+ * glide, two frames for a jump). Resolves false if `signal` aborts first. Every listener and timer
+ * goes away either way, so nothing outlives one navigation.
+ */
+function waitForLanding(win: Window, smooth: boolean, signal: AbortSignal): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (signal.aborted) {
+      resolve(false);
+      return;
+    }
+    const local = new AbortController();
+    let timer = 0;
+    let frame = 0;
+    const finish = (landed: boolean): void => {
+      if (local.signal.aborted) return;
+      local.abort();
+      win.clearTimeout(timer);
+      win.cancelAnimationFrame(frame);
+      resolve(landed);
+    };
+    win.addEventListener('scrollend', () => finish(true), { once: true, signal: local.signal });
+    signal.addEventListener('abort', () => finish(false), { once: true, signal: local.signal });
+    if (smooth) {
+      timer = win.setTimeout(() => finish(true), GLIDE_FOCUS_FALLBACK_MS);
+    } else {
+      frame = win.requestAnimationFrame(() => {
+        frame = win.requestAnimationFrame(() => finish(true));
+      });
+    }
+  });
+}
+
+/**
+ * Same-page anchors (MOTN-06, 07 D-08, UI-SPEC "Anchors and the skip link"). A capture-phase click
+ * hook, so it sees the click before the ClientRouter's bubble-phase handler.
+ *
+ * - Same pathname and search: the router keeps its native fragment navigation, so the URL and
+ *   history stay router-owned (Research Pitfall 4: Lenis anchors are off so the two never both
+ *   handle one click). Under 'on' the hook sets an inline `scroll-behavior: smooth` on `html` for
+ *   that one navigation: the browser's own smooth scroll glides on every pointer type and honours
+ *   `scroll-padding`, and Lenis follows native scroll while idle. Never set in CSS, because the
+ *   router restores history positions with scrollTo. The previous value comes back on landing.
+ * - The skip link (`data-skip-link`) never glides.
+ * - Same pathname with a different `?service=` (Home "Ask about this"): handled locally, because
+ *   the router would swap Home onto itself (wipe, hero replay, typed message lost). The chip is
+ *   checked through the allow-list, the URL is replaced in place with the router's own state
+ *   object (no new history entry), and the target is scrolled into view.
+ *
+ * In every case the target gets focus with preventScroll once the scroll lands. Hash text is
+ * looked up with getElementById only (T-07-17). Links inside a form and hashes that point at a
+ * control or link are ignored: the contact error summary keeps its own handler.
+ */
+function bindAnchorFocus(doc: Document, signal: AbortSignal): void {
+  const html = doc.documentElement;
+  // The one navigation still waiting to land, and the inline scroll-behavior to put back.
+  let pending: { ac: AbortController; restore: string | null } | null = null;
+
+  /** Synchronous, so a superseding click reads the restored value, never our own 'smooth'. */
+  function cancelPending(): void {
+    if (!pending) return;
+    const { ac, restore } = pending;
+    pending = null;
+    if (restore !== null) html.style.scrollBehavior = restore;
+    ac.abort();
+  }
+
+  async function land(
+    view: Window,
+    target: HTMLElement,
+    smooth: boolean,
+    restore: string | null,
+  ): Promise<void> {
+    const entry = { ac: new AbortController(), restore };
+    pending = entry;
+    const landed = await waitForLanding(view, smooth, entry.ac.signal);
+    if (pending !== entry) return; // superseded or unbound: already restored
+    pending = null;
+    if (restore !== null) html.style.scrollBehavior = restore;
+    if (landed) target.focus({ preventScroll: true });
+  }
+
+  function onClick(event: MouseEvent): void {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return;
+    const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
+    if (!(link instanceof HTMLAnchorElement)) return;
+    if ((link.target !== '' && link.target !== '_self') || link.hasAttribute('download')) return;
+    if (link.closest('form') !== null) return;
+
+    const view = doc.defaultView;
+    if (!view) return;
+    const here = view.location;
+    let url: URL;
+    try {
+      url = new URL(link.href, here.href);
+    } catch {
+      return;
+    }
+    if (url.origin !== here.origin || url.pathname !== here.pathname || url.hash === '') return;
+    const target = hashTarget(doc, url.hash);
+    if (!target || target.matches(SKIPPED_TARGETS)) return;
+
+    const smooth = currentMotionState(doc) === 'on' && !link.hasAttribute('data-skip-link');
+
+    if (url.search !== here.search) {
+      // Only the service links are taken over; any other search change stays the router's.
+      if (!url.searchParams.has('service')) return;
+      event.preventDefault();
+      cancelPending();
+      applyServicePreselect(doc, url.search);
+      // The router's own state object (index, scroll) stays, so back/forward keep working.
+      view.history.replaceState(view.history.state, '', url.href);
+      target.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant', block: 'start' });
+      void land(view, target, smooth, null);
+      return;
+    }
+
+    cancelPending();
+    const previous = html.style.scrollBehavior;
+    if (smooth) html.style.scrollBehavior = 'smooth';
+    void land(view, target, smooth, smooth ? previous : null);
+  }
+
+  doc.addEventListener('click', onClick, { capture: true, signal });
+  signal.addEventListener('abort', cancelPending, { once: true });
+}
+
 export function bindNavFocus(doc: Document, options: NavFocusOptions = {}): () => void {
   const ac = new AbortController();
   const { signal } = ac;
+  bindAnchorFocus(doc, signal);
   // astro:page-load also fires on the first load, where the browser's own focus start is right.
   let navigated = false;
 

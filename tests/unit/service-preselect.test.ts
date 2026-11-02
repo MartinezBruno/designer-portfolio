@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createLifecycle } from '../../src/lib/motion/lifecycle';
-import { initServicePreselect } from '../../src/lib/ui/service-preselect';
+import { applyServicePreselect, initServicePreselect } from '../../src/lib/ui/service-preselect';
 
 const CHOICES = ['graphic-design', 'web-design', 'branding', 'social-media', 'other'];
 
@@ -91,5 +91,36 @@ describe('initServicePreselect', () => {
     const imports = [...source.matchAll(/from '([^']+)'/g)].map((m) => m[1]);
     expect(imports).toEqual(['../motion/lifecycle', '../contact/service-param']);
     expect(source).not.toContain('focus(');
+  });
+});
+
+describe('applyServicePreselect', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('checks the chip named by the given search, not the current URL', () => {
+    document.body.innerHTML = fixture();
+    window.history.replaceState(null, '', '/');
+    applyServicePreselect(document, '?service=branding');
+    expect(checkedId()).toBe('branding');
+  });
+
+  it('allow-lists injection payloads: falls back to other and never throws', () => {
+    document.body.innerHTML = fixture();
+    for (const search of ['?service=x"],body', '?service=%22%5D%2Cbody', '?service=<img>']) {
+      byId('contact-service-branding').click();
+      expect(() => {
+        applyServicePreselect(document, search);
+      }).not.toThrow();
+      expect(checkedId()).toBe('other');
+    }
+  });
+
+  it('does nothing when there are no service radios', () => {
+    document.body.innerHTML = '<p>nothing</p>';
+    expect(() => {
+      applyServicePreselect(document, '?service=branding');
+    }).not.toThrow();
   });
 });
