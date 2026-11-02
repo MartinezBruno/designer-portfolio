@@ -188,10 +188,16 @@ export function createReveal(deps: RevealDeps): PageInit {
       el.setAttribute('data-revealed', '');
       el.setAttribute('data-reveal-instant', '');
     };
+    // Restored position (07 D-15): back/forward lands mid-page, and an element wholly above the
+    // viewport at mount is shown at once, so no entrance replays above the visitor. At scroll 0
+    // (every fresh load) nothing can be above, so no layout is read and first-load is unchanged.
+    const scrolled = (win?.scrollY ?? 0) > 0;
+    const aboveViewport = (el: HTMLElement): boolean =>
+      scrolled && el.getBoundingClientRect().bottom <= 0;
     const gateLines = deps.loadGsap !== undefined && currentMotionState(doc) === 'on';
     const toArm: HTMLElement[] = [];
     for (const el of elements) {
-      if (shownByFailsafe(el)) showInstantly(el);
+      if (aboveViewport(el) || shownByFailsafe(el)) showInstantly(el);
       else if (gateLines && isLines(el)) waitingLines.add(el);
       else toArm.push(el);
     }

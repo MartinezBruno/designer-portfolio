@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { dispatchMotionChange } from '../../src/lib/motion/events';
 import { createHeroPlayed } from '../../src/lib/motion/hero';
 
@@ -169,5 +169,42 @@ describe('createHeroPlayed', () => {
     const again = createHeroPlayed()(document);
     again?.();
     expect(hero().hasAttribute('data-hero-played')).toBe(true);
+  });
+
+  // 07-04 (D-15): a back/forward restore past the hero never plays it.
+  describe('restored scroll position', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    function heroRect(bottom: number): void {
+      vi.spyOn(hero(), 'getBoundingClientRect').mockReturnValue({
+        top: bottom - 900,
+        bottom,
+        left: 0,
+        right: 100,
+        width: 100,
+        height: 900,
+      } as DOMRect);
+    }
+
+    it("marks the hero played at once under 'on' when it is above the viewport", () => {
+      setMotion('on');
+      vi.spyOn(window, 'scrollY', 'get').mockReturnValue(1500);
+      heroRect(-200);
+      animating('[data-hero-cta]', '[data-hero-portrait]');
+      expect(createHeroPlayed()(document)).toBeUndefined();
+      expect(hero().hasAttribute('data-hero-played')).toBe(true);
+    });
+
+    it('still waits for the sequence when the hero is partly in view', () => {
+      setMotion('on');
+      vi.spyOn(window, 'scrollY', 'get').mockReturnValue(400);
+      heroRect(500);
+      animating('[data-hero-cta]', '[data-hero-portrait]');
+      const cleanup = createHeroPlayed()(document);
+      expect(hero().hasAttribute('data-hero-played')).toBe(false);
+      cleanup?.();
+    });
   });
 });

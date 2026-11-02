@@ -33,6 +33,13 @@ export function createHeroPlayed(): PageInit {
       return undefined;
     }
 
+    // Restored position (07 D-15): a back/forward restore past the hero never plays it. At scroll
+    // 0 (every fresh load) the hero cannot be above the viewport, so no layout is read.
+    if ((doc.defaultView?.scrollY ?? 0) > 0 && hero.getBoundingClientRect().bottom <= 0) {
+      markPlayed();
+      return undefined;
+    }
+
     const ac = new AbortController();
     const done = (): void => {
       markPlayed();

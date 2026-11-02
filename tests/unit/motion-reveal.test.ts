@@ -333,6 +333,49 @@ describe('createReveal', () => {
     cleanup?.();
   });
 
+  // 07-04 (D-15): back/forward restores a scrolled position; nothing above it replays.
+  it('shows elements above the viewport at mount instantly and leaves in-view and below armed', () => {
+    vi.spyOn(window, 'scrollY', 'get').mockReturnValue(1500);
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(800);
+    const tops: Record<string, number> = { h: -600, a: -200, b: -60, c: 100, cover1: 300 };
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      const top = tops[this.id] ?? 1200;
+      return { top, bottom: top + 60, left: 0, right: 100, width: 100, height: 60 } as DOMRect;
+    });
+    const cleanup = createReveal(makeDeps())(document);
+    const io = FakeIntersectionObserver.last();
+    for (const id of ['h', 'a', 'b']) {
+      expect(el(id).hasAttribute('data-revealed')).toBe(true);
+      expect(el(id).hasAttribute('data-reveal-instant')).toBe(true);
+      expect(io.observed.has(el(id))).toBe(false);
+    }
+    // c straddles the top edge (bottom 160 > 0): in view, so it keeps its normal entrance.
+    for (const id of ['c', 'cover1', 'text2']) {
+      expect(el(id).hasAttribute('data-revealed')).toBe(false);
+      expect(el(id).hasAttribute('data-reveal-armed')).toBe(true);
+      expect(io.observed.has(el(id))).toBe(true);
+    }
+    cleanup?.();
+  });
+
+  it('never treats elements as above the viewport at scroll 0 (fresh load unchanged)', () => {
+    vi.spyOn(window, 'scrollY', 'get').mockReturnValue(0);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      top: -100,
+      bottom: -10,
+      left: 0,
+      right: 100,
+      width: 100,
+      height: 90,
+    } as DOMRect);
+    const cleanup = createReveal(makeDeps())(document);
+    expect(el('a').hasAttribute('data-revealed')).toBe(false);
+    expect(el('a').hasAttribute('data-reveal-armed')).toBe(true);
+    cleanup?.();
+  });
+
   it('arms in-view elements whose failsafe has not fired, whatever the page clock says', () => {
     // A soft navigation mounts with performance.now() far past 1.5s, but the new page's failsafe
     // is still waiting: everything must be armed, nothing shown instantly.

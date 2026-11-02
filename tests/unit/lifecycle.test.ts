@@ -140,4 +140,87 @@ describe('bindToAstro', () => {
     expect(a.cleanup).toHaveBeenCalledTimes(1);
     expect(a.init).toHaveBeenCalledTimes(2);
   });
+
+  // 07-04 (D-16, threat T-07-11): the arriving page mounts at release, never under the wipe.
+  describe('with waitForRelease', () => {
+    function deferred(): { promise: Promise<void>; resolve: () => void } {
+      let resolve: () => void = () => undefined;
+      const promise = new Promise<void>((r) => {
+        resolve = r;
+      });
+      return { promise, resolve };
+    }
+
+    const flush = async (): Promise<void> => {
+      for (let i = 0; i < 5; i += 1) await Promise.resolve();
+    };
+
+    it('still mounts immediately on the first load', () => {
+      const lifecycle = createLifecycle(document);
+      const a = trackedInit();
+      lifecycle.register(a.init);
+      const unbind = bindToAstro(lifecycle, document, {
+        waitForRelease: () => new Promise<void>(() => undefined),
+      });
+      expect(a.init).toHaveBeenCalledTimes(1);
+      unbind();
+    });
+
+    it('mounts on page-load only after the release resolves', async () => {
+      const lifecycle = createLifecycle(document);
+      const a = trackedInit();
+      lifecycle.register(a.init);
+      const release = deferred();
+      const unbind = bindToAstro(lifecycle, document, { waitForRelease: () => release.promise });
+
+      document.dispatchEvent(new Event('astro:before-swap'));
+      document.dispatchEvent(new Event('astro:page-load'));
+      await flush();
+      expect(a.init).toHaveBeenCalledTimes(1);
+
+      release.resolve();
+      await flush();
+      expect(a.init).toHaveBeenCalledTimes(2);
+      unbind();
+    });
+
+    it('a stale release from a superseded navigation never mounts', async () => {
+      const lifecycle = createLifecycle(document);
+      const a = trackedInit();
+      lifecycle.register(a.init);
+      const releases = [deferred(), deferred()];
+      let call = 0;
+      const unbind = bindToAstro(lifecycle, document, {
+        waitForRelease: () => (releases[call++] ?? deferred()).promise,
+      });
+
+      document.dispatchEvent(new Event('astro:before-swap'));
+      document.dispatchEvent(new Event('astro:page-load'));
+      // A second navigation swaps before the first release.
+      document.dispatchEvent(new Event('astro:before-swap'));
+      releases[0]?.resolve();
+      await flush();
+      expect(a.init).toHaveBeenCalledTimes(1);
+
+      document.dispatchEvent(new Event('astro:page-load'));
+      releases[1]?.resolve();
+      await flush();
+      expect(a.init).toHaveBeenCalledTimes(2);
+      unbind();
+    });
+
+    it('unbind cancels a pending release mount', async () => {
+      const lifecycle = createLifecycle(document);
+      const a = trackedInit();
+      lifecycle.register(a.init);
+      const release = deferred();
+      const unbind = bindToAstro(lifecycle, document, { waitForRelease: () => release.promise });
+      document.dispatchEvent(new Event('astro:before-swap'));
+      document.dispatchEvent(new Event('astro:page-load'));
+      unbind();
+      release.resolve();
+      await flush();
+      expect(a.init).toHaveBeenCalledTimes(1);
+    });
+  });
 });

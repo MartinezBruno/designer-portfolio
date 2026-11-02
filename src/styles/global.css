@@ -418,6 +418,24 @@ html[data-motion='reduced']::view-transition-new(root) {
 }
 
 /*
+ * Entrance hold (07 D-16, Research Pitfall 3): while a soft navigation's view transition runs,
+ * navigation.ts marks the arriving html with data-vt. The hero keyframes start paused at their
+ * first frame (the LCP fallback start values, never blank) and play from the start when the wipe
+ * releases the page, so nothing animates under the ink.
+ */
+html[data-vt]
+  [data-hero]:not([data-hero-played])
+  :is(
+    [data-hero-line-inner],
+    picture[data-hero-portrait],
+    picture[data-hero-portrait] img,
+    [data-hero-lead],
+    [data-hero-cta]
+  ) {
+  animation-play-state: paused;
+}
+
+/*
  * UI-SPEC LCP fallback start values, chosen by the user on 2026-10-29 so the first frame is never
  * blank (D-03): the headline starts 60% down its mask (its top already shows) and the portrait
  * starts 35% open.

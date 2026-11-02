@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { bindNavigation } from '../../src/lib/motion/navigation';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { dispatchMotionChange } from '../../src/lib/motion/events';
+import { bindNavigation, type NavigationHandle } from '../../src/lib/motion/navigation';
 
 // 07-01: app-scope router hooks (MOTN-05, 07 D-04, D-05; Research Pattern 1, Pitfalls 1, 2, 9).
 
@@ -13,16 +14,34 @@ const ARRIVING_WITH_TOGGLE =
 const ARRIVING_WITHOUT_TOGGLE = '<!doctype html><html data-motion="off"><body></body></html>';
 
 interface FakeTransition {
+  ready: Promise<void>;
   finished: Promise<void>;
+  updateCallbackDone: Promise<void>;
+  skipTransition: () => void;
+  makeReady: () => void;
   finish: () => void;
 }
 
 function fakeTransition(): FakeTransition {
   let finish: () => void = () => undefined;
+  let makeReady: () => void = () => undefined;
   const finished = new Promise<void>((resolve) => {
     finish = resolve;
   });
-  return { finished, finish };
+  const ready = new Promise<void>((resolve) => {
+    makeReady = resolve;
+  });
+  const transition: FakeTransition = {
+    ready,
+    finished,
+    updateCallbackDone: Promise.resolve(),
+    skipTransition: vi.fn(() => {
+      transition.finish();
+    }),
+    makeReady,
+    finish,
+  };
+  return transition;
 }
 
 function beforeSwap(newDocument: Document, viewTransition?: FakeTransition): Event {
@@ -48,7 +67,7 @@ describe('bindNavigation', () => {
   let unbind: () => void = () => undefined;
 
   beforeEach(() => {
-    unbind = bindNavigation(document);
+    unbind = bindNavigation(document).unbind;
   });
 
   afterEach(() => {
@@ -141,5 +160,238 @@ describe('bindNavigation', () => {
     beforeSwap(next);
     expect(next.documentElement.dataset['motion']).toBe('off');
     expect(next.querySelector('[data-motion-toggle]')?.getAttribute('aria-pressed')).toBe('false');
+  });
+});
+
+// 07-04: release gate (D-16, Research Pattern 2, Pitfall 3) and live-toggle skip (D-18).
+describe('bindNavigation release gate', () => {
+  let navigation: NavigationHandle;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    navigation = bindNavigation(document);
+  });
+
+  afterEach(() => {
+    navigation.unbind();
+    vi.useRealTimers();
+    delete document.documentElement.dataset['motion'];
+    delete document.documentElement.dataset['wipe'];
+    delete document.documentElement.dataset['vt'];
+  });
+
+  /** Swaps like the router: arriving root attributes land on the live html. */
+  function swap(transition?: FakeTransition): Document {
+    const next = parse(ARRIVING_WITHOUT_TOGGLE);
+    beforeSwap(next, transition);
+    if (next.documentElement.hasAttribute('data-vt')) document.documentElement.dataset['vt'] = '';
+    return next;
+  }
+
+  function tracked(): { released: () => boolean } {
+    let released = false;
+    void navigation.waitForRelease().then(() => {
+      released = true;
+    });
+    return { released: () => released };
+  }
+
+  it('marks the arriving html with data-vt and releases 392 ms after ready under on', async () => {
+    setLiveState('on');
+    const transition = fakeTransition();
+    const next = swap(transition);
+    expect(next.documentElement.hasAttribute('data-vt')).toBe(true);
+    const state = tracked();
+    await vi.advanceTimersByTimeAsync(100);
+    transition.makeReady();
+    await vi.advanceTimersByTimeAsync(391);
+    expect(state.released()).toBe(false);
+    expect(document.documentElement.hasAttribute('data-vt')).toBe(true);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(state.released()).toBe(true);
+    expect(document.documentElement.hasAttribute('data-vt')).toBe(false);
+  });
+
+  it('releases when the transition finishes first', async () => {
+    setLiveState('on');
+    const transition = fakeTransition();
+    swap(transition);
+    const state = tracked();
+    await vi.advanceTimersByTimeAsync(200);
+    transition.finish();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.released()).toBe(true);
+    expect(document.documentElement.hasAttribute('data-vt')).toBe(false);
+  });
+
+  it('releases at the 1200 ms cap when neither ready nor finished settle', async () => {
+    setLiveState('on');
+    swap(fakeTransition());
+    const state = tracked();
+    await vi.advanceTimersByTimeAsync(1199);
+    expect(state.released()).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(state.released()).toBe(true);
+    expect(document.documentElement.hasAttribute('data-vt')).toBe(false);
+  });
+
+  it('releases on finished under reduced, not at 392 ms after ready', async () => {
+    setLiveState('reduced');
+    const transition = fakeTransition();
+    swap(transition);
+    const state = tracked();
+    transition.makeReady();
+    await vi.advanceTimersByTimeAsync(500);
+    expect(state.released()).toBe(false);
+    transition.finish();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.released()).toBe(true);
+  });
+
+  it('caps reduced at 1200 ms too', async () => {
+    setLiveState('reduced');
+    swap(fakeTransition());
+    const state = tracked();
+    await vi.advanceTimersByTimeAsync(1200);
+    expect(state.released()).toBe(true);
+  });
+
+  it('releases at once and sets no data-vt without a view transition (fallback swap)', async () => {
+    setLiveState('on');
+    const next = swap();
+    expect(next.documentElement.hasAttribute('data-vt')).toBe(false);
+    const state = tracked();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.released()).toBe(true);
+  });
+
+  it('releases at once on first load (no navigation yet)', async () => {
+    const state = tracked();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.released()).toBe(true);
+  });
+
+  it('swallows rejected ready and finished promises (aborted transition)', async () => {
+    setLiveState('on');
+    const ready = Promise.reject(new Error('skipped'));
+    const finished = Promise.reject(new Error('aborted'));
+    const transition = { ...fakeTransition(), ready, finished };
+    swap(transition);
+    const state = tracked();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.released()).toBe(true);
+    expect(document.documentElement.hasAttribute('data-vt')).toBe(false);
+  });
+
+  it('a superseded transition does not clear its successor data-vt', async () => {
+    setLiveState('on');
+    const first = fakeTransition();
+    swap(first);
+    const second = fakeTransition();
+    swap(second);
+    first.finish();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(document.documentElement.hasAttribute('data-vt')).toBe(true);
+    second.finish();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(document.documentElement.hasAttribute('data-vt')).toBe(false);
+  });
+
+  it('skips a pending transition once when motion changes to reduced (D-18)', async () => {
+    setLiveState('on');
+    const transition = fakeTransition();
+    swap(transition);
+    setLiveState('reduced');
+    dispatchMotionChange(document, 'reduced');
+    expect(transition.skipTransition).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(document.documentElement.hasAttribute('data-vt')).toBe(false);
+    dispatchMotionChange(document, 'off');
+    expect(transition.skipTransition).toHaveBeenCalledTimes(1);
+  });
+
+  it('still skips after release while the wipe is running (D-18)', async () => {
+    setLiveState('on');
+    const transition = fakeTransition();
+    swap(transition);
+    transition.makeReady();
+    await vi.advanceTimersByTimeAsync(400);
+    expect(document.documentElement.hasAttribute('data-vt')).toBe(false);
+    dispatchMotionChange(document, 'reduced');
+    expect(transition.skipTransition).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not skip a transition that has finished', async () => {
+    setLiveState('on');
+    const transition = fakeTransition();
+    swap(transition);
+    transition.finish();
+    await vi.advanceTimersByTimeAsync(0);
+    dispatchMotionChange(document, 'reduced');
+    expect(transition.skipTransition).not.toHaveBeenCalled();
+  });
+
+  it('does not skip when motion changes to on', () => {
+    setLiveState('reduced');
+    const transition = fakeTransition();
+    swap(transition);
+    dispatchMotionChange(document, 'on');
+    expect(transition.skipTransition).not.toHaveBeenCalled();
+  });
+
+  it('unbind stops the motion:change skip', () => {
+    setLiveState('on');
+    const transition = fakeTransition();
+    swap(transition);
+    navigation.unbind();
+    dispatchMotionChange(document, 'reduced');
+    expect(transition.skipTransition).not.toHaveBeenCalled();
+  });
+});
+
+// 07-04 (UI-SPEC "Vestibular", WCAG 2.3.1): at most three wipe passes in any one-second window.
+describe('bindNavigation wipe rate limit', () => {
+  let now = 0;
+  let navigation: NavigationHandle;
+
+  beforeEach(() => {
+    now = 0;
+    navigation = bindNavigation(document, { now: () => now });
+    setLiveState('on');
+  });
+
+  afterEach(() => {
+    navigation.unbind();
+    delete document.documentElement.dataset['motion'];
+    delete document.documentElement.dataset['wipe'];
+    delete document.documentElement.dataset['vt'];
+  });
+
+  function navigateAt(at: number): FakeTransition {
+    now = at;
+    const transition = fakeTransition();
+    beforeSwap(parse(ARRIVING_WITHOUT_TOGGLE), transition);
+    return transition;
+  }
+
+  it('lets three wipes through and skips a fourth inside the window', () => {
+    const passes = [0, 200, 400].map(navigateAt);
+    for (const transition of passes) expect(transition.skipTransition).not.toHaveBeenCalled();
+    const fourth = navigateAt(600);
+    expect(fourth.skipTransition).toHaveBeenCalledTimes(1);
+  });
+
+  it('a skipped navigation does not count, and the window slides', () => {
+    [0, 200, 400].map(navigateAt);
+    navigateAt(600);
+    // 1150 ms after the first pass: only two passes (200, 400) remain inside the window.
+    const later = navigateAt(1300);
+    expect(later.skipTransition).not.toHaveBeenCalled();
+  });
+
+  it('never limits reduced crossfades (no panel, no flash)', () => {
+    setLiveState('reduced');
+    const fades = [0, 100, 200, 300, 400].map(navigateAt);
+    for (const transition of fades) expect(transition.skipTransition).not.toHaveBeenCalled();
   });
 });
