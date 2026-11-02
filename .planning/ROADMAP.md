@@ -306,7 +306,38 @@ Plans:
   3. An automated test that navigates 10 times shows constant listener and ScrollTrigger counts, with no duplicated animations.
   4. Reduced motion and the Phase 6 toggle also disable transitions, smooth scroll, and parallax.
 
-**Plans**: TBD
+**Plans**: 10 plans
+Plans:
+**Wave 1**
+
+- [ ] 07-01-PLAN.md — ClientRouter soft navigation: motion-state carry, toggle sync, off full loads, focus to new h1, title/SEO after EN/ES
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 07-02-PLAN.md — Ink panel wipe, still header, reduced crossfade (VT CSS + tokens), wipe captures reviewed with taste skill
+- [ ] 07-03-PLAN.md — Persistent app-scope cursor with locale label resync + 10-navigation CDP leak test (SC3)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 07-04-PLAN.md — Arrival choreography: release gate (70%/finished/1200 ms), entrances and focus after the wipe, back/forward restore, live-toggle skip, flash limit
+- [ ] 07-05-PLAN.md — lenis@1.3.27 approval checkpoint, lazy page-scoped smooth wheel scroll (fine pointer + on), keyboard/find/touch e2e
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 07-06-PLAN.md — Card title -> detail h1 morph (click-time naming, invert/difference blend), morph captures reviewed
+- [ ] 07-07-PLAN.md — Anchors glide/jump with focus, instant skip link, Ask-about-this without page swap
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 07-08-PLAN.md — CSS scroll-driven parallax on card covers and Next-project teaser (overflow-clip frames, D-13 coexistence)
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 07-09-PLAN.md — Detail image-stack parallax with overrides opt-out and taste seam review (InstaBlogs, Cabrera's)
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
+- [ ] 07-10-PLAN.md — Phase gate: bundle guard (Lenis marker, 22 KB eager ceiling), full verify, full taste gate, Safari/Firefox/VoiceOver UAT, user sign-off
 **UI hint**: yes
 **Research flag**: Needs `/gsd:plan-phase --research-phase`. Open decision: `<ClientRouter />` vs native cross-document view transitions. Also research how Lenis/ScrollTrigger interact with scroll restoration, Safari/Firefox support, and the bundle budget.
 
