@@ -124,6 +124,14 @@ export function createMagnetic(deps: MagneticDeps): PageInit {
         if (timer !== undefined) clearTimeout(timer);
         timer = setTimeout(measure, REMEASURE_DEBOUNCE_MS);
       };
+      // A reveal or hero transform on an ancestor moves the shell without changing layout, so no
+      // resize or ResizeObserver callback fires. Remeasure once that transform settles (06 review
+      // CR-01), but only for transitions and animations on an element holding a shell.
+      const onSettle = (event: Event): void => {
+        const source = event.target;
+        if (!(source instanceof Element)) return;
+        if (targets.some((t) => source.contains(t.shell))) remeasureSoon();
+      };
 
       const release = (t: Target): void => {
         if (!t.active) return;
@@ -169,6 +177,9 @@ export function createMagnetic(deps: MagneticDeps): PageInit {
             },
             { signal },
           );
+          for (const type of ['transitionend', 'transitioncancel', 'animationend']) {
+            doc.addEventListener(type, onSettle, { passive: true, signal });
+          }
           win?.addEventListener('resize', measure, { passive: true, signal });
           win?.addEventListener('load', measure, { signal });
           void doc.fonts?.ready.then(() => {

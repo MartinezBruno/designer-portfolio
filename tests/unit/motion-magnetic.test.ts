@@ -230,6 +230,47 @@ describe('createMagnetic', () => {
     cleanup?.();
   });
 
+  it('remeasures once an ancestor reveal transform settles', async () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = `<p id="wrap" data-reveal="settle">${FIXTURE}</p>`;
+    // Measured while the reveal still translates the shells 20px down.
+    const shifted = { ...RECTS['pill'], top: 120 } as (typeof RECTS)['pill'];
+    el('pill').getBoundingClientRect = () =>
+      DOMRect.fromRect({ x: shifted.left, y: shifted.top, width: 100, height: 48 });
+    el('link').getBoundingClientRect = () =>
+      DOMRect.fromRect({ x: 400, y: 100, width: 60, height: 20 });
+    const h = harness();
+    const cleanup = createMagnetic(h.deps)(document);
+    await flush();
+
+    // The reveal lands: the shell is back at its layout position, centre (150, 124).
+    shifted.top = 100;
+    el('wrap').dispatchEvent(new Event('transitionend', { bubbles: true }));
+    move(150, 124);
+    expect(lastCall(h.gsap, 'pill-face:y')).toBe(-6);
+    vi.advanceTimersByTime(150);
+    move(150, 124);
+    expect(lastCall(h.gsap, 'pill-face:x')).toBe(0);
+    expect(lastCall(h.gsap, 'pill-face:y')).toBe(0);
+    cleanup?.();
+    vi.useRealTimers();
+  });
+
+  it('ignores transitions on elements that hold no shell', async () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = `${FIXTURE}<div id="other"></div>`;
+    const spies = stubRects();
+    const h = harness();
+    const cleanup = createMagnetic(h.deps)(document);
+    await flush();
+    for (const spy of spies) spy.mockClear();
+    el('other').dispatchEvent(new Event('transitionend', { bubbles: true }));
+    vi.advanceTimersByTime(150);
+    for (const spy of spies) expect(spy).not.toHaveBeenCalled();
+    cleanup?.();
+    vi.useRealTimers();
+  });
+
   it('adds the scroll offset to the cached rects', async () => {
     window.scrollTo(0, 0);
     Object.defineProperty(window, 'scrollY', { value: 1000, configurable: true });
