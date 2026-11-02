@@ -12,9 +12,23 @@ const ARRIVING_WITH_TOGGLE =
   '<!doctype html><html data-motion="off"><body><button data-motion-toggle aria-pressed="false"></button></body></html>';
 const ARRIVING_WITHOUT_TOGGLE = '<!doctype html><html data-motion="off"><body></body></html>';
 
-function beforeSwap(newDocument: Document): Event {
+interface FakeTransition {
+  finished: Promise<void>;
+  finish: () => void;
+}
+
+function fakeTransition(): FakeTransition {
+  let finish: () => void = () => undefined;
+  const finished = new Promise<void>((resolve) => {
+    finish = resolve;
+  });
+  return { finished, finish };
+}
+
+function beforeSwap(newDocument: Document, viewTransition?: FakeTransition): Event {
   const event = Object.assign(new Event('astro:before-swap', { cancelable: true }), {
     newDocument,
+    viewTransition,
   });
   document.dispatchEvent(event);
   return event;
@@ -40,6 +54,7 @@ describe('bindNavigation', () => {
   afterEach(() => {
     unbind();
     delete document.documentElement.dataset['motion'];
+    delete document.documentElement.dataset['wipe'];
   });
 
   for (const state of ['on', 'reduced'] as const) {
@@ -83,6 +98,39 @@ describe('bindNavigation', () => {
       expect(beforePreparation().defaultPrevented).toBe(false);
     });
   }
+
+  it('marks the arriving document with data-wipe="out" under on (07-02)', () => {
+    setLiveState('on');
+    const next = parse(ARRIVING_WITHOUT_TOGGLE);
+    beforeSwap(next, fakeTransition());
+    expect(next.documentElement.dataset['wipe']).toBe('out');
+  });
+
+  it('never marks the arriving document under reduced', () => {
+    setLiveState('reduced');
+    const next = parse(ARRIVING_WITHOUT_TOGGLE);
+    beforeSwap(next, fakeTransition());
+    expect(next.documentElement.hasAttribute('data-wipe')).toBe(false);
+  });
+
+  it('clears data-wipe from the live html when the transition finishes', async () => {
+    setLiveState('on');
+    const transition = fakeTransition();
+    beforeSwap(parse(ARRIVING_WITHOUT_TOGGLE), transition);
+    // The router swaps root attributes; simulate the arriving marker on the live html.
+    document.documentElement.dataset['wipe'] = 'out';
+    transition.finish();
+    await transition.finished;
+    await Promise.resolve();
+    expect(document.documentElement.hasAttribute('data-wipe')).toBe(false);
+  });
+
+  it('clears a stale data-wipe at the start of the next navigation (aborted transition)', () => {
+    setLiveState('on');
+    document.documentElement.dataset['wipe'] = 'out';
+    beforePreparation();
+    expect(document.documentElement.hasAttribute('data-wipe')).toBe(false);
+  });
 
   it('unbind removes every listener', () => {
     unbind();

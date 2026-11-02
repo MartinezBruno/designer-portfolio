@@ -63,6 +63,10 @@
   --t-line: 640ms;
   --t-shutter: 720ms;
   --t-hero: 720ms;
+  /* Phase 7 navigation (07-02): ink wipe pass, entrance release point, reduced crossfade. */
+  --t-wipe: 560ms;
+  --wipe-release: 0.7;
+  --t-nav-fade: 320ms;
 }
 
 /*
@@ -182,6 +186,125 @@
 }
 
 /*
+ * Navigation transitions (MOTN-05, 07 UI-SPEC "the Ink Wipe" and "reduced and off Navigation").
+ * Native same-document View Transition CSS under the ClientRouter; no transition:* directives.
+ *
+ * The panel is one flat ink sheet parked above the viewport. Under 'on' only it is named `wipe`:
+ * the old snapshot sits above the page, the arriving document (html[data-wipe='out'], set in
+ * navigation.ts) parks it below, so its group travels top -> bottom across the content. A back
+ * traverse (the router's html[data-astro-transition='back'], kept on both snapshots) mirrors it.
+ * In 'reduced' and 'off' it has no name and never moves. aria-hidden, never takes a click
+ * (T-07-05).
+ */
+[data-wipe-panel] {
+  position: fixed;
+  inset: 0;
+  background: var(--color-ink);
+  pointer-events: none;
+  translate: 0 -100%;
+}
+html[data-motion='on'] [data-wipe-panel] {
+  view-transition-name: wipe;
+}
+html[data-wipe='out'] [data-wipe-panel],
+html[data-astro-transition='back'] [data-wipe-panel] {
+  translate: 0 100%;
+}
+html[data-astro-transition='back'][data-wipe='out'] [data-wipe-panel] {
+  translate: 0 -100%;
+}
+
+/* One pass over --t-wipe; both snapshots are the same solid sheet, so they never blend. */
+html[data-motion='on']::view-transition-group(wipe) {
+  z-index: 1;
+  animation-duration: var(--t-wipe);
+  animation-timing-function: var(--ease-travel);
+}
+html[data-motion='on']::view-transition-old(wipe),
+html[data-motion='on']::view-transition-new(wipe) {
+  animation: none;
+}
+
+/*
+ * Under the ink the pages never crossfade: each root switches in one step at 50% of --t-wipe,
+ * the instant the panel covers the whole content area (UI-SPEC Timeline).
+ */
+html[data-motion='on']::view-transition-group(root) {
+  animation-duration: var(--t-wipe);
+}
+html[data-motion='on']::view-transition-old(root) {
+  animation: vt-root-out var(--t-wipe) linear both;
+}
+html[data-motion='on']::view-transition-new(root) {
+  animation: vt-root-in var(--t-wipe) linear both;
+}
+@keyframes vt-root-out {
+  from {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+    animation-timing-function: steps(1, jump-start);
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vt-root-in {
+  from {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0;
+    animation-timing-function: steps(1, jump-start);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/*
+ * The header stays still in 'on' and 'reduced' (D-05): its own name keeps it out of the root
+ * snapshot and above the panel; nothing animates and the arriving header shows at once, so on
+ * the EN/ES switch its labels change instantly at the start. Hidden with opacity, never display.
+ */
+html:is([data-motion='on'], [data-motion='reduced']) [data-site-header] {
+  view-transition-name: site-header;
+}
+::view-transition-group(site-header),
+::view-transition-old(site-header),
+::view-transition-new(site-header) {
+  animation: none;
+}
+::view-transition-old(site-header) {
+  opacity: 0;
+}
+
+/* Stacking, bottom -> top: root, wipe, site-header, project-title (07-06), cursor (07-03). */
+::view-transition-group(site-header) {
+  z-index: 2;
+}
+::view-transition-group(project-title) {
+  z-index: 3;
+}
+::view-transition-group(cursor) {
+  z-index: 4;
+  animation: none;
+}
+::view-transition-old(cursor),
+::view-transition-new(cursor) {
+  animation: none;
+}
+
+/* 'reduced' (OS or toggle, D-04): the UA root crossfade, shortened to --t-nav-fade. No panel. */
+html[data-motion='reduced']::view-transition-group(root),
+html[data-motion='reduced']::view-transition-old(root),
+html[data-motion='reduced']::view-transition-new(root) {
+  animation-duration: var(--t-nav-fade);
+  animation-timing-function: var(--ease-reveal);
+}
+
+/*
  * Print and save-as-PDF (06 review WR-04): armed content below the fold has no failsafe, so a
  * printed page would drop everything the visitor has not scrolled to. Paper gets the end state.
  * The shutter frame drops its clip; the card mat keeps its own resting inset(0).
@@ -197,6 +320,9 @@
   }
   [data-reveal] {
     clip-path: none !important;
+  }
+  [data-wipe-panel] {
+    opacity: 0 !important;
   }
 }
 

@@ -9,7 +9,45 @@ declare global {
   interface Window {
     __marker?: number;
     __pressedAfterSwap?: (string | null)[];
+    __vtAnimations?: { pseudo: string; duration: number }[];
+    __vtNames?: string[];
   }
+}
+
+/**
+ * Wraps `document.startViewTransition` (07-02) and, once the pseudo tree exists (`ready`),
+ * records every view-transition animation (pseudo-element and duration in ms) plus the names
+ * assigned in the arriving document.
+ */
+async function recordViewTransitions(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    window.__vtAnimations = [];
+    window.__vtNames = [];
+    const original = document.startViewTransition?.bind(document);
+    if (original === undefined) return;
+    document.startViewTransition = ((callback?: ViewTransitionUpdateCallback) => {
+      const transition = original(callback);
+      void transition.ready
+        .then(() => {
+          for (const animation of document.getAnimations()) {
+            const effect = animation.effect;
+            if (!(effect instanceof KeyframeEffect)) continue;
+            const pseudo = effect.pseudoElement ?? '';
+            if (!pseudo.startsWith('::view-transition')) continue;
+            window.__vtAnimations?.push({
+              pseudo,
+              duration: Number(effect.getComputedTiming().duration),
+            });
+          }
+          for (const element of document.querySelectorAll('*')) {
+            const name = getComputedStyle(element).viewTransitionName;
+            if (name !== '' && name !== 'none') window.__vtNames?.push(name);
+          }
+        })
+        .catch(() => undefined);
+      return transition;
+    }) as typeof document.startViewTransition;
+  });
 }
 
 function collectErrors(page: Page): string[] {
@@ -78,6 +116,39 @@ test.describe('reduced motion survives soft navigation', () => {
       'true',
     ]);
     expect(errors).toEqual([]);
+  });
+});
+
+test.describe('reduced navigation is a root crossfade (D-04)', () => {
+  test.use({ reducedMotion: 'reduce' });
+
+  test('no panel, no title morph, roots fade over 320ms, header named still', async ({ page }) => {
+    await recordViewTransitions(page);
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
+    const nav = page.getByRole('navigation', { name: en['nav.label'], exact: true });
+    await softNavigate(page, nav.getByRole('link', { name: en['nav.projects'], exact: true }));
+
+    const animations = await page.evaluate(() => window.__vtAnimations ?? []);
+    const names = await page.evaluate(() => window.__vtNames ?? []);
+    const pseudos = animations.map((entry) => entry.pseudo);
+    expect(pseudos.some((pseudo) => pseudo.includes('wipe'))).toBe(false);
+    expect(pseudos.some((pseudo) => pseudo.includes('project-title'))).toBe(false);
+    expect(pseudos.some((pseudo) => pseudo.includes('site-header'))).toBe(false);
+    expect(names).not.toContain('wipe');
+    expect(names).toContain('site-header');
+
+    const roots = animations.filter(
+      (entry) =>
+        entry.pseudo === '::view-transition-old(root)' ||
+        entry.pseudo === '::view-transition-new(root)',
+    );
+    // The UA pairs each root fade with a blend-mode animation; both take the same duration.
+    expect([...new Set(roots.map((entry) => entry.pseudo))].sort()).toEqual([
+      '::view-transition-new(root)',
+      '::view-transition-old(root)',
+    ]);
+    for (const entry of roots) expect(entry.duration).toBe(320);
   });
 });
 
