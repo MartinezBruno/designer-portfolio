@@ -15,11 +15,11 @@ const FIXTURE = `
     <li id="c" data-reveal="settle" data-reveal-delay="140">C</li>
   </ul>
   <ul id="grid" data-reveal-stagger="90">
-    <li id="card1"><article>
+    <li id="card1"><article data-card>
       <div id="cover1" data-reveal="shutter"><picture></picture></div>
       <div id="text1" data-reveal="settle" data-reveal-delay="70"><h3><a id="card1-link" href="#">One</a></h3></div>
     </article></li>
-    <li id="card2"><article>
+    <li id="card2"><article data-card>
       <div id="cover2" data-reveal="shutter"><picture></picture></div>
       <div id="text2" data-reveal="settle" data-reveal-delay="70">Two</div>
     </article></li>
@@ -289,7 +289,7 @@ describe('createReveal', () => {
     cleanup?.();
   });
 
-  it('focus inside an article reveals every element of that card', () => {
+  it('focus inside a [data-card] reveals every element of that card', () => {
     const cleanup = createReveal(makeDeps())(document);
     el('card1-link').dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
     expect(el('text1').hasAttribute('data-revealed')).toBe(true);
@@ -298,6 +298,20 @@ describe('createReveal', () => {
     expect(el('cover2').hasAttribute('data-revealed')).toBe(false);
     const io = FakeIntersectionObserver.last();
     expect(io.observed.has(el('cover1'))).toBe(false);
+    cleanup?.();
+  });
+
+  it('focus inside a non-card article (the detail page) reveals only its own element', () => {
+    document.body.innerHTML = `
+      <article aria-labelledby="t">
+        <p id="intro" data-reveal="settle"><a id="intro-link" href="#">Behance</a></p>
+        <div id="module" data-reveal="settle">Text module</div>
+      </article>`;
+    const cleanup = createReveal(makeDeps())(document);
+    el('intro-link').dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    expect(el('intro').hasAttribute('data-revealed')).toBe(true);
+    expect(el('module').hasAttribute('data-revealed')).toBe(false);
+    expect(el('module').hasAttribute('data-reveal-armed')).toBe(true);
     cleanup?.();
   });
 

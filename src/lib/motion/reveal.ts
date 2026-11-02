@@ -190,14 +190,15 @@ export function createReveal(deps: RevealDeps): PageInit {
     }
 
     // Keyboard focus never lands on an invisible tile (WCAG 2.4.7): reveal the focused element's
-    // reveal ancestor, and every part of its card, with no transition.
+    // reveal ancestor, and every part of its card, with no transition. Only `[data-card]` counts as
+    // a card: the detail page's whole-page <article> must not reveal every module (06 review WR-02).
     doc.addEventListener(
       'focusin',
       (event) => {
         if (!(event.target instanceof Element)) return;
         const own = event.target.closest<HTMLElement>(PENDING);
         if (own) finish(own, true);
-        const card = event.target.closest('article');
+        const card = event.target.closest('[data-card]');
         if (card) for (const el of card.querySelectorAll<HTMLElement>(PENDING)) finish(el, true);
       },
       { signal: ac.signal },
