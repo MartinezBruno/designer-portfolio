@@ -10,13 +10,15 @@ export const lifecycle = createLifecycle(document, (err) => {
   console.error(err);
 });
 
-bindToAstro(lifecycle, document);
+// Router hooks: motion-state carry, toggle sync, 'off' full-load opt-out (07 D-04, D-05), and the
+// release gate (07 D-16). Bound before bindToAstro so its before-swap listener runs first.
+const navigation = bindNavigation(document);
+
+// Page effects mount when the wipe releases the arriving page, not under the ink (07 D-16).
+bindToAstro(lifecycle, document, { waitForRelease: navigation.waitForRelease });
 
 // Follow reduced-motion changes after load (WR-03). App-scoped: the listener lives for the session.
 syncMotionGate(document, window);
 
-// Router hooks: motion-state carry, toggle sync, 'off' full-load opt-out (07 D-04, D-05).
-bindNavigation(document);
-
-// Focus the arriving page's h1 (or hash target, or #main) after each soft navigation (07 D-14).
-bindNavFocus(document);
+// Focus the arriving page's h1 (or hash target, or #main) at release, never earlier (07 D-14).
+bindNavFocus(document, { waitForRelease: navigation.waitForRelease });
