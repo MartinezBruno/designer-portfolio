@@ -83,9 +83,9 @@ describe('createHeroPlayed', () => {
     cleanup?.();
   });
 
-  it('counts a pending animation (not yet started) as still to run', () => {
+  it('counts a paused animation as still to run', () => {
     setMotion('on');
-    cta().getAnimations = () => [{ pending: true, playState: 'idle' } as Animation];
+    cta().getAnimations = () => [{ playState: 'paused' } as Animation];
     const cleanup = createHeroPlayed()(document);
     expect(hero().hasAttribute('data-hero-played')).toBe(false);
     cleanup?.();

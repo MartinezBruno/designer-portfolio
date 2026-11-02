@@ -196,40 +196,47 @@ export function createReveal(deps: RevealDeps): PageInit {
       else toArm.push(el);
     }
 
-    // Arm only once the observer exists (Pitfall 1): if creating it throws, nothing is armed and
-    // the CSS failsafe still shows every element.
-    let mountPass: ReturnType<RevealDeps['createObserver']> | undefined;
-    let mountPassDone = false;
-    try {
-      // Mount-time viewport pass (06-10 review): an element already on the first screen but inside
-      // the trigger's bottom 12% would otherwise stay blank until the first scroll. A one-shot
-      // observer with no margin reveals what is visible now, as one staggered batch, then goes
-      // away. Created first, so its initial callback runs before the trigger's and owns the batch.
-      mountPass = deps.createObserver(
+    type Observer = ReturnType<RevealDeps['createObserver']>;
+    /** Reveals the intersecting, still-pending targets of one callback as a staggered batch. */
+    const revealEntries = (entries: IntersectionObserverEntry[]): void => {
+      const batch: HTMLElement[] = [];
+      for (const entry of entries) {
+        const target = entry.target as HTMLElement;
+        if (entry.isIntersecting && pending.has(target)) batch.push(target);
+      }
+      if (batch.length > 0) revealBatch(batch);
+    };
+    // One-shot viewport passes (06-10 review, 06 review WR-01): an element already on screen but
+    // inside the trigger's bottom 12% would otherwise stay blank until the first scroll. A pass
+    // observes with no margin, reveals what is visible now as one batch, then goes away.
+    const passes = new Set<Observer>();
+    const createPass = (): Observer => {
+      let done = false;
+      const pass = deps.createObserver(
         (entries) => {
-          if (mountPassDone) return;
-          mountPassDone = true;
-          mountPass?.disconnect();
-          const batch: HTMLElement[] = [];
-          for (const entry of entries) {
-            const target = entry.target as HTMLElement;
-            if (entry.isIntersecting && pending.has(target)) batch.push(target);
-          }
-          if (batch.length > 0) revealBatch(batch);
+          if (done) return;
+          done = true;
+          pass.disconnect();
+          passes.delete(pass);
+          revealEntries(entries);
         },
         { rootMargin: '0px', threshold: 0 },
       );
-      observer = deps.createObserver(
-        (entries) => {
-          const batch: HTMLElement[] = [];
-          for (const entry of entries) {
-            const target = entry.target as HTMLElement;
-            if (entry.isIntersecting && pending.has(target)) batch.push(target);
-          }
-          if (batch.length > 0) revealBatch(batch);
-        },
-        { rootMargin: '0px 0px -12% 0px', threshold: 0 },
-      );
+      passes.add(pass);
+      return pass;
+    };
+
+    // Arm only once the observer exists (Pitfall 1): if creating it throws, nothing is armed and
+    // the CSS failsafe still shows every element.
+    let mountPass: Observer | undefined;
+    try {
+      // The mount pass is created first, so its initial callback runs before the trigger's and
+      // owns the batch.
+      mountPass = createPass();
+      observer = deps.createObserver(revealEntries, {
+        rootMargin: '0px 0px -12% 0px',
+        threshold: 0,
+      });
       for (const el of toArm) {
         el.setAttribute('data-reveal-armed', '');
         pending.add(el);
@@ -277,9 +284,11 @@ export function createReveal(deps: RevealDeps): PageInit {
      * Arms lines headings that waited for a driver. One that the failsafe already showed (in or
      * above the viewport after 1.5s) stays shown instead of blinking out (Pitfall 6).
      */
-    const latePasses = new Set<ReturnType<RevealDeps['createObserver']>>();
     const armWaiting = (): void => {
-      const armed: HTMLElement[] = [];
+      // These missed the mount-time pass (06 review WR-01): they get their own one-shot pass, so
+      // a heading already on screen inside the bottom 12% reveals now, not on a scroll that may
+      // never come.
+      let pass: Observer | undefined;
       for (const el of waitingLines) {
         if (el.hasAttribute('data-revealed')) continue;
         if (shownByFailsafe(el)) {
@@ -289,31 +298,9 @@ export function createReveal(deps: RevealDeps): PageInit {
         el.setAttribute('data-reveal-armed', '');
         pending.add(el);
         observer?.observe(el);
-        armed.push(el);
+        (pass ??= createPass()).observe(el);
       }
       waitingLines.clear();
-      if (armed.length === 0) return;
-      // These missed the mount-time viewport pass (06 review WR-01): give them the same one-shot,
-      // no-margin pass, so a heading already on screen inside the bottom 12% reveals now instead
-      // of waiting for a scroll that may never come.
-      let done = false;
-      const pass = deps.createObserver(
-        (entries) => {
-          if (done) return;
-          done = true;
-          pass.disconnect();
-          latePasses.delete(pass);
-          const batch: HTMLElement[] = [];
-          for (const entry of entries) {
-            const target = entry.target as HTMLElement;
-            if (entry.isIntersecting && pending.has(target)) batch.push(target);
-          }
-          if (batch.length > 0) revealBatch(batch);
-        },
-        { rootMargin: '0px', threshold: 0 },
-      );
-      latePasses.add(pass);
-      for (const el of armed) pass.observe(el);
     };
 
     const ensureGsap = (): void => {
@@ -365,9 +352,8 @@ export function createReveal(deps: RevealDeps): PageInit {
 
     return () => {
       ac.abort();
-      mountPass?.disconnect();
-      for (const pass of latePasses) pass.disconnect();
-      latePasses.clear();
+      for (const pass of passes) pass.disconnect();
+      passes.clear();
       observer?.disconnect();
       splits.clear();
       ctx?.revert();

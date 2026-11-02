@@ -9,9 +9,8 @@ import type { PageInit } from './lifecycle';
  */
 function stillAnimating(el: Element): boolean {
   if (typeof el.getAnimations !== 'function') return true;
-  return el
-    .getAnimations()
-    .some((a) => a.pending || a.playState === 'running' || a.playState === 'paused');
+  // getAnimations() never lists idle animations, so anything not finished is still to end.
+  return el.getAnimations().some((a) => a.playState !== 'finished');
 }
 
 /**
