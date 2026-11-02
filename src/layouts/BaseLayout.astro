@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import { Font } from 'astro:assets';
+import { ClientRouter } from 'astro:transitions';
 import type { Locale } from '../i18n/config';
 import SkipLink from '../components/global/SkipLink.astro';
 import SiteHeader from '../components/global/SiteHeader.astro';
@@ -32,6 +33,9 @@ const pathname = Astro.url.pathname;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- Blocking motion gate before any stylesheet: build-time constant, never user data. -->
     <script is:inline set:html={motionGateInline} />
+    <!-- Soft navigation (Phase 7, MOTN-05): after the gate so hard loads resolve motion first.
+         No transition:* directives anywhere (07 Research Pattern 3). -->
+    <ClientRouter fallback="swap" />
     <SeoHead
       locale={locale}
       pathname={pathname}
