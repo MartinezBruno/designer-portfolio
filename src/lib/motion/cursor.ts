@@ -33,17 +33,35 @@ function zoneOf(target: EventTarget | null): Zone {
   return 'rest';
 }
 
+const TEMPLATE = 'template[data-cursor-template]';
+const PILL = '[data-cursor-pill]';
+
+/** The pill label baked into a document's build-time template (the page's own locale). */
+function templateLabel(doc: Document): string | undefined {
+  const tpl = doc.querySelector<HTMLTemplateElement>(TEMPLATE);
+  return tpl?.content.querySelector(PILL)?.textContent ?? undefined;
+}
+
 /**
  * Decorative cursor follower (MOTN-03, D-09..D-11, D-13). The layer is cloned from the build-time
  * `template[data-cursor-template]` (CursorFollower.astro), so the localized pill label never passes
  * through client code. It exists only for a fine hover pointer, `data-motion="on"` and no forced
  * colours; any of those changing at runtime mounts or removes it in place. The native cursor is
  * never hidden, and the layer is aria-hidden and pointer-events none.
+ *
+ * Phase 7 (07 D-05, D-17): started once at app scope, never per page. The layer lives in the
+ * `[data-cursor-host]` element, which ClientRouter carries across swaps
+ * (`data-astro-transition-persist`), so one layer and one set of delegated listeners on the
+ * persistent document and window serve the whole session. On `astro:before-preparation` it returns
+ * to rest (no View pill over a page that is leaving); on `astro:before-swap` the pill label is
+ * re-read from the arriving document's template and written with `textContent` only, so an EN<->ES
+ * switch never leaves stale text behind (T-07-07, T-07-08). A session started later clones the
+ * template of whichever page is live.
  */
 export function createCursor(deps: CursorDeps): PageInit {
   return (doc) => {
-    const template = doc.querySelector<HTMLTemplateElement>('template[data-cursor-template]');
-    if (!template) return undefined;
+    const host = doc.querySelector<HTMLElement>('[data-cursor-host]');
+    if (!host || !doc.querySelector(TEMPLATE)) return undefined;
 
     const win = doc.defaultView;
     const ac = new AbortController();
@@ -64,6 +82,9 @@ export function createCursor(deps: CursorDeps): PageInit {
         .loadGsap()
         .then(({ gsap }) => {
           if (signal.aborted) return;
+          // Re-read at session start: after a swap the live page's template carries its locale.
+          const template = doc.querySelector<HTMLTemplateElement>(TEMPLATE);
+          if (!template) return;
           const fragment = template.content.cloneNode(true) as DocumentFragment;
           const root = fragment.querySelector<HTMLElement>('[data-cursor-layer]');
           const pos = root?.querySelector<HTMLElement>('[data-cursor-pos]');
@@ -111,8 +132,29 @@ export function createCursor(deps: CursorDeps): PageInit {
             syncHidden();
           };
 
-          doc.body.append(fragment);
+          host.append(fragment);
+          // Every listener sits on the persistent document, root or window (delegation), so it
+          // keeps working after the router replaces the body.
           doc.addEventListener('pointermove', onMove, { passive: true, signal });
+          doc.addEventListener(
+            'astro:before-preparation',
+            () => {
+              // Rest state: no View pill or link ring over a page that is leaving.
+              enter('rest');
+            },
+            { signal },
+          );
+          doc.addEventListener(
+            'astro:before-swap',
+            (event) => {
+              const label = templateLabel(event.newDocument);
+              const pill = el.querySelector(PILL);
+              if (label !== undefined && pill && pill.textContent !== label) {
+                pill.textContent = label;
+              }
+            },
+            { signal },
+          );
           doc.addEventListener(
             'pointerover',
             (event) => {

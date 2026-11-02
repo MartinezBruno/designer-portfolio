@@ -43,11 +43,26 @@ const t = useTranslations(locale);
     </span>
   </div>
 </template>
+<!--
+  Persisted host (07 D-05): ClientRouter moves this element, with the live layer inside, into the
+  arriving page instead of replacing it. Raw attribute, not the transition:persist directive (that
+  one injects an `animation: none !important` the motion gate does not want). The view-transition
+  name is assigned only under data-motion="on", so the wipe never captures the cursor otherwise.
+  The host itself is the fixed z-50 click-through overlay: a view-transition name makes it a
+  stacking context, so in normal flow it would trap the layer below the sticky header (z-40).
+-->
+<div
+  data-cursor-host
+  data-astro-transition-persist="cursor"
+  class="motion-on:[view-transition-name:cursor] pointer-events-none fixed inset-0 z-50"
+></div>
 
 <script>
-  import { lifecycle } from '../../lib/motion';
   import { createCursor } from '../../lib/motion/cursor';
   import { loadGsap } from '../../lib/motion/load-gsap';
-  // GSAP stays behind the lazy loader: it is only fetched once the follower is allowed to mount.
-  lifecycle.register(createCursor({ matchMedia: (q) => window.matchMedia(q), loadGsap }));
+  // App scope, not the page lifecycle: under ClientRouter a bundled module script runs once per
+  // session, so the follower mounts once and is never unmounted on a swap (07 D-05, D-17). Its
+  // layer rides across pages inside the persisted host above. GSAP stays behind the lazy loader:
+  // it is only fetched once the follower is allowed to mount.
+  createCursor({ matchMedia: (q) => window.matchMedia(q), loadGsap })(document);
 </script>
