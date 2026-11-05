@@ -136,6 +136,8 @@ interface PendingLanding {
   ac: AbortController;
   /** Inline scroll-behavior to put back, or null once restored (or never changed). */
   restore: string | null;
+  /** Whether this navigation glides (only then can a traversal land mid-glide). */
+  smooth: boolean;
   target: HTMLElement;
 }
 
@@ -157,10 +159,28 @@ function bindAnchorFocus(doc: Document, signal: AbortSignal): void {
       hashTarget(doc, doc.defaultView?.location.hash ?? '') === pending.target
     )
       return;
-    const { ac, restore } = pending;
+    const { ac, restore, smooth } = pending;
     pending = null;
     if (restore !== null) html.style.scrollBehavior = restore;
     ac.abort();
+    const view = doc.defaultView;
+    if (smooth && event instanceof PopStateEvent && view) repinAfterTraversal(view);
+  }
+
+  /**
+   * History traversal during a glide: the router's popstate listener (registered first) has
+   * already called scrollTo with the entry's saved position, but Chromium lets the in-flight
+   * fragment smooth scroll leave the page at an intermediate offset on the next frame. Put the
+   * router's position back once, one frame later (WR-01, 07-20).
+   */
+  function repinAfterTraversal(view: Window): void {
+    const left = view.scrollX;
+    const top = view.scrollY;
+    view.requestAnimationFrame(() => {
+      if (view.scrollX !== left || view.scrollY !== top) {
+        view.scrollTo({ left, top, behavior: 'instant' });
+      }
+    });
   }
 
   async function land(
@@ -169,7 +189,7 @@ function bindAnchorFocus(doc: Document, signal: AbortSignal): void {
     smooth: boolean,
     restore: string | null,
   ): Promise<void> {
-    const entry: PendingLanding = { ac: new AbortController(), restore, target };
+    const entry: PendingLanding = { ac: new AbortController(), restore, smooth, target };
     pending = entry;
     if (restore !== null) {
       // The glide has started on the first scroll event; changing scroll-behavior does not stop

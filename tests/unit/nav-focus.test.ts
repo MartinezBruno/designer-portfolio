@@ -334,6 +334,54 @@ describe('anchor hook (bindNavFocus)', () => {
     expect(focusedIds()).toEqual(['contact']);
   });
 
+  describe('traversal re-pin (07-20, WR-01 follow-up)', () => {
+    let y = 0;
+    let scrollTo: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      y = 0;
+      Object.defineProperty(window, 'scrollY', { configurable: true, get: () => y });
+      scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {
+        // happy-dom has no layout; the call itself is what is checked.
+      });
+    });
+
+    afterEach(() => {
+      scrollTo.mockRestore();
+      Reflect.deleteProperty(window, 'scrollY');
+    });
+
+    it("a traversal during a glide puts the router's position back one frame later", async () => {
+      click('to-contact');
+      window.dispatchEvent(new Event('scroll'));
+      // The router has already restored 0 when our popstate listener runs.
+      window.dispatchEvent(new PopStateEvent('popstate', { state: { index: 0 } }));
+      y = 145; // the in-flight glide leaves the page mid-way on the next frame
+      await wait(50);
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+      expect(scrollTo).toHaveBeenCalledWith({ left: 0, top: 0, behavior: 'instant' });
+    });
+
+    it('does nothing when the page stayed where the router put it', async () => {
+      click('to-contact');
+      window.dispatchEvent(new PopStateEvent('popstate', { state: { index: 0 } }));
+      await wait(50);
+      expect(scrollTo).not.toHaveBeenCalled();
+    });
+
+    it('never re-pins a jump (reduced) or a non-traversal cancel', async () => {
+      setMotion('reduced');
+      click('to-contact');
+      window.dispatchEvent(new PopStateEvent('popstate', { state: { index: 0 } }));
+      setMotion('on');
+      click('to-contact');
+      document.dispatchEvent(new Event('astro:before-preparation'));
+      y = 145;
+      await wait(50);
+      expect(scrollTo).not.toHaveBeenCalled();
+    });
+  });
+
   for (const state of ['reduced', 'off'] as const) {
     it(`${state}: no smooth behaviour, focus after two frames`, async () => {
       setMotion(state);
