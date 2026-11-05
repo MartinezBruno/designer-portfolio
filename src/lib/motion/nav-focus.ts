@@ -2,8 +2,10 @@
  * Focus after soft navigation (MOTN-05, 07 D-14, Research Pattern 5). A full page load resets focus
  * to the document start; a ClientRouter swap keeps the old focus point, so keyboard and
  * screen-reader users would be stranded. After each swap focus moves to the arriving page's
- * anchor target, else its main h1, else `#main`. All three carry `tabindex="-1"`, are
- * non-interactive and show no ring (global.css). `preventScroll` leaves scrolling to the router.
+ * anchor target, else its main h1, else `#main`. The h1 and `#main` carry `tabindex="-1"`, are
+ * non-interactive and show no ring (global.css); any other target is given `tabindex="-1"` when
+ * it cannot take focus, and if focus still does not land the chain falls through (07-11 WR-03).
+ * `preventScroll` leaves scrolling to the router.
  * The same binding also moves focus for same-page anchors (07-07, bindAnchorFocus below).
  */
 import { applyServicePreselect } from '../ui/service-preselect';
@@ -36,6 +38,31 @@ export function pickFocusTarget(doc: Document, hash: string): HTMLElement | null
   if (heading instanceof HTMLElement) return heading;
   const main = doc.getElementById('main');
   return main instanceof HTMLElement ? main : null;
+}
+
+/**
+ * Lets a non-interactive element take programmatic focus. Elements that are already focusable
+ * (native controls, links, anything with a tabindex) are left as they are. Only the constant
+ * `-1` is ever written (T-07-21).
+ */
+export function ensureFocusable(el: HTMLElement): HTMLElement {
+  if (el.tabIndex < 0 && !el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+  return el;
+}
+
+/**
+ * Focuses `primary`, else `main h1`, else `#main`, stopping at the first one that actually becomes
+ * the active element, so focus is never left on body when one of them exists (T-07-20, WR-03).
+ */
+export function focusWithFallback(doc: Document, primary: HTMLElement | null): void {
+  const heading = doc.querySelector('main h1');
+  const main = doc.getElementById('main');
+  const chain = [primary, heading, main];
+  for (const candidate of chain) {
+    if (!(candidate instanceof HTMLElement)) continue;
+    ensureFocusable(candidate).focus({ preventScroll: true });
+    if (doc.activeElement === candidate) return;
+  }
 }
 
 /** Upper bound on waiting for `scrollend` after a smooth glide (T-07-20: focus is never lost). */
@@ -90,8 +117,13 @@ function waitForLanding(win: Window, smooth: boolean, signal: AbortSignal): Prom
  * - The skip link (`data-skip-link`) never glides.
  * - Same pathname with a different `?service=` (Home "Ask about this"): handled locally, because
  *   the router would swap Home onto itself (wipe, hero replay, typed message lost). The chip is
- *   checked through the allow-list, the URL is replaced in place with the router's own state
- *   object (no new history entry), and the target is scrolled into view.
+ *   checked through the allow-list and is the source of truth for the selected service. The URL
+ *   keeps its search and only the fragment changes, replaced in place with the router's own
+ *   state object (no new history entry): the router decides "same page" against its private
+ *   `originalLocation`, so a search rewritten behind it would make the next in-page click or the
+ *   skip link swap Home onto itself (07-11 CR-01). The target is then scrolled into view.
+ * - A pending landing is cancelled by `popstate` and `astro:before-preparation`, so history
+ *   traversal or a new router navigation never glides or focuses the abandoned target (WR-02).
  *
  * In every case the target gets focus with preventScroll once the scroll lands. Hash text is
  * looked up with getElementById only (T-07-17). Links inside a form and hashes that point at a
@@ -100,11 +132,21 @@ function waitForLanding(win: Window, smooth: boolean, signal: AbortSignal): Prom
 function bindAnchorFocus(doc: Document, signal: AbortSignal): void {
   const html = doc.documentElement;
   // The one navigation still waiting to land, and the inline scroll-behavior to put back.
-  let pending: { ac: AbortController; restore: string | null } | null = null;
+  let pending: { ac: AbortController; restore: string | null; target: HTMLElement } | null = null;
 
-  /** Synchronous, so a superseding click reads the restored value, never our own 'smooth'. */
-  function cancelPending(): void {
+  /**
+   * Synchronous, so a superseding click reads the restored value, never our own 'smooth'.
+   * A `popstate` whose location still points at the pending target is the router's own fragment
+   * move for this very click (router.js dispatches one after `location.href = to.href`), so it
+   * keeps the landing; any other popstate is history traversal and cancels it (WR-02).
+   */
+  function cancelPending(event?: Event): void {
     if (!pending) return;
+    if (
+      event instanceof PopStateEvent &&
+      hashTarget(doc, doc.defaultView?.location.hash ?? '') === pending.target
+    )
+      return;
     const { ac, restore } = pending;
     pending = null;
     if (restore !== null) html.style.scrollBehavior = restore;
@@ -117,13 +159,13 @@ function bindAnchorFocus(doc: Document, signal: AbortSignal): void {
     smooth: boolean,
     restore: string | null,
   ): Promise<void> {
-    const entry = { ac: new AbortController(), restore };
+    const entry = { ac: new AbortController(), restore, target };
     pending = entry;
     const landed = await waitForLanding(view, smooth, entry.ac.signal);
     if (pending !== entry) return; // superseded or unbound: already restored
     pending = null;
     if (restore !== null) html.style.scrollBehavior = restore;
-    if (landed) target.focus({ preventScroll: true });
+    if (landed) focusWithFallback(doc, target);
   }
 
   function onClick(event: MouseEvent): void {
@@ -162,8 +204,11 @@ function bindAnchorFocus(doc: Document, signal: AbortSignal): void {
       event.preventDefault();
       cancelPending();
       applyServicePreselect(doc, url.search);
-      // The router's own state object (index, scroll) stays, so back/forward keep working.
-      view.history.replaceState(view.history.state, '', url.href);
+      // Only the fragment changes: the search stays in step with the router (CR-01). The router's
+      // own state object (index, scroll) stays, so back/forward keep working.
+      const next = new URL(here.href);
+      next.hash = url.hash;
+      view.history.replaceState(view.history.state, '', next.href);
       target.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant', block: 'start' });
       void land(view, target, smooth, null);
       return;
@@ -176,7 +221,15 @@ function bindAnchorFocus(doc: Document, signal: AbortSignal): void {
   }
 
   doc.addEventListener('click', onClick, { capture: true, signal });
-  signal.addEventListener('abort', cancelPending, { once: true });
+  doc.defaultView?.addEventListener('popstate', cancelPending, { signal });
+  doc.addEventListener('astro:before-preparation', cancelPending, { signal });
+  signal.addEventListener(
+    'abort',
+    () => {
+      cancelPending();
+    },
+    { once: true },
+  );
 }
 
 export function bindNavFocus(doc: Document, options: NavFocusOptions = {}): () => void {
@@ -185,6 +238,12 @@ export function bindNavFocus(doc: Document, options: NavFocusOptions = {}): () =
   bindAnchorFocus(doc, signal);
   // astro:page-load also fires on the first load, where the browser's own focus start is right.
   let navigated = false;
+  // Bumped on every swap, so a navigation released after a newer one started never focuses (WR-01).
+  let navToken = 0;
+
+  function onBeforeSwap(): void {
+    navToken += 1;
+  }
 
   function onAfterSwap(): void {
     navigated = true;
@@ -193,11 +252,13 @@ export function bindNavFocus(doc: Document, options: NavFocusOptions = {}): () =
   async function onPageLoad(): Promise<void> {
     if (!navigated) return;
     navigated = false;
+    const mine = navToken;
     await (options.waitForRelease?.() ?? Promise.resolve());
-    if (signal.aborted) return;
-    pickFocusTarget(doc, doc.defaultView?.location.hash ?? '')?.focus({ preventScroll: true });
+    if (signal.aborted || mine !== navToken) return;
+    focusWithFallback(doc, pickFocusTarget(doc, doc.defaultView?.location.hash ?? ''));
   }
 
+  doc.addEventListener('astro:before-swap', onBeforeSwap, { signal });
   doc.addEventListener('astro:after-swap', onAfterSwap, { signal });
   doc.addEventListener(
     'astro:page-load',
