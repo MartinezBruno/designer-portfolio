@@ -364,7 +364,7 @@ Plans:
 
 **Gap closure 2 — Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 07-19-PLAN.md — Loader focus handoff to the checked chip (WR-02) + mount deferred during a mailto press (IN-02)
+- [x] 07-19-PLAN.md — Loader focus handoff to the checked chip (WR-02) + mount deferred during a mailto press (IN-02)
 
 **Gap closure 2 — Wave 3** *(blocked on Wave 2 completion)*
 
@@ -404,5 +404,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
-| 7. Page Transitions & Smooth Scroll | 18/21 | In Progress|  |
+| 7. Page Transitions & Smooth Scroll | 19/21 | In Progress|  |
 | 8. Quality Verification | 0/TBD | Not started | - |
