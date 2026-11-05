@@ -38,6 +38,24 @@ const FIXTURE = `<section id="contact" tabindex="-1">
   <form data-contact-form hidden><input id="contact-name" name="name"></form>
 </section>`;
 
+// Same shape as the real form: service chips first (`other` checked), then the first text field.
+const FIXTURE_CHIPS = `<section id="contact" tabindex="-1">
+  <div data-contact-nojs><a href="mailto:x@y.z">Email me</a></div>
+  <form data-contact-form hidden>
+    <input type="radio" name="service" value="web">
+    <input type="radio" name="service" value="other" checked>
+    <input id="contact-name" name="name">
+  </form>
+</section>`;
+
+const revealForm: PageInit = (doc) => {
+  const form = doc.querySelector<HTMLFormElement>('[data-contact-form]');
+  const nojs = doc.querySelector<HTMLElement>('[data-contact-nojs]');
+  if (form) form.hidden = false;
+  if (nojs) nojs.hidden = true;
+  return undefined;
+};
+
 const flush = async (): Promise<void> => {
   for (let i = 0; i < 5; i += 1) await Promise.resolve();
 };
@@ -160,6 +178,30 @@ describe('createLazyContactForm', () => {
     const link = document.querySelector<HTMLAnchorElement>('[data-contact-nojs] a');
     link?.focus();
     expect(document.activeElement).toBe(link);
+    await flush();
+    expect(inner).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(document.getElementById('contact-name'));
+  });
+
+  it('WR-02: hands focus to the checked service radio, not the first one', async () => {
+    document.body.innerHTML = FIXTURE_CHIPS;
+    const inner = vi.fn<PageInit>(revealForm);
+    createLazyContactForm(() => Promise.resolve(inner))(document);
+    document.querySelector<HTMLAnchorElement>('[data-contact-nojs] a')?.focus();
+    await flush();
+    expect(inner).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(
+      document.querySelector('input[name="service"][value="other"]'),
+    );
+  });
+
+  it('WR-02: with no checked radio, skips the radios and focuses the first field', async () => {
+    document.body.innerHTML = FIXTURE_CHIPS;
+    const other = document.querySelector<HTMLInputElement>('input[value="other"]');
+    if (other) other.checked = false;
+    const inner = vi.fn<PageInit>(revealForm);
+    createLazyContactForm(() => Promise.resolve(inner))(document);
+    document.querySelector<HTMLAnchorElement>('[data-contact-nojs] a')?.focus();
     await flush();
     expect(inner).toHaveBeenCalledTimes(1);
     expect(document.activeElement).toBe(document.getElementById('contact-name'));
