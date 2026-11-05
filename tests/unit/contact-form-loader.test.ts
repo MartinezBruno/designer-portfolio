@@ -89,7 +89,9 @@ describe('createLazyContactForm', () => {
     expect(load).not.toHaveBeenCalled();
     io?.fire(true);
     io?.fire(true);
-    document.getElementById('contact-name')?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    document
+      .getElementById('contact-name')
+      ?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
     await flush();
     expect(load).toHaveBeenCalledTimes(1);
     expect(inner).toHaveBeenCalledTimes(1);
@@ -107,7 +109,9 @@ describe('createLazyContactForm', () => {
     document.body.innerHTML = FIXTURE;
     const load2 = vi.fn(() => Promise.resolve<PageInit>(() => undefined));
     createLazyContactForm(load2)(document);
-    document.getElementById('contact')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    document
+      .getElementById('contact')
+      ?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
     expect(load2).toHaveBeenCalledTimes(1);
   });
 
@@ -164,8 +168,12 @@ describe('createLazyContactForm', () => {
     const cleanup2 = createLazyContactForm(load2)(document);
     cleanup2?.();
     expect(FakeObserver.instances[1]?.disconnected).toBe(true);
-    document.getElementById('contact-name')?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
-    document.getElementById('contact')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    document
+      .getElementById('contact-name')
+      ?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    document
+      .getElementById('contact')
+      ?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
     expect(load2).not.toHaveBeenCalled();
   });
 
@@ -184,7 +192,9 @@ describe('createLazyContactForm', () => {
     expect(error).toHaveBeenCalledTimes(1);
     expect(nojs?.hidden).toBe(false);
     expect(form?.hidden).toBe(true);
-    document.getElementById('contact-name')?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    document
+      .getElementById('contact-name')
+      ?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
     await flush();
     expect(load).toHaveBeenCalledTimes(2);
     expect(inner).toHaveBeenCalledTimes(1);
