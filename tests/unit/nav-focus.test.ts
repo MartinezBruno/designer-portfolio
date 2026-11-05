@@ -290,6 +290,50 @@ describe('anchor hook (bindNavFocus)', () => {
     expect(html().style.scrollBehavior).toBe('');
   });
 
+  // WR-01 (07-20): the inline smooth window ends once the glide has started, so a history
+  // traversal during the glide is restored by the router's scrollTo without a glide.
+  it('WR-01 (07-20): under on, the first scroll event restores the inline scroll-behavior', async () => {
+    click('to-contact');
+    expect(html().style.scrollBehavior).toBe('smooth');
+    window.dispatchEvent(new Event('scroll'));
+    expect(html().style.scrollBehavior).toBe('');
+    await wait(50);
+    expect(focus).not.toHaveBeenCalled();
+    window.dispatchEvent(new Event('scrollend'));
+    await flush();
+    expect(focusedIds()).toEqual(['contact']);
+  });
+
+  it('WR-01 (07-20): a previous inline value comes back on the first scroll', () => {
+    html().style.scrollBehavior = 'auto';
+    click('to-contact');
+    expect(html().style.scrollBehavior).toBe('smooth');
+    window.dispatchEvent(new Event('scroll'));
+    expect(html().style.scrollBehavior).toBe('auto');
+  });
+
+  it('WR-01 (07-20): later scroll events and the landing do not overwrite a value set after the restore', async () => {
+    click('to-contact');
+    window.dispatchEvent(new Event('scroll'));
+    expect(html().style.scrollBehavior).toBe('');
+    html().style.scrollBehavior = 'auto';
+    window.dispatchEvent(new Event('scroll'));
+    window.dispatchEvent(new Event('scrollend'));
+    await flush();
+    expect(html().style.scrollBehavior).toBe('auto');
+    expect(focusedIds()).toEqual(['contact']);
+  });
+
+  it('WR-01 (07-20): without a scroll event the landing still restores', async () => {
+    html().style.scrollBehavior = 'auto';
+    click('to-contact');
+    await wait(1100);
+    expect(html().style.scrollBehavior).toBe('smooth');
+    await wait(200);
+    expect(html().style.scrollBehavior).toBe('auto');
+    expect(focusedIds()).toEqual(['contact']);
+  });
+
   for (const state of ['reduced', 'off'] as const) {
     it(`${state}: no smooth behaviour, focus after two frames`, async () => {
       setMotion(state);
