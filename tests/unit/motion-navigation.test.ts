@@ -4,6 +4,7 @@ import { dispatchMotionChange } from '../../src/lib/motion/events';
 import {
   bindNavigation,
   MORPH_NAME,
+  PRESS_TIMEOUT_MS,
   wrapForMorph,
   type NavigationHandle,
 } from '../../src/lib/motion/navigation';
@@ -668,5 +669,121 @@ describe('bindNavigation title morph', () => {
     nextFrame();
     expect(next.querySelector('[data-morph-title]')).toBeNull();
     expect(named(next)).toHaveLength(0);
+  });
+});
+
+// 07-16: pressed marker on the tapped link (touch latency gap, 07-10).
+describe('bindNavigation pressed state', () => {
+  let navigation: NavigationHandle;
+
+  const NAV = `<nav><a href="/projects/">Projects</a><a href="/es/"><span>ES</span></a></nav>`;
+
+  function prepare(sourceElement?: Element): Event {
+    const event = Object.assign(new Event('astro:before-preparation', { cancelable: true }), {
+      sourceElement,
+    });
+    document.dispatchEvent(event);
+    return event;
+  }
+
+  function links(): [HTMLAnchorElement, HTMLAnchorElement] {
+    document.body.innerHTML = NAV;
+    const [a, b] = [...document.body.querySelectorAll('a')];
+    if (a === undefined || b === undefined) throw new Error('no links');
+    return [a, b];
+  }
+
+  const pressed = (): Element[] => [...document.querySelectorAll('[data-nav-pressed]')];
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    navigation = bindNavigation(document);
+  });
+
+  afterEach(() => {
+    navigation.unbind();
+    vi.useRealTimers();
+    document.body.innerHTML = '';
+    delete document.documentElement.dataset['motion'];
+  });
+
+  for (const state of ['on', 'reduced'] as const) {
+    it(`marks the source link under ${state}`, () => {
+      setLiveState(state);
+      const [projects] = links();
+      prepare(projects);
+      expect(projects.getAttribute('data-nav-pressed')).toBe('');
+      expect(pressed()).toHaveLength(1);
+    });
+  }
+
+  it('marks the enclosing link when the source is a node inside it', () => {
+    setLiveState('on');
+    const [, es] = links();
+    const inner = es.querySelector('span');
+    if (inner === null) throw new Error('no span');
+    prepare(inner);
+    expect(es.hasAttribute('data-nav-pressed')).toBe(true);
+    expect(inner.hasAttribute('data-nav-pressed')).toBe(false);
+  });
+
+  it('marks nothing under off (the navigation is prevented)', () => {
+    setLiveState('off');
+    const [projects] = links();
+    prepare(projects);
+    expect(pressed()).toHaveLength(0);
+  });
+
+  it('marks nothing without a source element (back/forward)', () => {
+    setLiveState('on');
+    links();
+    prepare();
+    expect(pressed()).toHaveLength(0);
+  });
+
+  it('clears the marker on before-swap', () => {
+    setLiveState('on');
+    const [projects] = links();
+    prepare(projects);
+    beforeSwap(parse(ARRIVING_WITHOUT_TOGGLE));
+    expect(pressed()).toHaveLength(0);
+  });
+
+  it('moves the marker to the next tapped link', () => {
+    setLiveState('on');
+    const [projects, es] = links();
+    prepare(projects);
+    prepare(es);
+    expect(projects.hasAttribute('data-nav-pressed')).toBe(false);
+    expect(es.hasAttribute('data-nav-pressed')).toBe(true);
+  });
+
+  it('clears the marker after PRESS_TIMEOUT_MS without a swap', () => {
+    setLiveState('on');
+    const [projects] = links();
+    prepare(projects);
+    vi.advanceTimersByTime(PRESS_TIMEOUT_MS - 1);
+    expect(projects.hasAttribute('data-nav-pressed')).toBe(true);
+    vi.advanceTimersByTime(1);
+    expect(projects.hasAttribute('data-nav-pressed')).toBe(false);
+  });
+
+  it('a superseded timer does not clear the newer marker early', () => {
+    setLiveState('on');
+    const [projects, es] = links();
+    prepare(projects);
+    vi.advanceTimersByTime(PRESS_TIMEOUT_MS - 100);
+    prepare(es);
+    vi.advanceTimersByTime(200);
+    expect(es.hasAttribute('data-nav-pressed')).toBe(true);
+  });
+
+  it('unbind clears the marker and its timer', () => {
+    setLiveState('on');
+    const [projects] = links();
+    prepare(projects);
+    navigation.unbind();
+    expect(projects.hasAttribute('data-nav-pressed')).toBe(false);
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
