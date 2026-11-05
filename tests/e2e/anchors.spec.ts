@@ -124,6 +124,52 @@ test.describe('same-page anchors', () => {
     expect(await page.evaluate(() => document.documentElement.style.scrollBehavior)).toBe('');
   });
 
+  test('on: Back during an anchor glide restores without gliding (WR-01, 07-20)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await blockTurnstile(page);
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+    await settleMotion(page);
+    const y0 = await scrollY(page);
+    expect(y0).toBe(0);
+
+    await pressInPlace(contactLink(page));
+    await expect
+      .poll(() => scrollY(page), { intervals: [10], timeout: 1000 })
+      .toBeGreaterThan(y0 + 50);
+
+    // The router's history restore runs on popstate; two frames later the page must be back.
+    // Chromium's own fragment navigation focuses #contact (tabindex=-1) at the click, so the
+    // focus point is cleared first: what is checked is that the hook's landing focus never comes.
+    const after = await page.evaluate(
+      () =>
+        new Promise<{ y: number; behavior: string }>((resolve) => {
+          if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+          window.addEventListener(
+            'popstate',
+            () => {
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  resolve({
+                    y: window.scrollY,
+                    behavior: document.documentElement.style.scrollBehavior,
+                  });
+                });
+              });
+            },
+            { once: true },
+          );
+          history.back();
+        }),
+    );
+    expect(Math.abs(after.y - y0), `y0 ${y0}, after two frames ${after.y}`).toBeLessThanOrEqual(1);
+    expect(after.behavior).not.toBe('smooth');
+    await page.waitForTimeout(1500);
+    await expect(page.locator('#contact')).not.toBeFocused();
+  });
+
   test('on: the hero CTA glides to #contact and focuses it', async ({ page }) => {
     await blockTurnstile(page);
     await page.goto('/');
