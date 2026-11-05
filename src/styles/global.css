@@ -64,7 +64,7 @@
   --t-shutter: 720ms;
   --t-hero: 720ms;
   /* Phase 7 navigation (07-02): ink wipe pass, entrance release point, reduced crossfade. */
-  --t-wipe: 560ms;
+  --t-wipe: 480ms;
   --wipe-release: 0.7;
   --t-nav-fade: 320ms;
 }
