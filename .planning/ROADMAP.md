@@ -361,13 +361,16 @@ Plans:
 **Gap closure 2 — Wave 1** *(lazy contact form layout shift)*
 
 - [ ] 07-18-PLAN.md — Reserve the lazy contact form's height (scripting-only CSS stack) + held-chunk layout-shift e2e at 1440/390, taste review
-- [ ] 07-19-PLAN.md — Loader focus handoff to the checked chip (WR-02) + mount deferred during a mailto press (IN-02)
 
 **Gap closure 2 — Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 07-20-PLAN.md — Anchor smooth window ends when the glide starts, so Back never glides (WR-01)
+- [ ] 07-19-PLAN.md — Loader focus handoff to the checked chip (WR-02) + mount deferred during a mailto press (IN-02)
 
 **Gap closure 2 — Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 07-20-PLAN.md — Anchor smooth window ends when the glide starts, so Back never glides (WR-01)
+
+**Gap closure 2 — Wave 4** *(blocked on Wave 3 completion)*
 
 - [ ] 07-21-PLAN.md — Final gate: verify, layout-shift assertions, leaks, bundle, taste on / and /es/, validation map
 **UI hint**: yes
