@@ -435,8 +435,8 @@ async function resetArrival(page: Page): Promise<void> {
   });
 }
 
-/** Release lands 392 ms after `ready` (70% of 560 ms); 12 ms tolerance for timer granularity. */
-const RELEASE_MIN_MS = 380;
+/** Release lands 336 ms after `ready` (70% of 480 ms); 12 ms tolerance for timer granularity. */
+const RELEASE_MIN_MS = 324;
 
 test.describe('arrival after the wipe (07-04)', () => {
   test('hold: entrances and h1 focus wait for the release, hero keyframes paused under data-vt', async ({
@@ -532,9 +532,9 @@ test.describe('arrival after the wipe (07-04)', () => {
     // Gated on what the UI-SPEC table models (text entrances). The above-the-fold image shutters
     // (card and cover picture scale) end later and are logged, not gated. Home (~1.35 s) is the
     // accepted exception and is logged only (UI-SPEC D-16).
-    // Detail measured ~1.38 s against the table's ~1.23 s: the Phase 6 metadata stagger runs
-    // longer than the table's arithmetic. Recorded in 07-04-SUMMARY as an open budget item (the
-    // UI-SPEC lever is a shorter --t-wipe, a user decision); 1450 ms only guards against regression.
+    // Detail measured ~1.38 s with the 560 ms wipe (07-04). With the 480 ms wipe (07-13, user
+    // decision) five runs measured 1312-1316 ms for both detail paths and 1343-1348 ms for Home
+    // (all above-fold); max + 100 ms rounded up to 50 is 1450, so 1450 ms stays a regression guard.
     expect(home.all).toBeGreaterThan(0);
     expect(projects.text).toBeLessThanOrEqual(1300);
     expect(viaCard.text).toBeLessThanOrEqual(1450);
@@ -671,7 +671,7 @@ test.describe('arrival after the wipe (07-04)', () => {
   }) => {
     // The arriving header's toggle is bound when the page is released (the page lifecycle mounts
     // then), and a view transition takes hit testing until it ends, so the earliest real press is
-    // at release, while the wipe still has ~170 ms to run.
+    // at release, while the wipe still has ~145 ms to run.
     await recordArrival(page);
     await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
@@ -689,8 +689,8 @@ test.describe('arrival after the wipe (07-04)', () => {
     const finishedAt = record.finished[0] ?? 0;
     expect(record.toggleAt).not.toBeNull();
     expect(finishedAt - (record.toggleAt ?? 0)).toBeLessThanOrEqual(250);
-    // skipTransition, not the natural end: the 560 ms wipe would finish at ready + 560.
-    expect(finishedAt - readyAt).toBeLessThan(520);
+    // skipTransition, not the natural end: the 480 ms wipe would finish at ready + 480.
+    expect(finishedAt - readyAt).toBeLessThan(460);
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
     await expect(page.locator('html')).not.toHaveAttribute('data-vt', /.*/);
     await expect(page.locator('html')).not.toHaveAttribute('data-wipe', /.*/);
@@ -716,7 +716,7 @@ test.describe('arrival after the wipe (07-04)', () => {
     const readyAt = record.ready[0]?.at ?? 0;
     const changeAt = record.motionChangeAt ?? Number.POSITIVE_INFINITY;
     // The switch landed while the wipe was still running, and ended it within 250 ms.
-    expect(changeAt - readyAt).toBeLessThan(560);
+    expect(changeAt - readyAt).toBeLessThan(480);
     expect((record.finished[0] ?? 0) - changeAt).toBeLessThanOrEqual(250);
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
     await expect(page.locator('html')).not.toHaveAttribute('data-vt', /.*/);

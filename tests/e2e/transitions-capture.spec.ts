@@ -194,7 +194,7 @@ for (const { width, height } of WIDTHS) {
           .first()
           .click();
         await expect.poll(() => page.evaluate(() => window.__capturePaused === true)).toBe(true);
-        // The release timer runs at ready + 392 ms whatever the frozen frame shows.
+        // The release timer runs at ready + 336 ms whatever the frozen frame shows.
         await expect
           .poll(() => page.evaluate(() => !document.documentElement.hasAttribute('data-vt')))
           .toBe(true);

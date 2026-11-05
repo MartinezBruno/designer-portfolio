@@ -201,7 +201,7 @@ describe('bindNavigation release gate', () => {
     return { released: () => released };
   }
 
-  it('marks the arriving html with data-vt and releases 392 ms after ready under on', async () => {
+  it('marks the arriving html with data-vt and releases 336 ms after ready under on', async () => {
     setLiveState('on');
     const transition = fakeTransition();
     const next = swap(transition);
@@ -209,7 +209,7 @@ describe('bindNavigation release gate', () => {
     const state = tracked();
     await vi.advanceTimersByTimeAsync(100);
     transition.makeReady();
-    await vi.advanceTimersByTimeAsync(391);
+    await vi.advanceTimersByTimeAsync(335);
     expect(state.released()).toBe(false);
     expect(document.documentElement.hasAttribute('data-vt')).toBe(true);
     await vi.advanceTimersByTimeAsync(1);
@@ -240,7 +240,7 @@ describe('bindNavigation release gate', () => {
     expect(document.documentElement.hasAttribute('data-vt')).toBe(false);
   });
 
-  it('releases on finished under reduced, not at 392 ms after ready', async () => {
+  it('releases on finished under reduced, not at 336 ms after ready', async () => {
     setLiveState('reduced');
     const transition = fakeTransition();
     swap(transition);

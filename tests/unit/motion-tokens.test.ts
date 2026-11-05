@@ -21,7 +21,7 @@ describe('motion tokens', () => {
   });
 
   it('defines the Phase 7 navigation tokens (07-02)', () => {
-    expect(cssMs('wipe')).toBe(560);
+    expect(cssMs('wipe')).toBe(480);
     expect(cssMs('wipe')).toBe(durations.wipe * 1000);
     expect(cssMs('nav-fade')).toBe(320);
     expect(css).toContain('--wipe-release: 0.7;');
