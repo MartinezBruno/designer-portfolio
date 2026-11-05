@@ -202,32 +202,13 @@ const dangerTitle = 'text-base font-semibold text-danger inline-flex items-cente
 </div>
 
 <script>
-  import { actions, isInputError } from 'astro:actions';
-  import { PUBLIC_TURNSTILE_SITE_KEY } from 'astro:env/client';
   import { lifecycle } from '../../lib/motion';
-  import {
-    createContactForm,
-    loadTurnstileScript,
-    type ContactFormDeps,
-    type SendResult,
-  } from '../../lib/ui/contact-form';
+  import { createLazyContactForm } from '../../lib/ui/contact-form-loader';
 
-  // Maps the Action result onto the controller's SendResult. A throw (network) is a failed send.
-  async function send(data: FormData): Promise<SendResult> {
-    try {
-      const { error } = await actions.contact(data);
-      if (error === undefined) return { kind: 'ok' };
-      if (isInputError(error)) return { kind: 'input', fields: error.fields };
-      return { kind: 'failed' };
-    } catch {
-      return { kind: 'failed' };
-    }
-  }
-
-  const deps: ContactFormDeps = {
-    send,
-    siteKey: PUBLIC_TURNSTILE_SITE_KEY,
-    loadTurnstile: loadTurnstileScript,
-  };
-  lifecycle.register(createContactForm(deps));
+  // The controller loads on demand (07-15, eager JS ceiling): see contact-form-loader.ts.
+  lifecycle.register(
+    createLazyContactForm(() =>
+      import('../../lib/ui/contact-form-boot').then((m) => m.contactFormInit),
+    ),
+  );
 </script>
