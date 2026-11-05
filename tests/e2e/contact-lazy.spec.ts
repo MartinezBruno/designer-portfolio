@@ -147,7 +147,8 @@ async function captureContact(page: Page, name: string): Promise<void> {
   await page.evaluate(() => {
     document.getElementById('contact')?.scrollIntoView({ behavior: 'instant', block: 'start' });
   });
-  await twoFrames(page);
+  // Let the section's reveals finish so the shot shows the layout, not a mid-fade frame.
+  await settleMotion(page);
   await page.locator('#contact').screenshot({ path: `.taste-skill/inspect/07-18/${name}.png` });
 }
 
