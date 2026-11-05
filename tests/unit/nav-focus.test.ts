@@ -329,6 +329,18 @@ describe('anchor hook (bindNavFocus)', () => {
     expect(focus).not.toHaveBeenCalled();
   });
 
+  it("WR-02: the router's own popstate for this fragment keeps the glide", async () => {
+    click('to-contact');
+    // The router moves to the target hash, then dispatches a stateless popstate.
+    window.history.replaceState(null, '', '/#contact');
+    window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
+    expect(html().style.scrollBehavior).toBe('smooth');
+    window.dispatchEvent(new Event('scrollend'));
+    await flush();
+    expect(focusedIds()).toEqual(['contact']);
+    expect(html().style.scrollBehavior).toBe('');
+  });
+
   it('WR-02: astro:before-preparation cancels a pending glide and its focus', async () => {
     click('to-contact');
     expect(html().style.scrollBehavior).toBe('smooth');
