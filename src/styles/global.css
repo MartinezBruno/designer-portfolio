@@ -670,3 +670,35 @@ html[data-vt]
     translate: none;
   }
 }
+
+/*
+ * Contact form height reserve (07-18). The 07-15 lazy form reserved no height, so a reader below
+ * #contact saw the footer jump by the form's height when the chunk mounted. While the no-JS block
+ * shows, the hidden form is laid out invisibly in the same grid cell under it, so the column
+ * already has the form's own height at every width and in both locales. The controller hides
+ * [data-contact-nojs] in the same task it reveals the form, so the rule stops matching and normal
+ * [hidden] semantics return (success swap included). scripting: enabled keeps no-JS visitors at
+ * the mailto block's height. visibility: hidden keeps the form out of hit testing, the tab order
+ * and the accessibility tree; the layer lets the !important beat preflight's [hidden] rule.
+ */
+@layer base {
+  @media (scripting: enabled) {
+    [data-contact-column]:has(> [data-contact-nojs]:not([hidden])) {
+      display: grid;
+      align-items: start;
+    }
+    [data-contact-column]:has(> [data-contact-nojs]:not([hidden])) > [data-contact-nojs] {
+      position: relative;
+      z-index: 1;
+      grid-area: 1 / 1;
+    }
+    [data-contact-column]:has(> [data-contact-nojs]:not([hidden])) > form[data-contact-form] {
+      grid-area: 1 / 1;
+    }
+    [data-contact-column]:has(> [data-contact-nojs]:not([hidden]))
+      > form[data-contact-form][hidden] {
+      display: flex !important;
+      visibility: hidden;
+    }
+  }
+}
