@@ -796,6 +796,9 @@ async function expectMorph(page: Page): Promise<void> {
   await expect(title).toHaveAttribute('data-revealed', '');
   await expect(title).toHaveAttribute('data-reveal-instant', '');
   expect(await restingTitleNames(page)).toBe(0);
+  // IN-01 (07-13): the landed h1 loses its morph wrapper, so it matches a full load.
+  await waitForNavigationIdle(page);
+  await expect(title.locator('[data-morph-title]')).toHaveCount(0);
 }
 
 async function expectNoMorph(page: Page): Promise<void> {
@@ -835,6 +838,79 @@ test.describe('morph: card title into the detail h1 (07-06, D-02)', () => {
     await softNavigate(page, link);
     await expect(page).toHaveURL(new RegExp(`${href ?? 'missing'}$`));
     await expectMorph(page);
+  });
+
+  test('the title hands off without a doubled frame, in plain ink (07-13)', async ({ page }) => {
+    // Pause the project-title animations at ready, seek them through the flight and read the old
+    // and new image opacities (user decision at 07-10: never both visible, no difference blend).
+    await page.addInitScript(() => {
+      const samples: { t: number; old: number; next: number }[] = [];
+      const out = { samples, blend: '', filters: [] as string[], animations: 0 };
+      (window as unknown as { __handoff: typeof out }).__handoff = out;
+      document.addEventListener('astro:before-swap', (event) => {
+        const transition = (event as Event & { viewTransition?: ViewTransition }).viewTransition;
+        if (transition === undefined) return;
+        void transition.ready.then(() => {
+          const root = document.documentElement;
+          const animations = document
+            .getAnimations()
+            .filter((a) =>
+              ((a.effect as KeyframeEffect | null)?.pseudoElement ?? '').includes('project-title'),
+            );
+          out.animations = animations.length;
+          if (animations.length === 0) return;
+          for (const a of animations) a.pause();
+          const timing = animations[0]?.effect?.getComputedTiming();
+          const duration = Number(timing?.duration ?? 0);
+          for (let i = 0; i <= 10; i += 1) {
+            const t = (duration * i) / 10;
+            for (const a of animations) a.currentTime = t;
+            samples.push({
+              t,
+              old: Number(getComputedStyle(root, '::view-transition-old(project-title)').opacity),
+              next: Number(getComputedStyle(root, '::view-transition-new(project-title)').opacity),
+            });
+          }
+          out.blend = getComputedStyle(root, '::view-transition-group(project-title)').mixBlendMode;
+          out.filters = [
+            getComputedStyle(root, '::view-transition-old(project-title)').filter,
+            getComputedStyle(root, '::view-transition-new(project-title)').filter,
+          ];
+          for (const a of animations) a.play();
+        });
+      });
+    });
+    await page.goto('/projects/');
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+    await softNavigate(page, page.locator(`main article a[href="/projects/${DETAIL_SLUG}/"]`));
+    await waitForNavigationIdle(page);
+    const handoff = await page.evaluate(
+      () =>
+        (
+          window as unknown as {
+            __handoff: {
+              samples: { t: number; old: number; next: number }[];
+              blend: string;
+              filters: string[];
+              animations: number;
+            };
+          }
+        ).__handoff,
+    );
+    test.info().annotations.push({
+      type: 'morph-handoff',
+      description: handoff.samples
+        .map((s) => `${String(Math.round(s.t))}ms old ${String(s.old)} new ${String(s.next)}`)
+        .join('; '),
+    });
+    expect(handoff.animations).toBeGreaterThan(0);
+    expect(handoff.samples).toHaveLength(11);
+    for (const sample of handoff.samples) expect(Math.min(sample.old, sample.next)).toBe(0);
+    expect(handoff.samples[0]?.old).toBe(1);
+    expect(handoff.samples[10]?.next).toBe(1);
+    expect(handoff.blend).toBe('normal');
+    for (const filter of handoff.filters) expect(filter).toBe('none');
+    await expect(page.locator('#project-title [data-morph-title]')).toHaveCount(0);
   });
 
   test('no morph for a nav link, the EN/ES switch or back', async ({ page }) => {
