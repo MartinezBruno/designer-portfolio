@@ -117,3 +117,24 @@ export function checkEagerCeiling(
   if (gzipTotal <= ceiling) return undefined;
   return `eager JS on ${route} is ${gzipTotal} B gzip -9, over the ${ceiling} B ceiling (+${gzipTotal - ceiling} B)`;
 }
+
+export interface MeasuredPage {
+  route: string;
+  html: string;
+}
+
+// Built HTML files (relative to dist/client) to measured pages: `es/projects/index.html` is
+// `/es/projects/`, any other file is its own path (`404.html` is `/404.html`). Sorted by route.
+export function pagesFromHtmlFiles(paths: readonly string[]): MeasuredPage[] {
+  return paths
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((html) => html.endsWith('.html'))
+    .map((html) => {
+      if (html === 'index.html') return { route: '/', html };
+      if (html.endsWith('/index.html')) {
+        return { route: `/${html.slice(0, -'index.html'.length)}`, html };
+      }
+      return { route: `/${html}`, html };
+    })
+    .sort((a, b) => a.route.localeCompare(b.route));
+}
