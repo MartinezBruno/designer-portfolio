@@ -61,7 +61,7 @@ Filled by the planner (2026-11-02) with plan task IDs; statuses set by 07-10 Tas
 | 07-08-T1/T2 | MOTN-06 / SC4 | Card/teaser parallax translate changes under `on` (incl. touch), covers frame, no CLS, hover composes, `none` under reduced/off/live toggle, no overflow | e2e | `pnpm exec playwright test tests/e2e/parallax.spec.ts` | ✅ | ✅ green |
 | 07-09-T1 | MOTN-06 / D-11a | `stackMotion` opt-out schema + validation + `entrance` side (alternation over eligible images) | unit | `pnpm vitest run tests/unit/projects-overrides.test.ts tests/unit/project-detail-site.test.ts` | ✅ | ✅ green |
 | 07-09-T2 | MOTN-06 / D-11a | Detail stack side entrance: alternating sides, scrubbed, rests at 0, seamless adjacency, equal stack height across states, still under reduced/off/print, hold coexistence | unit + e2e | `pnpm vitest run tests/unit/project-modules.test.ts tests/unit/motion-tokens.test.ts && pnpm exec playwright test tests/e2e/stack-entrance.spec.ts` | ✅ | ✅ green |
-| 07-10-T1 | Budget | Eager ≤ 22,000 B gzip; no GreenSock/lenisVersion in eager chunks | unit + script | `pnpm vitest run tests/unit/measure-bundle.test.ts && pnpm build && pnpm measure:bundle` | ✅ | ❌ red: eager 23,010 B gzip on `/` and `/es/` (+1,010 B over 22,000); markers clean; ceiling pending user decision at the 07-10 checkpoint |
+| 07-10-T1 | Budget | Eager ≤ 22,000 B gzip; no GreenSock/lenisVersion in eager chunks | unit + script | `pnpm vitest run tests/unit/measure-bundle.test.ts && pnpm build && pnpm measure:bundle` | ✅ | ❌ red: eager 23,010 B gzip on `/` and `/es/` (+1,010 B over 22,000); markers clean. User confirmed 22,000 B (2026-11-04). Gap: lazy-load deferrable eager chunks (ContactForm first) |
 | 07-10-T1 | Regression | Phase 1–7 suites green under the router | full | `pnpm verify` | ✅ | ✅ green (final run: lint 0 errors, 1242 unit, 771 e2e passed / 110 opt-in skipped, secrets ok); ⚠️ one Phase 6 split-heading timing flake on the first full run, not reproduced in 10 isolated + 219 parallel-stress runs |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
@@ -76,7 +76,7 @@ Filled by the planner (2026-11-02) with plan task IDs; statuses set by 07-10 Tas
 - [x] `tests/e2e/helpers/navigation.ts` — `softNavigate(page, href)`, CDP listener counter
 - [x] e2e specs: transitions, smooth-scroll, parallax, navigation-leaks, transitions-reduced
 - [x] `settleMotion` helper extended to wait for VT attributes to clear
-- [ ] Wave 0 spike (folded into plans): Chromium wipe/morph captures in 07-02 and 07-06 (done, recaptured in 07-10); manual Safari/Firefox check in 07-10 Task 3 (pending the user checkpoint)
+- [ ] Wave 0 spike (folded into plans): Chromium wipe/morph captures in 07-02 and 07-06 (done, recaptured in 07-10); manual Safari/Firefox check pending: the user runs it after the gap fixes land
 
 ---
 
@@ -87,6 +87,19 @@ Filled by the planner (2026-11-02) with plan task IDs; statuses set by 07-10 Tas
 | Real browser find bar (Cmd+F) not fighting Lenis | MOTN-06 | Native find UI not scriptable | Desktop Chrome/Safari/Firefox, Cmd+F a below-fold word, confirm it stays in view |
 | Safari/Firefox transition + fallback quality | MOTN-05 | Playwright runs Chromium only here | Navigate Home → Projects → detail → back in Safari and Firefox, confirm no flash or broken state |
 | Visual quality of wipe/morph | MOTN-05 | Taste judgment | taste skill `inspect.mjs` screenshots reviewed |
+
+---
+
+## 07-10 Checkpoint Decisions (2026-11-04)
+
+- Q1 eager ceiling: keep 22,000 B gzip. Cut eager code instead: every chunk not needed for first paint or interaction loads on demand (gap).
+- Touch latency (Pixel 7 Fast 4G, cold cache median 538.5 ms, default cache 296.5 ms): follow-up gap (production compression check and/or immediate touch feedback).
+- Q2: shorten `--t-wipe` to 480 ms (gap). Q3: keep the vertical wipe. Q4: reverse morph out of v1.
+- Q5: CollectionModule grids get motion (gap).
+- Morph soft findings: remove the mid-morph doubled title and drop the difference blend so the title stays plain ink (gap).
+- Q6 (VoiceOver double announcement) and Q7 (per-engine no-morph fallback): pending manual UAT after the gaps.
+
+**Manual UAT (Safari 26, Firefox 159, VoiceOver, real Figma embed wheel, find bar): pending, after the gap fixes.**
 
 ---
 

@@ -15,8 +15,10 @@ const EAGER_MARKERS = [
   { name: 'gsap', marker: 'GreenSock' },
   { name: 'lenis', marker: 'lenisVersion' },
 ] as const;
-// Phase 7 eager ceiling (gzip -9, per page). Proposed in 07-RESEARCH Open Question 1 / UI-SPEC;
-// confirmed by the user at the 07-10 checkpoint. Phase 6 baseline 14,643 B + ClientRouter 5,655 B.
+// Phase 7 eager ceiling (gzip -9, per page). Proposed in 07-RESEARCH Open Question 1 / UI-SPEC.
+// The user confirmed 22,000 B at the 07-10 checkpoint (2026-11-04) and chose to cut eager code
+// (load deferrable chunks on demand) instead of raising it. Phase 6 baseline 14,643 B + ClientRouter
+// 5,655 B.
 const EAGER_CEILING_GZIP = 22_000;
 
 interface FileSize {
