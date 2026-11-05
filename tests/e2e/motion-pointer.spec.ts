@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { devices, expect, test, type Locator, type Page } from '@playwright/test';
+import { openContactForm } from './helpers/contact';
 
 // Phase 6 magnetic buttons (MOTN-03, D-12, D-13; VALIDATION V-09 and the face half of V-10).
 // The shell ([data-magnetic]) owns the hit area and focus outline and never moves; only its
@@ -155,11 +156,29 @@ test.describe('magnetic', () => {
   test('a footer social icon pulls (cap 6px) after scrolling', async ({ page }) => {
     await page.goto('/');
     await settled(page);
+    // 07-15 loads the contact form on demand; mount it first so its taller layout cannot move the
+    // footer after the box below is measured.
+    await openContactForm(page);
     const shell = page.locator('footer [data-magnetic="link"]').first();
     await shell.scrollIntoViewIfNeeded();
     // The footer row settles in (translate) as it scrolls into view; measure once it rests.
     await page.waitForTimeout(100);
     await finishAnimations(page);
+    // The settle-in can be a lazily loaded GSAP tween (not a WAAPI animation), so also wait until
+    // the box holds still across two reads before measuring.
+    let last = '';
+    await expect
+      .poll(
+        async () => {
+          const now = JSON.stringify(await box(shell));
+          const still = now === last;
+          last = now;
+          await page.waitForTimeout(150);
+          return still;
+        },
+        { timeout: 5000 },
+      )
+      .toBe(true);
     const before = await box(shell);
 
     await pullFromRight(page, shell);
@@ -286,6 +305,8 @@ test.describe('cursor', () => {
       )
       .toBe('1');
 
+    // 07-15: the form controller loads on demand, so bring the form up before using its field.
+    await openContactForm(page);
     const field = await centreOf(page.locator('textarea[name="message"]'));
     await page.mouse.move(field.x, field.y);
     await expect.poll(() => cursorState(page)).toBe('hidden');

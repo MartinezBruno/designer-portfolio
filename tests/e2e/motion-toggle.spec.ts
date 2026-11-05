@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openContactForm } from './helpers/contact';
 import { en } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
 
@@ -53,6 +54,8 @@ test.describe('motion toggle switches live and persists', () => {
       window.__marker = 1;
     });
 
+    // 07-15: the form controller loads on demand, so bring the form up before typing.
+    await openContactForm(page);
     const message = page.getByLabel(en['contact.message.label'], { exact: true });
     await message.fill('Half a thought about a new logo');
 
