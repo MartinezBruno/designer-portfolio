@@ -162,3 +162,9 @@ None.
 ## Threat Flags
 
 None. The fix is one CSS class on existing markup. The validation docs contain only numbers and commands, and `check:secrets` passed.
+
+## Self-Check: PASSED
+
+- FOUND: 07-21-SUMMARY.md, src/components/contact/ContactForm.astro, tests/e2e/contact-lazy.spec.ts (`07-21` describe), 07-VALIDATION.md (7 new rows)
+- FOUND commits: dc51612, 1cebe5d, c45269c, 2d88ef2
+- No file deletions since 9e0ddf7
