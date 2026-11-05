@@ -260,9 +260,59 @@ test.describe('Ask about this on Home', () => {
     await expect(page.locator('[data-hero]')).toHaveAttribute('data-hero-played', /.*/);
     await expect(message).toHaveValue('hello');
     await expect(page.locator(`#contact-service-${askService.id}`)).toBeChecked();
-    expect(await page.evaluate(() => location.search)).toBe(`?service=${askService.id}`);
+    // 07-11 CR-01: only the hash changes, so the router's notion of "same page" stays in step.
+    expect(await page.evaluate(() => location.search)).toBe('');
     expect(await page.evaluate(() => location.hash)).toBe('#contact');
     await expect.poll(() => activeId(page)).toBe('contact');
     await expect(page.locator('section#contact')).toBeInViewport();
   });
+
+  for (const state of ['on', 'reduced'] as const) {
+    test(`${state}: Ask, type, Ask again, skip link: no swap, message kept (CR-01)`, async ({
+      page,
+    }) => {
+      if (state === 'reduced') await useReduced(page);
+      await countViewTransitions(page);
+      await blockTurnstile(page);
+      await page.goto('/');
+      await settleMotion(page);
+
+      // Scroll first: a later plan may load the form on demand.
+      await page.locator('#contact').scrollIntoViewIfNeeded();
+      const message = page.locator('#contact-message');
+      await expect(message).toBeVisible();
+
+      const ask = page.getByRole('link', { name: askName, exact: true });
+      await ask.scrollIntoViewIfNeeded();
+      await pressInPlace(ask);
+      await waitForScrollRest(page);
+
+      await message.fill('keep me');
+      await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+        window.__marker = 1;
+      });
+      const before = await page.evaluate(() => window.__vtCount ?? 0);
+
+      await page.evaluate(() => {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      });
+      await ask.scrollIntoViewIfNeeded();
+      await pressInPlace(ask);
+      await waitForScrollRest(page);
+
+      // The skip link: focus it, then activate it from the keyboard.
+      const skip = page.locator('[data-skip-link]');
+      await skip.focus();
+      await page.keyboard.press('Enter');
+      await waitForScrollRest(page);
+
+      expect(await page.evaluate(() => window.__marker)).toBe(1);
+      expect(await page.evaluate(() => window.__vtCount ?? 0)).toBe(before);
+      await expect(message).toHaveValue('keep me');
+      await expect(page.locator(`#contact-service-${askService.id}`)).toBeChecked();
+      await expect.poll(() => activeId(page)).toBe('main');
+      expect(await page.evaluate(() => location.search)).toBe('');
+    });
+  }
 });

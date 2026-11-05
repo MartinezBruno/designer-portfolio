@@ -63,7 +63,9 @@ for (const { locale, prefix, dict } of cases) {
       }) => {
         await page.goto(prefix);
         await page.getByRole('link', { name: link.name, exact: true }).click();
-        await expect(page).toHaveURL(new RegExp(`\\?service=${link.id}#contact$`));
+        // 07-11 CR-01: a same-page click on Home changes only the hash; the page's own search
+        // (none here) is kept, and the checked chip carries the selected service.
+        await expect(page).toHaveURL(new RegExp(`${prefix}#contact$`));
         await expect(page.locator('section#contact')).toBeInViewport();
         await expect(page.locator(`#contact-service-${link.id}`)).toBeChecked();
         await expect(page.locator('#contact-service-other')).not.toBeChecked();
