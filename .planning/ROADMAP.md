@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Project Detail & Discovery** - Mirrored detail pages with metadata and navigation, plus conditional filter/search (completed 2026-10-19)
 - [x] **Phase 5: Contact** - Working spam-protected contact form (logging mailer in v1), service pre-selection, and a mailto fallback (completed 2026-10-29)
 - [x] **Phase 6: Scroll & Interaction Motion** - Reveals, text splits, cursor/magnetic buttons, card hover effects, reduced-motion support, and a motion toggle (completed 2026-11-02)
-- [ ] **Phase 7: Page Transitions & Smooth Scroll** - Animated navigation with focus management, inertial scroll and parallax, no lifecycle leaks
+- [x] **Phase 7: Page Transitions & Smooth Scroll** - Animated navigation with focus management, inertial scroll and parallax, no lifecycle leaks (completed 2026-11-05)
 - [ ] **Phase 8: Quality Verification** - Measured performance budget, full axe/keyboard pass in both languages, and Spanish copy ready for review
 
 ## Phase Details
@@ -333,11 +333,11 @@ Plans:
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [ ] 07-09-PLAN.md — Detail image-stack parallax with overrides opt-out and taste seam review (InstaBlogs, Cabrera's)
+- [x] 07-09-PLAN.md — Detail image-stack parallax with overrides opt-out and taste seam review (InstaBlogs, Cabrera's)
 
 **Wave 7** *(blocked on Wave 6 completion)*
 
-- [ ] 07-10-PLAN.md — Phase gate: bundle guard (Lenis marker, 22 KB eager ceiling), full verify, full taste gate, Safari/Firefox/VoiceOver UAT, user sign-off
+- [x] 07-10-PLAN.md — Phase gate: bundle guard (Lenis marker, 22 KB eager ceiling), full verify, full taste gate, Safari/Firefox/VoiceOver UAT, user sign-off
 **UI hint**: yes
 **Research flag**: Needs `/gsd:plan-phase --research-phase`. Open decision: `<ClientRouter />` vs native cross-document view transitions. Also research how Lenis/ScrollTrigger interact with scroll restoration, Safari/Firefox support, and the bundle budget.
 
@@ -369,5 +369,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
-| 7. Page Transitions & Smooth Scroll | 8/10 | In Progress|  |
+| 7. Page Transitions & Smooth Scroll | 10/10 | Complete   | 2026-11-05 |
 | 8. Quality Verification | 0/TBD | Not started | - |
