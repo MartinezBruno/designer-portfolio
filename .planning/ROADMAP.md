@@ -368,7 +368,7 @@ Plans:
 
 **Gap closure 2 — Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 07-20-PLAN.md — Anchor smooth window ends when the glide starts, so Back never glides (WR-01)
+- [x] 07-20-PLAN.md — Anchor smooth window ends when the glide starts, so Back never glides (WR-01)
 
 **Gap closure 2 — Wave 4** *(blocked on Wave 3 completion)*
 
@@ -404,5 +404,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
-| 7. Page Transitions & Smooth Scroll | 19/21 | In Progress|  |
+| 7. Page Transitions & Smooth Scroll | 20/21 | In Progress|  |
 | 8. Quality Verification | 0/TBD | Not started | - |
