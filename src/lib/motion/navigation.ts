@@ -60,6 +60,7 @@ export interface NavigationDeps {
   setTimeout?: (cb: () => void, ms: number) => number;
   clearTimeout?: (id: number) => void;
   now?: () => number;
+  requestAnimationFrame?: (cb: () => void) => void;
 }
 
 export interface NavigationHandle {
@@ -133,6 +134,13 @@ export function bindNavigation(doc: Document, deps: NavigationDeps = {}): Naviga
       window.clearTimeout(id);
     });
   const now = deps.now ?? ((): number => performance.now());
+  const nextFrame =
+    deps.requestAnimationFrame ??
+    ((cb: () => void): void => {
+      window.requestAnimationFrame(() => {
+        cb();
+      });
+    });
   const holdMs = Math.round(durations.wipe * wipeRelease * 1000);
   // Swap times of the wipe passes inside the current vestibular window.
   let wipeStarts: number[] = [];
@@ -238,9 +246,10 @@ export function bindNavigation(doc: Document, deps: NavigationDeps = {}): Naviga
 
   /**
    * Ends the morph: the source link gets its original children back (an aborted navigation leaves
-   * the visitor on the card, whose hover underline needs the bare text), and the arriving h1 only
-   * loses the name. Its wrapper stays so the landed title keeps the exact box the new snapshot
-   * was taken from, with no reflow at the end. Afterwards no element is named (Pitfall 8).
+   * the visitor on the card, whose hover underline needs the bare text), and the arriving h1 loses
+   * the name at once. Its wrapper is unwrapped separately, one frame after the transition settles
+   * (`nameMorphTarget`), so the landed h1 matches a full load of the same page (IN-01) without a
+   * reflow while the new snapshot is still on screen. Afterwards no element is named (Pitfall 8).
    */
   function clearMorph(): void {
     if (morph === undefined) return;
@@ -270,7 +279,8 @@ export function bindNavigation(doc: Document, deps: NavigationDeps = {}): Naviga
    * The arriving `#project-title` gets the same name around its children, and lands revealed
    * (`data-revealed data-reveal-instant`), so the Phase 6 line rise never splits or replays it
    * under the flying title (UI-SPEC "Title Morph"). Both names are cleared once the transition
-   * settles, whether it finished, was skipped or was aborted.
+   * settles, whether it finished, was skipped or was aborted, and one frame later the h1's wrapper
+   * is unwrapped (IN-01, 07-13). Its nodes are moved back, never re-parsed (T-07-27).
    */
   function nameMorphTarget(event: TransitionBeforeSwapEvent): void {
     if (morph === undefined || morph.target !== undefined) return;
@@ -290,6 +300,11 @@ export function bindNavigation(doc: Document, deps: NavigationDeps = {}): Naviga
       .catch(() => undefined)
       .finally(() => {
         if (morph === entry) clearMorph();
+        const target = entry.target;
+        if (target === undefined) return;
+        nextFrame(() => {
+          if (target.isConnected && target.parentNode !== null) unwrap(target);
+        });
       });
   }
 

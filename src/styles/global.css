@@ -295,19 +295,20 @@ html:is([data-motion='on'], [data-motion='reduced']) [data-site-header] {
 /*
  * Title morph (07 D-02, UI-SPEC "Title Morph" and "Color"): only under 'on' does navigation.ts
  * name the clicked card title and the arriving h1. The group travels from the card title's box to
- * the h1's over --t-wipe with --ease-travel, so it lands as the panel leaves. The two images
- * crossfade between 30% and 70% of the flight, so the size and font change happens mid-air; the
- * UA keeps their aspect (block-size: auto), so nothing stretches. Inverted and blended with
- * difference, the ink title reads near-ink over the surface and near-white over the ink panel.
+ * the h1's over --t-wipe with --ease-travel, so it lands as the panel leaves. The UA keeps the two
+ * images' aspect (block-size: auto), so nothing stretches.
+ * 07-13 (user decision at the 07-10 checkpoint): the title is plain ink, with no difference blend
+ * and no invert, and the two images hand off instead of crossfading, so there is never a doubled,
+ * ghosted title. The old image is gone by 50% of the flight and the new one fades up between 50%
+ * and 55%, so the size and font swap happens once, mid-air. While the title crosses the ink panel
+ * it is ink on ink by design: the user chose plain ink over the blend.
  */
 html[data-motion='on']::view-transition-group(project-title) {
   animation-duration: var(--t-wipe);
   animation-timing-function: var(--ease-travel);
-  mix-blend-mode: difference;
 }
 html[data-motion='on']::view-transition-old(project-title),
 html[data-motion='on']::view-transition-new(project-title) {
-  filter: invert(1);
   animation-duration: var(--t-wipe);
   animation-timing-function: linear;
   animation-fill-mode: both;
@@ -320,20 +321,20 @@ html[data-motion='on']::view-transition-new(project-title) {
 }
 @keyframes morph-out {
   0%,
-  30% {
+  45% {
     opacity: 1;
   }
-  70%,
+  50%,
   100% {
     opacity: 0;
   }
 }
 @keyframes morph-in {
   0%,
-  30% {
+  50% {
     opacity: 0;
   }
-  70%,
+  55%,
   100% {
     opacity: 1;
   }
