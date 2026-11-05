@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Project Detail & Discovery** - Mirrored detail pages with metadata and navigation, plus conditional filter/search (completed 2026-10-19)
 - [x] **Phase 5: Contact** - Working spam-protected contact form (logging mailer in v1), service pre-selection, and a mailto fallback (completed 2026-10-29)
 - [x] **Phase 6: Scroll & Interaction Motion** - Reveals, text splits, cursor/magnetic buttons, card hover effects, reduced-motion support, and a motion toggle (completed 2026-11-02)
-- [ ] **Phase 7: Page Transitions & Smooth Scroll** - Animated navigation with focus management, inertial scroll and parallax, no lifecycle leaks
+- [x] **Phase 7: Page Transitions & Smooth Scroll** - Animated navigation with focus management, inertial scroll and parallax, no lifecycle leaks (completed 2026-11-05)
 - [ ] **Phase 8: Quality Verification** - Measured performance budget, full axe/keyboard pass in both languages, and Spanish copy ready for review
 
 ## Phase Details
@@ -372,7 +372,7 @@ Plans:
 
 **Gap closure 2 — Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 07-21-PLAN.md — Final gate: verify, layout-shift assertions, leaks, bundle, taste on / and /es/, validation map
+- [x] 07-21-PLAN.md — Final gate: verify, layout-shift assertions, leaks, bundle, taste on / and /es/, validation map
 **UI hint**: yes
 **Research flag**: Needs `/gsd:plan-phase --research-phase`. Open decision: `<ClientRouter />` vs native cross-document view transitions. Also research how Lenis/ScrollTrigger interact with scroll restoration, Safari/Firefox support, and the bundle budget.
 
@@ -404,5 +404,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
-| 7. Page Transitions & Smooth Scroll | 20/21 | In Progress|  |
+| 7. Page Transitions & Smooth Scroll | 21/21 | Complete   | 2026-11-05 |
 | 8. Quality Verification | 0/TBD | Not started | - |
