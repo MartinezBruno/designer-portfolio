@@ -3,6 +3,9 @@ import type { Cleanup, PageInit } from '../motion/lifecycle';
 /** At most one retry after a failed chunk load on the same mount. */
 const MAX_ATTEMPTS = 2;
 
+/** A press that drags off the mailto button and never releases must not keep the form unmounted. */
+const PRESS_CAP_MS = 1000;
+
 /**
  * Loads the contact form controller on demand (07-15). The controller (Actions client, Turnstile
  * loader, validation UI) was the largest eager chunk on Home, and eager JS has a 22,000 B gzip
@@ -15,8 +18,12 @@ const MAX_ATTEMPTS = 2;
  *
  * Progressive enhancement: until the controller mounts it is the one that hides the mailto block and
  * reveals the form, so a visitor can always email Martina. A failed load is logged and hides nothing.
- * The returned cleanup disconnects the observer, removes the listeners, and blocks a load that
- * resolves after the page has been swapped away.
+ * A pointer press on the mailto block defers the mount until just after its click (or a
+ * pointercancel, or PRESS_CAP_MS), so the mailto opens and the click never lands on a service chip
+ * revealed under the pointer (IN-02). When a keyboard user had focus in the mailto block, the
+ * handoff prefers the checked service chip (WR-02).
+ * The returned cleanup disconnects the observer, removes the listeners and the press timer, and
+ * blocks a load that resolves after the page has been swapped away.
  */
 export function createLazyContactForm(load: () => Promise<PageInit>): PageInit {
   return (doc) => {
@@ -31,6 +38,41 @@ export function createLazyContactForm(load: () => Promise<PageInit>): PageInit {
     let inner: Cleanup | undefined;
     let observer: IntersectionObserver | undefined;
     const listeners = new AbortController();
+    // Press tracking outlives the triggers (stopTriggers runs once the chunk resolves), so it has
+    // its own controller, aborted after the mount and on cleanup.
+    const press = new AbortController();
+    let pressed = false;
+    let deferredMount: (() => void) | undefined;
+    let pressTimer = 0;
+
+    const flushPress = (): void => {
+      pressed = false;
+      win?.clearTimeout(pressTimer);
+      pressTimer = 0;
+      const run = deferredMount;
+      deferredMount = undefined;
+      run?.();
+    };
+
+    const mount = (init: PageInit): void => {
+      if (dead) return;
+      // A keyboard user who tabbed onto the mailto link (that focusin is a trigger) must not
+      // be dropped to <body> when the controller hides the block: hand focus to the form. The
+      // checked service chip is queried on its own first, because a selector list matches in
+      // document order and would pick the first (unchecked) chip (WR-02).
+      const nojs = region.querySelector<HTMLElement>('[data-contact-nojs]');
+      const hadFocus = nojs?.contains(doc.activeElement) === true;
+      inner = init(doc);
+      press.abort();
+      if (hadFocus && nojs?.hidden === true && !form.hidden) {
+        (
+          form.querySelector<HTMLElement>('input[name="service"]:checked') ??
+          form.querySelector<HTMLElement>(
+            'input:not([type="hidden"]):not([tabindex="-1"]):not([name="service"]), textarea, button',
+          )
+        )?.focus();
+      }
+    };
 
     const stopTriggers = (): void => {
       observer?.disconnect();
@@ -46,26 +88,45 @@ export function createLazyContactForm(load: () => Promise<PageInit>): PageInit {
         (init) => {
           if (dead) return;
           stopTriggers();
-          // A keyboard user who tabbed onto the mailto link (that focusin is a trigger) must not
-          // be dropped to <body> when the controller hides the block: hand focus to the form.
-          const nojs = region.querySelector<HTMLElement>('[data-contact-nojs]');
-          const hadFocus = nojs?.contains(doc.activeElement) === true;
-          inner = init(doc);
-          if (hadFocus && nojs?.hidden === true && !form.hidden) {
-            form
-              .querySelector<HTMLElement>(
-                'input[name="service"]:checked, input:not([type="hidden"]):not([tabindex="-1"]), textarea, button',
-              )
-              ?.focus();
+          if (pressed && win) {
+            deferredMount = () => mount(init);
+            pressTimer = win.setTimeout(flushPress, PRESS_CAP_MS);
+          } else {
+            mount(init);
           }
         },
         (err: unknown) => {
           busy = false;
           console.error('[contact] form controller failed to load', err);
-          if (attempts >= MAX_ATTEMPTS) stopTriggers();
+          if (attempts >= MAX_ATTEMPTS) {
+            // No mount can follow, so press tracking is no longer needed either.
+            stopTriggers();
+            press.abort();
+          }
         },
       );
     };
+
+    if (win) {
+      // Registered before the triggers so `pressed` is set before `start` runs on the same press.
+      const pressOpts = { capture: true, signal: press.signal };
+      region.addEventListener(
+        'pointerdown',
+        (e) => {
+          if (e.target instanceof Element && e.target.closest('[data-contact-nojs]'))
+            pressed = true;
+        },
+        pressOpts,
+      );
+      // The 0 ms task runs after the click dispatched with this pointerup.
+      const release = (): void => {
+        if (!pressed) return;
+        win.clearTimeout(pressTimer);
+        pressTimer = win.setTimeout(flushPress, 0);
+      };
+      doc.addEventListener('pointerup', release, pressOpts);
+      doc.addEventListener('pointercancel', release, pressOpts);
+    }
 
     const opts = { capture: true, signal: listeners.signal };
     region.addEventListener('focusin', start, opts);
@@ -92,6 +153,9 @@ export function createLazyContactForm(load: () => Promise<PageInit>): PageInit {
     return () => {
       dead = true;
       stopTriggers();
+      press.abort();
+      win?.clearTimeout(pressTimer);
+      deferredMount = undefined;
       const c = inner;
       inner = undefined;
       c?.();

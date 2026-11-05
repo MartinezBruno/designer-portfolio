@@ -38,6 +38,24 @@ const FIXTURE = `<section id="contact" tabindex="-1">
   <form data-contact-form hidden><input id="contact-name" name="name"></form>
 </section>`;
 
+// Same shape as the real form: service chips first (`other` checked), then the first text field.
+const FIXTURE_CHIPS = `<section id="contact" tabindex="-1">
+  <div data-contact-nojs><a href="mailto:x@y.z">Email me</a></div>
+  <form data-contact-form hidden>
+    <input type="radio" name="service" value="web">
+    <input type="radio" name="service" value="other" checked>
+    <input id="contact-name" name="name">
+  </form>
+</section>`;
+
+const revealForm: PageInit = (doc) => {
+  const form = doc.querySelector<HTMLFormElement>('[data-contact-form]');
+  const nojs = doc.querySelector<HTMLElement>('[data-contact-nojs]');
+  if (form) form.hidden = false;
+  if (nojs) nojs.hidden = true;
+  return undefined;
+};
+
 const flush = async (): Promise<void> => {
   for (let i = 0; i < 5; i += 1) await Promise.resolve();
 };
@@ -165,6 +183,30 @@ describe('createLazyContactForm', () => {
     expect(document.activeElement).toBe(document.getElementById('contact-name'));
   });
 
+  it('WR-02: hands focus to the checked service radio, not the first one', async () => {
+    document.body.innerHTML = FIXTURE_CHIPS;
+    const inner = vi.fn<PageInit>(revealForm);
+    createLazyContactForm(() => Promise.resolve(inner))(document);
+    document.querySelector<HTMLAnchorElement>('[data-contact-nojs] a')?.focus();
+    await flush();
+    expect(inner).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(
+      document.querySelector('input[name="service"][value="other"]'),
+    );
+  });
+
+  it('WR-02: with no checked radio, skips the radios and focuses the first field', async () => {
+    document.body.innerHTML = FIXTURE_CHIPS;
+    const other = document.querySelector<HTMLInputElement>('input[value="other"]');
+    if (other) other.checked = false;
+    const inner = vi.fn<PageInit>(revealForm);
+    createLazyContactForm(() => Promise.resolve(inner))(document);
+    document.querySelector<HTMLAnchorElement>('[data-contact-nojs] a')?.focus();
+    await flush();
+    expect(inner).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(document.getElementById('contact-name'));
+  });
+
   it('leaves focus alone when it was not in the mailto block', async () => {
     history.replaceState(null, '', '/#contact');
     const outside = document.createElement('button');
@@ -243,5 +285,108 @@ describe('createLazyContactForm', () => {
       await flush();
     }
     expect(load).toHaveBeenCalledTimes(2);
+  });
+  describe('IN-02: press on the mailto block', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const pressMailto = (): void => {
+      document
+        .querySelector('[data-contact-nojs] a')
+        ?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    };
+
+    it('starts the load on the press but waits for the click before mounting', async () => {
+      const inner = vi.fn<PageInit>(revealForm);
+      const load = vi.fn(() => Promise.resolve(inner));
+      createLazyContactForm(load)(document);
+      pressMailto();
+      expect(load).toHaveBeenCalledTimes(1);
+      await flush();
+      expect(inner).not.toHaveBeenCalled();
+      document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+      expect(inner).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(0);
+      expect(inner).toHaveBeenCalledTimes(1);
+      vi.advanceTimersByTime(2000);
+      expect(inner).toHaveBeenCalledTimes(1);
+    });
+
+    it('mounts after a pointercancel', async () => {
+      const inner = vi.fn<PageInit>(revealForm);
+      createLazyContactForm(() => Promise.resolve(inner))(document);
+      pressMailto();
+      await flush();
+      expect(inner).not.toHaveBeenCalled();
+      document.dispatchEvent(new PointerEvent('pointercancel', { bubbles: true }));
+      vi.advanceTimersByTime(0);
+      expect(inner).toHaveBeenCalledTimes(1);
+    });
+
+    it('mounts at the 1000 ms cap when the press never ends', async () => {
+      const inner = vi.fn<PageInit>(revealForm);
+      createLazyContactForm(() => Promise.resolve(inner))(document);
+      pressMailto();
+      await flush();
+      vi.advanceTimersByTime(999);
+      expect(inner).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1);
+      expect(inner).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not defer a press outside the mailto block', async () => {
+      const inner = vi.fn<PageInit>(revealForm);
+      createLazyContactForm(() => Promise.resolve(inner))(document);
+      document
+        .getElementById('contact')
+        ?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      await flush();
+      expect(inner).toHaveBeenCalledTimes(1);
+    });
+
+    it('mounts at once when the press ended before the load resolved', async () => {
+      const d = deferred<PageInit>();
+      const inner = vi.fn<PageInit>(revealForm);
+      createLazyContactForm(() => d.promise)(document);
+      pressMailto();
+      document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+      vi.advanceTimersByTime(0);
+      d.resolve(inner);
+      await flush();
+      expect(inner).toHaveBeenCalledTimes(1);
+    });
+
+    it('cleanup while the mount is deferred never mounts and ignores a later release', async () => {
+      const inner = vi.fn<PageInit>(revealForm);
+      const cleanup = createLazyContactForm(() => Promise.resolve(inner))(document);
+      pressMailto();
+      await flush();
+      cleanup?.();
+      expect(vi.getTimerCount()).toBe(0);
+      document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+      vi.advanceTimersByTime(2000);
+      expect(inner).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('leaves no timer behind after a deferred mount', async () => {
+      const inner = vi.fn<PageInit>(revealForm);
+      createLazyContactForm(() => Promise.resolve(inner))(document);
+      pressMailto();
+      await flush();
+      document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+      vi.advanceTimersByTime(0);
+      expect(inner).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(0);
+      // Press tracking is gone after the mount: a new press and release schedule nothing.
+      pressMailto();
+      document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+      expect(vi.getTimerCount()).toBe(0);
+    });
   });
 });
