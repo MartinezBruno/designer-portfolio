@@ -171,6 +171,8 @@ describe.each([
     const slot = openTag(html, /<div[^>]*data-turnstile[^>]*>/);
     expect(classTokens(slot)).toEqual(expect.arrayContaining(['min-h-[140px]', 'w-[150px]']));
     expect(html).not.toContain('cf-turnstile"');
+    // 07-21: no inherited leading under the inline widget iframe, so it stays at the 140 px reserve.
+    expect(classTokens(slot)).toContain('leading-[0]');
 
     const submit = openTag(html, /<button[^>]*data-contact-submit[^>]*>/);
     expect(submit).toContain('type="submit"');
