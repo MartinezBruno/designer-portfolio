@@ -306,7 +306,7 @@ Plans:
   3. An automated test that navigates 10 times shows constant listener and ScrollTrigger counts, with no duplicated animations.
   4. Reduced motion and the Phase 6 toggle also disable transitions, smooth scroll, and parallax.
 
-**Plans**: 17 plans (10 + 7 gap closure)
+**Plans**: 21 plans (10 + 11 gap closure)
 Plans:
 **Wave 1**
 
@@ -357,6 +357,19 @@ Plans:
 **Gap closure — Wave 4** *(blocked on Wave 3 completion)*
 
 - [x] 07-17-PLAN.md — Final gate (verify, bundle, taste) + manual UAT checkpoint (Safari 26, Firefox 159, VoiceOver Q6, morph fallback Q7, Figma wheel)
+
+**Gap closure 2 — Wave 1** *(lazy contact form layout shift)*
+
+- [ ] 07-18-PLAN.md — Reserve the lazy contact form's height (scripting-only CSS stack) + held-chunk layout-shift e2e at 1440/390, taste review
+- [ ] 07-19-PLAN.md — Loader focus handoff to the checked chip (WR-02) + mount deferred during a mailto press (IN-02)
+
+**Gap closure 2 — Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 07-20-PLAN.md — Anchor smooth window ends when the glide starts, so Back never glides (WR-01)
+
+**Gap closure 2 — Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 07-21-PLAN.md — Final gate: verify, layout-shift assertions, leaks, bundle, taste on / and /es/, validation map
 **UI hint**: yes
 **Research flag**: Needs `/gsd:plan-phase --research-phase`. Open decision: `<ClientRouter />` vs native cross-document view transitions. Also research how Lenis/ScrollTrigger interact with scroll restoration, Safari/Firefox support, and the bundle budget.
 
