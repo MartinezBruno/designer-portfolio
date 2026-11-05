@@ -1,15 +1,15 @@
 import { mkdirSync } from 'node:fs';
-import { expect, test, type Page } from '@playwright/test';
+import { devices, expect, test, type Page } from '@playwright/test';
 import { en, type Dictionary } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
 import { wipeRelease } from '../../src/lib/motion/tokens';
 import { settleMotion } from './helpers/motion';
-import { expectedProjects, type ExpectedProject } from './helpers/projects';
+import { expectedDetails, expectedProjects, type ExpectedProject } from './helpers/projects';
 import { softNavigate, waitForNavigationIdle } from './helpers/navigation';
 
 // Opt-in capture of the Phase 7 navigation-transition screenshots (07 UI-SPEC "Verification",
-// extra items 1 to 6) for the taste-skill review. The behaviour itself is gated by
-// transitions.spec.ts and transitions-reduced.spec.ts. Run with
+// extra items 1 to 8, plus the touch-latency measurement) for the taste-skill review. The
+// behaviour itself is gated by transitions.spec.ts and transitions-reduced.spec.ts. Run with
 //   CAPTURE_TRANSITIONS=1 pnpm exec playwright test tests/e2e/transitions-capture.spec.ts
 // PNGs go to .taste-skill/transitions/ (gitignored), named {item}-{locale}-{width}-{pct}.png.
 const CAPTURE = process.env['CAPTURE_TRANSITIONS'] === '1';
@@ -406,3 +406,162 @@ for (const { width, height } of WIDTHS) {
     }
   });
 }
+
+// 8. The detail page with an embed, mid-glide over the loaded embed (1440, EN). The Figma prototype
+// is stubbed locally (no real network), so the frame shows the stub document; the real provider's
+// wheel handling is the manual UAT step. The wheel starts with the pointer over the iframe and the
+// shot is taken 150 ms later. scrollY at the start, at the shot and at rest is recorded as an
+// annotation, so "the page never feels stuck" has numbers behind it.
+const FIGMA_STUB =
+  '<!doctype html><html lang="en"><head><title>Prototype stub</title></head>' +
+  '<body style="margin:0;background:#e9e6df"><main><p style="padding:24px">stub</p></main></body></html>';
+
+test.describe('8 embed glide 1440', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('8 mid-glide over the loaded embed', async ({ page }) => {
+    const detail = expectedDetails('en').find((entry) => entry.hasEmbed);
+    if (detail === undefined) throw new Error('capture: no detail page with an embed');
+    await page.route('https://embed.figma.com/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'text/html', body: FIGMA_STUB }),
+    );
+    await page.goto(detail.href);
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+    await expect(page.locator('html')).toHaveClass(/\blenis\b/);
+    const facade = page.locator('[data-embed-facade]');
+    await facade.scrollIntoViewIfNeeded();
+    await page.getByRole('button', { name: en['detail.embed.load'] }).click();
+    const frame = page.locator('[data-embed-facade] iframe');
+    await expect(frame).toHaveCount(1);
+    // Park the embed in the lower half of the viewport so the glide carries the page over it.
+    await frame.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      window.scrollTo({ top: rect.top + window.scrollY - window.innerHeight * 0.45 });
+    });
+    await page.waitForTimeout(800);
+    const box = await frame.boundingBox();
+    if (box === null) throw new Error('capture: embed frame not laid out');
+    await page.mouse.move(box.x + box.width / 2, box.y + Math.min(box.height / 2, 200));
+    const start = await page.evaluate(() => window.scrollY);
+    await page.mouse.wheel(0, 400);
+    await page.waitForTimeout(150);
+    const mid = await page.evaluate(() => window.scrollY);
+    await page.screenshot({ path: `${OUT}/8-embed-glide-en-1440.png` });
+    await page.waitForTimeout(1200);
+    const rest = await page.evaluate(() => window.scrollY);
+    await page.mouse.wheel(0, 400);
+    await page.waitForTimeout(1200);
+    const past = await page.evaluate(() => window.scrollY);
+    console.log(
+      `embed glide ${detail.href}: start ${String(start)}, +150ms ${String(mid)}, rest ${String(rest)}, second notch ${String(past)}`,
+    );
+    test.info().annotations.push({
+      type: 'embed-glide',
+      description: `${detail.href} scrollY start ${String(start)}, +150ms ${String(mid)}, rest ${String(rest)}, after a second notch ${String(past)}`,
+    });
+    expect(past).toBeGreaterThan(start);
+  });
+});
+
+// Touch latency (07 UI-SPEC "Loading feedback"): Pixel 7 on emulated Fast 4G (about 150 ms latency,
+// 1.6 Mbps down, cache disabled). Ten taps on the Projects nav link from a fresh Home load; each
+// sample is the time from the tap's touchstart to the router's startViewTransition call (the
+// fetch of the next page sits in between). The median is written as an annotation. Over 300 ms is
+// raised at the phase checkpoint, not hidden.
+const pixel7 = devices['Pixel 7'];
+
+declare global {
+  interface Window {
+    __tapAt?: number;
+    __vtAt?: number;
+  }
+}
+
+test.describe('touch latency (Pixel 7, Fast 4G)', () => {
+  test.use({
+    viewport: pixel7.viewport,
+    userAgent: pixel7.userAgent,
+    deviceScaleFactor: pixel7.deviceScaleFactor,
+    isMobile: pixel7.isMobile,
+    hasTouch: pixel7.hasTouch,
+  });
+
+  // cold: HTTP cache disabled (every tap refetches the page). default: the browser cache and the
+  // router's touchstart prefetch work as on a real phone.
+  for (const cache of ['cold', 'default'] as const) {
+    test(`median tap to startViewTransition over 10 taps (${cache} cache)`, async ({ page }) => {
+      test.setTimeout(180_000);
+      const cdp = await page.context().newCDPSession(page);
+      await cdp.send('Network.enable');
+      await cdp.send('Network.setCacheDisabled', { cacheDisabled: cache === 'cold' });
+      await cdp.send('Network.emulateNetworkConditions', {
+        offline: false,
+        latency: 150,
+        downloadThroughput: (1.6 * 1024 * 1024) / 8,
+        uploadThroughput: (750 * 1024) / 8,
+      });
+      await page.addInitScript(() => {
+        window.addEventListener(
+          'touchstart',
+          () => {
+            window.__tapAt = performance.now();
+          },
+          { capture: true },
+        );
+        const original = document.startViewTransition?.bind(document);
+        if (original === undefined) return;
+        document.startViewTransition = ((callback?: ViewTransitionUpdateCallback) => {
+          window.__vtAt ??= performance.now();
+          return original(callback);
+        }) as typeof document.startViewTransition;
+      });
+
+      const samples: number[] = [];
+      const fetched: string[] = [];
+      for (let run = 0; run < 10; run += 1) {
+        await page.goto('/');
+        await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+        await page.evaluate(() => {
+          delete window.__tapAt;
+          delete window.__vtAt;
+        });
+        const nav = page.getByRole('navigation', { name: en['nav.label'], exact: true });
+        await nav.getByRole('link', { name: en['nav.projects'], exact: true }).tap();
+        await expect
+          .poll(() => page.evaluate(() => window.__vtAt !== undefined), { timeout: 10_000 })
+          .toBe(true);
+        const sample = await page.evaluate(() => (window.__vtAt ?? 0) - (window.__tapAt ?? 0));
+        samples.push(Math.round(sample));
+        // What the wait was spent on: every request issued after the tap, relative to the tap.
+        fetched.push(
+          await page.evaluate(() =>
+            performance
+              .getEntriesByType('resource')
+              .filter((entry) => entry.startTime >= (window.__tapAt ?? 0))
+              .map(
+                (entry) =>
+                  `${new URL(entry.name).pathname} ${String(Math.round(entry.startTime - (window.__tapAt ?? 0)))}-${String(Math.round((entry as PerformanceResourceTiming).responseEnd - (window.__tapAt ?? 0)))}ms`,
+              )
+              .join(' | '),
+          ),
+        );
+        await waitForNavigationIdle(page);
+      }
+      const sorted = [...samples].sort((a, b) => a - b);
+      const median = ((sorted[4] ?? 0) + (sorted[5] ?? 0)) / 2;
+      test.info().annotations.push({
+        type: `touch-latency-${cache}`,
+        description: `median ${String(median)} ms, samples ${samples.join(', ')} ms`,
+      });
+      test.info().annotations.push({
+        type: `touch-latency-requests-${cache}`,
+        description: fetched[0] ?? '',
+      });
+      console.log(
+        `touch latency (${cache}) median ${String(median)} ms (samples ${samples.join(', ')})`,
+      );
+      console.log(`requests after the first tap: ${fetched[0] ?? ''}`);
+      expect(samples.every((value) => value > 0)).toBe(true);
+    });
+  }
+});

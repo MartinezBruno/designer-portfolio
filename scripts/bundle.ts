@@ -85,3 +85,35 @@ export function collectEager(entries: string[], readFile: (path: string) => stri
 
   return { eager: [...eager], lazy: [...lazy] };
 }
+
+export interface BundleFile {
+  path: string;
+  text: string;
+}
+
+export interface BundleMarker {
+  name: string;
+  marker: string;
+}
+
+// One problem per (file, marker) hit: a library that must stay lazy shows up in an eager chunk.
+export function findEagerMarkers(
+  files: readonly BundleFile[],
+  markers: readonly BundleMarker[],
+): string[] {
+  return files.flatMap((file) =>
+    markers
+      .filter((entry) => file.text.includes(entry.marker))
+      .map((entry) => `${entry.name} loads eagerly: ${file.path} contains "${entry.marker}"`),
+  );
+}
+
+// A problem only when the page's eager gzip total is strictly over the ceiling.
+export function checkEagerCeiling(
+  route: string,
+  gzipTotal: number,
+  ceiling: number,
+): string | undefined {
+  if (gzipTotal <= ceiling) return undefined;
+  return `eager JS on ${route} is ${gzipTotal} B gzip -9, over the ${ceiling} B ceiling (+${gzipTotal - ceiling} B)`;
+}

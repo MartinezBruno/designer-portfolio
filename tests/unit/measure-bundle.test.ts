@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  checkEagerCeiling,
   collectEager,
   dynamicImports,
+  findEagerMarkers,
   parseEntryScripts,
   staticImports,
 } from '../../scripts/bundle.ts';
@@ -77,5 +79,66 @@ describe('collectEager', () => {
   it('deduplicates shared entries', () => {
     const { eager } = collectEager(['/_astro/entry.js', '/_astro/motion.js'], readFile);
     expect(eager).toEqual(['/_astro/entry.js', '/_astro/motion.js']);
+  });
+});
+
+describe('findEagerMarkers', () => {
+  const markers = [
+    { name: 'gsap', marker: 'GreenSock' },
+    { name: 'lenis', marker: 'lenisVersion' },
+  ] as const;
+
+  it('reports a chunk containing lenisVersion as lenis', () => {
+    const problems = findEagerMarkers(
+      [{ path: '/_astro/scroll.js', text: 'const v={lenisVersion:"1.3.27"};' }],
+      markers,
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('lenis');
+    expect(problems[0]).toContain('/_astro/scroll.js');
+    expect(problems[0]).toContain('lenisVersion');
+  });
+
+  it('reports a chunk containing GreenSock as gsap', () => {
+    const problems = findEagerMarkers(
+      [{ path: '/_astro/gsap.js', text: '/* GreenSock */' }],
+      markers,
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('gsap');
+    expect(problems[0]).toContain('/_astro/gsap.js');
+  });
+
+  it('reports one problem per file and marker hit', () => {
+    const problems = findEagerMarkers(
+      [
+        { path: '/_astro/both.js', text: 'GreenSock lenisVersion' },
+        { path: '/_astro/clean.js', text: 'export const a=1;' },
+      ],
+      markers,
+    );
+    expect(problems).toHaveLength(2);
+  });
+
+  it('returns nothing for clean files', () => {
+    expect(findEagerMarkers([{ path: '/_astro/a.js', text: 'export{}' }], markers)).toEqual([]);
+  });
+});
+
+describe('checkEagerCeiling', () => {
+  it('reports a total over the ceiling', () => {
+    const problem = checkEagerCeiling('/', 22_001, 22_000);
+    expect(problem).toBeDefined();
+    expect(problem).toContain('/');
+    expect(problem).toContain('22001');
+    expect(problem).toContain('22000');
+  });
+
+  it('accepts a total equal to the ceiling', () => {
+    expect(checkEagerCeiling('/', 22_000, 22_000)).toBeUndefined();
+  });
+
+  it('accepts a total under the ceiling', () => {
+    expect(checkEagerCeiling('/es/', 14_643, 22_000)).toBeUndefined();
   });
 });
