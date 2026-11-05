@@ -367,8 +367,16 @@ The Home hero keeps its full timing because D-16 says entrances play "as they do
 | Project card covers (Home `compact`, Projects `full`) | the existing `bg-surface-alt` aspect frame, changed from `overflow-hidden` to **`overflow-clip`** | the `<img>` (`translate`) | 4% / 3.5% |
 | Next-project teaser thumbnail | its `aspect-[5/4]` frame, `overflow-clip` | the `<img>` | 4% / 3.5% |
 | ~~Detail `ImageModule` images~~ | ~~drift frame, 3% / 2.6%~~. **Superseded 2026-11-02 by D-11a:** detail images no longer get parallax. See "Detail-stack side entrance" below | | |
+| `CollectionModule` grid cells **(added 2026-11-04, 07-14; user decision Q5 at 07-10)** | each eligible cell becomes the frame: `data-parallax-frame`, `overflow-clip`, `aspect-(--ar)` (the same `--ar` that sets its flex-grow, so the cell box and the grid height are unchanged); the module root carries `data-collection` | the `<img>` (`data-parallax`, `object-cover`), inside a `size-full` `<picture>` | 3% / 2.6% (`[data-collection] [data-parallax-frame]` override; 2.6% of 106% = 2.756% < 3%) |
 
-**Not parallaxed:** the hero portrait (D-09), the eager LCP card cover on Projects (it is never altered, as in Phase 6), every detail `ImageModule` image (they get the side entrance instead, D-11a), `CollectionModule` grid images `[Default: cells drifting independently read as jitter and multiply seams. See Open Questions]`, `EmbedFacade`, `UnknownModule`, text modules, and anything in `reduced` or `off`.
+**Not parallaxed:** the hero portrait (D-09), the eager LCP card cover on Projects (it is never altered, as in Phase 6), every detail `ImageModule` image (they get the side entrance instead, D-11a), ~~`CollectionModule` grid images `[Default: cells drifting independently read as jitter and multiply seams. See Open Questions]`~~ (superseded 2026-11-04 by 07-14: grid cells drift, see below), `EmbedFacade`, `UnknownModule`, text modules, and anything in `reduced` or `off`.
+
+**Collection cell drift (2026-11-04, 07-14; user decision Q5 at 07-10).**
+- **Eligible:** a collection cell that is not the eager (LCP) image, whose project's `stackMotion` is not `false`, and whose image id is not listed in `stackMotion`. The same opt-out data as the side entrance, but cells never count toward the left/right alternation. Static cells render exactly the Phase 4/6 markup.
+- **Row unison:** from `sm` up every cell of a justified row has the same top and bottom, so their `--px` view timelines have the same progress and the row moves as one (verified to ±0.5 px in `collection-motion.spec.ts`). This answers the "cells drifting independently read as jitter" concern. Below `sm` the cells stack and each one drifts on its own, like a card.
+- **Seams:** no gap ever opens (overscan covers the travel), and every cell box and the page height are the same in `on` and `reduced`. `reduced`, `off`, print and browsers without scroll timelines show the Phase 4/6 box.
+- **InstaBlogs data:** to make its grids eligible, its `stackMotion` changed from `false` to the list of all 58 of its `ImageModule` ids. Its image modules stay static, exactly as the 07-09 opt-out decided.
+- **Known trade-off (taste review, 07-14):** the overscan hides 3% of each cell at the top and bottom at rest, and up to about 5.6% on one edge at the ends of the range. InstaBlogs cells are full screen mockups, so their thin navigation bars and footer credit lines touch the cell edges and are partly cropped under `on`. This is waiting on a user decision; see Open Question 5.
 
 ### Layering (one property per layer, extends the Phase 6 table) `[CONTEXT D-13]`
 
@@ -532,7 +540,7 @@ New npm dependency (not a registry): `lenis@1.3.27`, source `github.com/darkroom
 2. ~~**Home settle time:** accept ~1.35s on Home (full hero after the wipe), or shorten `--t-wipe` to 480ms for all pages.~~ **Resolved 2026-11-04 (07-10 checkpoint, applied in 07-13):** `--t-wipe` is 480ms for all pages.
 3. **Wipe direction:** vertical (top-down forward, bottom-up back) is my pick for family with the Phase 6 vertical reveals. A horizontal sweep is a token-level swap if preferred.
 4. **Reverse morph** (detail h1 back into its card on Back) is left out of v1. Add it later if wanted.
-5. **CollectionModule grids** stay static. Confirm, or ask for the same gentle drift per cell.
+5. ~~**CollectionModule grids** stay static. Confirm, or ask for the same gentle drift per cell.~~ **Resolved 2026-11-04 (07-10 checkpoint Q5, applied in 07-14):** grid cells get the same gentle drift per cell (3% / 2.6%). **Follow-up for the user:** the overscan crops the thin edge chrome of InstaBlogs' mockups (nav bars, footer credits). Choose one: keep it as is, lower the collection tokens (for example 1.5% / 1.3%, which halves the crop and the motion), or opt cells out by id in `stackMotion`. All three are changes to data or tokens only.
 6. **Double announcement** (route announcer plus h1 focus): keep both until VoiceOver UAT; hide the announcer only if it is noisy.
 7. ~~**Blend-mode fallback:** if an engine cannot blend the morphing title, that engine gets the wipe without the morph.~~ **Resolved 2026-11-04 (07-10 checkpoint, applied in 07-13):** the morph title is plain ink with no blend, so no fallback is needed.
 

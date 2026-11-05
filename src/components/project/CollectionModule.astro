@@ -3,6 +3,14 @@
  * A Behance MediaCollection as justified rows (D-10). Below sm every image stacks full width;
  * from sm each row is flex with basis 0 and flex-grow equal to the image aspect ratio, so every
  * item in a row has the same height and nothing is cropped. Zero gaps, square corners.
+ *
+ * Cell drift (07-14, user decision Q5 at 07-10): a drifting cell (item.drift) is an overflow-clip
+ * parallax frame whose aspect ratio is the same --ar that sets its flex-grow, so the cell box is
+ * unchanged and the grid stays seamless. Its image carries the card parallax hook and drifts
+ * gently inside the frame under 'on' only (CSS scroll-driven, zero JS; gentler tokens on
+ * [data-collection] in global.css). Cells of one justified row share top and bottom, so their
+ * view timelines match and the row moves as one. A static cell (eager, opted out) renders exactly
+ * the Phase 4/6 markup.
  */
 import { Picture } from 'astro:assets';
 import type { ModuleView } from '../../lib/projects/model';
@@ -11,14 +19,23 @@ import { pictureFormat } from '../../lib/ui/picture-format';
 type Props = Omit<Extract<ModuleView, { kind: 'collection' }>, 'kind'>;
 
 const { rows } = Astro.props;
+
+const staticCell = 'min-w-0 sm:grow-(--ar) sm:basis-0';
+const driftCell = 'min-w-0 sm:grow-(--ar) sm:basis-0 aspect-(--ar) overflow-clip';
+const staticImage = 'bg-surface-alt block h-auto w-full';
+const driftImage = 'bg-surface-alt block h-auto w-full object-cover';
 ---
 
-<div class="flex flex-col">
+<div class="flex flex-col" data-collection>
   {rows.map((row) => (
     <div class="flex flex-col sm:flex-row">
       {row.map((item) => (
         // The aspect ratio is data, so it is the one UI-SPEC-sanctioned inline custom property.
-        <div class="min-w-0 sm:grow-(--ar) sm:basis-0" style={{ '--ar': item.ratio }}>
+        <div
+          class={item.drift ? driftCell : staticCell}
+          style={{ '--ar': item.ratio }}
+          {...(item.drift ? { 'data-parallax-frame': '' } : {})}
+        >
           <Picture
             src={item.image}
             alt={item.alt}
@@ -29,9 +46,10 @@ const { rows } = Astro.props;
             height={item.image.height}
             loading={item.eager ? 'eager' : 'lazy'}
             {...(item.eager ? { fetchpriority: 'high' as const } : {})}
+            {...(item.drift ? { 'data-parallax': '' } : {})}
             decoding="async"
-            pictureAttributes={{ class: 'block' }}
-            class="bg-surface-alt block h-auto w-full"
+            pictureAttributes={{ class: item.drift ? 'block size-full' : 'block' }}
+            class={item.drift ? driftImage : staticImage}
           />
         </div>
       ))}

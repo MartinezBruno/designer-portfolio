@@ -407,6 +407,70 @@ for (const { width, height } of WIDTHS) {
   });
 }
 
+// 9 (collection drift, 07-14, user decision Q5 at 07-10): each of the 9 InstaBlogs collections
+// with its seams to the neighbouring modules, at three positions of the collection: entering (its
+// top 40% up the viewport from the bottom), centred and leaving (its bottom 40% down from the top).
+// EN only (the images are the same). Named 9-instablogs-col{N}-{position}-{width}.png, N from 1.
+for (const { width, height } of WIDTHS) {
+  test.describe(`9 collection drift ${width}`, () => {
+    test.use({ viewport: { width, height } });
+
+    test('9 instablogs collections at three scroll positions', async ({ page }) => {
+      test.setTimeout(240_000);
+      const href = expectedProjects('en').find((project) => project.slug === DETAIL_SLUG)?.href;
+      if (href === undefined) throw new Error(`capture: no project ${DETAIL_SLUG}`);
+      await page.goto(href);
+      await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+      // Load every lazy image first, so no capture shows an empty cell.
+      await page.evaluate(async () => {
+        for (let y = 0; y < document.documentElement.scrollHeight; y += 600) {
+          window.scrollTo({ top: y, behavior: 'instant' });
+          await new Promise((resolve) => setTimeout(resolve, 40));
+        }
+        await Promise.all(
+          [...document.images].map((image) =>
+            image.complete
+              ? null
+              : new Promise((resolve) => {
+                  image.addEventListener('load', resolve, { once: true });
+                  image.addEventListener('error', resolve, { once: true });
+                }),
+          ),
+        );
+      });
+      const collections = page.locator('[data-collection]');
+      await expect(collections).toHaveCount(9);
+      for (let index = 0; index < 9; index += 1) {
+        for (const position of ['entering', 'centred', 'leaving'] as const) {
+          await collections.nth(index).evaluate((element, where) => {
+            const rect = element.getBoundingClientRect();
+            const top = rect.top + window.scrollY;
+            const vh = window.innerHeight;
+            const target =
+              where === 'entering'
+                ? top - vh * 0.6
+                : where === 'centred'
+                  ? top - (vh - rect.height) / 2
+                  : top + rect.height - vh * 0.4;
+            const max = document.documentElement.scrollHeight - vh;
+            window.scrollTo({ top: Math.max(0, Math.min(max, target)), behavior: 'instant' });
+          }, position);
+          await page.waitForTimeout(250);
+          await page.evaluate(
+            () =>
+              new Promise((resolve) => {
+                requestAnimationFrame(() => requestAnimationFrame(resolve));
+              }),
+          );
+          await page.screenshot({
+            path: `${OUT}/9-instablogs-col${String(index + 1)}-${position}-${String(width)}.png`,
+          });
+        }
+      }
+    });
+  });
+}
+
 // 8. The detail page with an embed, mid-glide over the loaded embed (1440, EN). The Figma prototype
 // is stubbed locally (no real network), so the frame shows the stub document; the real provider's
 // wheel handling is the manual UAT step. The wheel starts with the pointer over the iframe and the

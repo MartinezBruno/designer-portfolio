@@ -144,6 +144,7 @@ describe('CollectionModule', () => {
     widths: [portrait.width],
     sizes: '(min-width: 1400px) 700px, (min-width: 640px) 50vw, 100vw',
     eager,
+    drift: false,
   });
 
   it('renders rows of items carrying --ar and the grow class', async () => {
@@ -168,6 +169,34 @@ describe('CollectionModule', () => {
       expect(img).not.toContain('fetchpriority');
     }
     expect(out).not.toMatch(/rounded|shadow|gap-/);
+  });
+
+  it('marks the root with data-collection', async () => {
+    const c = await container();
+    const out = await c.renderToString(CollectionModule, { props: { rows: [[item(1)]] } });
+    expect(firstTag(out)).toContain('data-collection');
+  });
+
+  it('frames a drifting cell with the parallax hooks (07-14)', async () => {
+    const c = await container();
+    const out = await c.renderToString(CollectionModule, {
+      props: { rows: [[{ ...item(0.75), drift: true }, item(1.5)]] },
+    });
+    const cells = out.match(/<div\b[^>]*--ar:[^>]*>/g) ?? [];
+    expect(cells).toHaveLength(2);
+    expect(cells[0]).toContain('data-parallax-frame');
+    expect(cells[0]).toContain('overflow-clip');
+    expect(cells[0]).toContain('aspect-(--ar)');
+    expect(cells[1]).not.toContain('data-parallax-frame');
+    expect(cells[1]).not.toContain('overflow-clip');
+    expect(cells[1]).not.toContain('aspect-');
+    const imgs = imgTags(out);
+    expect(imgs[0]).toContain('data-parallax');
+    expect(imgs[0]).toContain('object-cover');
+    expect(imgs[1]).not.toContain('data-parallax');
+    expect(imgs[1]).not.toContain('object-cover');
+    expect(out.match(/data-parallax-frame/g)).toHaveLength(1);
+    expect(out.match(/data-parallax(?!-)/g)).toHaveLength(1);
   });
 });
 
@@ -262,6 +291,7 @@ describe('reveal hooks (Phase 6 D-04)', () => {
     widths: [portrait.width],
     sizes: '100vw',
     eager: false,
+    drift: false,
   };
   const stack: ModuleView[] = [
     { kind: 'image', ...imageProps },
@@ -283,14 +313,21 @@ describe('reveal hooks (Phase 6 D-04)', () => {
     expect(out.match(/data-reveal=/g)).toHaveLength(1);
   });
 
-  it('keeps ImageModule and CollectionModule static', async () => {
+  it('gives ImageModule no parallax and CollectionModule cells parallax only when drifting', async () => {
     const c = await container();
     const image = await c.renderToString(ImageModule, { props: imageProps });
     expect(image).not.toContain('data-reveal');
+    expect(image).not.toContain('data-parallax');
     const collection = await c.renderToString(CollectionModule, {
       props: { rows: [[collectionItem, collectionItem]] },
     });
     expect(collection).not.toContain('data-reveal');
+    expect(collection).not.toContain('data-parallax');
+    const drifting = await c.renderToString(CollectionModule, {
+      props: { rows: [[{ ...collectionItem, drift: true }, collectionItem]] },
+    });
+    expect(drifting).not.toContain('data-reveal');
+    expect(drifting.match(/data-parallax-frame/g)).toHaveLength(1);
     const unknown = await c.renderToString(UnknownModule, {
       props: { behanceUrl: BEHANCE_URL, locale: 'en' },
     });

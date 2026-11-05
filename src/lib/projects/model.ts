@@ -100,6 +100,11 @@ export interface CollectionItemView {
   widths: readonly number[];
   sizes: string;
   eager: boolean;
+  /**
+   * Gentle per-cell drift inside the cell frame under 'on' (07-14, user decision Q5 at 07-10).
+   * false = the eager image, a project with stackMotion false, or an id listed in stackMotion.
+   */
+  drift: boolean;
 }
 
 /** One localized, render-ready content module. No Behance shapes reach the UI (DATA-06). */
