@@ -239,6 +239,8 @@ test.describe('Ask about this on Home', () => {
     await settleMotion(page);
     await expect(page.locator('[data-hero]')).toHaveAttribute('data-hero-played', /.*/);
 
+    // 07-15: the form loads on demand, so bring it near first.
+    await page.locator('#contact').scrollIntoViewIfNeeded();
     const message = page.locator('#contact-message');
     await expect(message).toBeVisible();
     await message.fill('hello');

@@ -6,6 +6,7 @@ import { interpolate } from '../../src/i18n/t';
 import { en } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
 import type { Dictionary } from '../../src/i18n/ui.en';
+import { openContactForm } from './helpers/contact';
 import { settleMotion } from './helpers/motion';
 
 // Home Contact section (D-01..D-04, CONT-05). Later Phase 5 plans extend this spec with the form.
@@ -137,6 +138,7 @@ test.describe('contact form with JavaScript', () => {
   for (const [path, dict, locale] of jsCases) {
     test(`${path} with JavaScript the form replaces the no-JS block`, async ({ page }) => {
       await page.goto(path);
+      await openContactForm(page);
       const section = page.locator('section#contact');
       await expect(section.locator('[data-contact-nojs]')).toBeHidden();
       await expect(section.locator('form[data-contact-form]')).toBeVisible();

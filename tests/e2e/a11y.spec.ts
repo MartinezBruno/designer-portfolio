@@ -14,11 +14,23 @@ import {
   type ExpectedDetail,
   type ExpectedProject,
 } from './helpers/projects';
+import { openContactForm } from './helpers/contact';
 import { settleMotion } from './helpers/motion';
 
 // Detail pages under axe: one with prose links, one with an embed, one image-led. The slugs are
 // resolved through the helper (snapshot + overrides), so a renamed or hidden project fails here.
 const AXE_DETAIL_SLUGS = ['website-instablogs', 'portfolio-web', 'sistema-visual'] as const;
+
+/**
+ * 07-15: the contact controller loads on demand, so a fast Tab walk can reach the section before it
+ * mounts. Load it first, then return to the top; scrolling does not move the Tab starting point.
+ */
+async function openContactAndReturnToTop(page: Page): Promise<void> {
+  await openContactForm(page);
+  await page.evaluate(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  });
+}
 
 function detailPaths(): string[] {
   return (['en', 'es'] as const).flatMap((locale) =>
@@ -262,6 +274,7 @@ async function tabAndExpect(page: Page, step: Step): Promise<void> {
 for (const [path, dict, homeHref] of keyboardCases) {
   test(`keyboard Tab order on ${path} matches the UI-SPEC with visible focus`, async ({ page }) => {
     await page.goto(path);
+    await openContactAndReturnToTop(page);
 
     for (const step of expectedOrderFor(dict, homeHref)) {
       await tabAndExpect(page, step);
@@ -430,6 +443,7 @@ test.describe('with prefers-reduced-motion: reduce', () => {
     }) => {
       await page.goto(path);
       await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
+      await openContactAndReturnToTop(page);
       await expect(page.locator('[data-marquee-toggle]')).toBeHidden();
 
       // Under reduced motion the pause button is display:none, so it drops out of the order. The
