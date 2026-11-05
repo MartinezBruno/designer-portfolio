@@ -113,7 +113,10 @@ function waitForLanding(win: Window, smooth: boolean, signal: AbortSignal): Prom
  *   handle one click). Under 'on' the hook sets an inline `scroll-behavior: smooth` on `html` for
  *   that one navigation: the browser's own smooth scroll glides on every pointer type and honours
  *   `scroll-padding`, and Lenis follows native scroll while idle. Never set in CSS, because the
- *   router restores history positions with scrollTo. The previous value comes back on landing.
+ *   router restores history positions with scrollTo. The previous value comes back as soon as
+ *   the glide starts (first scroll event), or on landing/cancel if no scroll happens, so a
+ *   history traversal during the glide is restored by the router's scrollTo without a glide
+ *   (WR-01, 07-20).
  * - The skip link (`data-skip-link`) never glides.
  * - Same pathname with a different `?service=` (Home "Ask about this"): handled locally, because
  *   the router would swap Home onto itself (wipe, hero replay, typed message lost). The chip is
@@ -129,10 +132,19 @@ function waitForLanding(win: Window, smooth: boolean, signal: AbortSignal): Prom
  * looked up with getElementById only (T-07-17). Links inside a form and hashes that point at a
  * control or link are ignored: the contact error summary keeps its own handler.
  */
+interface PendingLanding {
+  ac: AbortController;
+  /** Inline scroll-behavior to put back, or null once restored (or never changed). */
+  restore: string | null;
+  /** Whether this navigation glides (only then can a traversal land mid-glide). */
+  smooth: boolean;
+  target: HTMLElement;
+}
+
 function bindAnchorFocus(doc: Document, signal: AbortSignal): void {
   const html = doc.documentElement;
   // The one navigation still waiting to land, and the inline scroll-behavior to put back.
-  let pending: { ac: AbortController; restore: string | null; target: HTMLElement } | null = null;
+  let pending: PendingLanding | null = null;
 
   /**
    * Synchronous, so a superseding click reads the restored value, never our own 'smooth'.
@@ -147,10 +159,28 @@ function bindAnchorFocus(doc: Document, signal: AbortSignal): void {
       hashTarget(doc, doc.defaultView?.location.hash ?? '') === pending.target
     )
       return;
-    const { ac, restore } = pending;
+    const { ac, restore, smooth } = pending;
     pending = null;
     if (restore !== null) html.style.scrollBehavior = restore;
     ac.abort();
+    const view = doc.defaultView;
+    if (smooth && event instanceof PopStateEvent && view) repinAfterTraversal(view);
+  }
+
+  /**
+   * History traversal during a glide: the router's popstate listener (registered first) has
+   * already called scrollTo with the entry's saved position, but Chromium lets the in-flight
+   * fragment smooth scroll leave the page at an intermediate offset on the next frame. Put the
+   * router's position back once, one frame later (WR-01, 07-20).
+   */
+  function repinAfterTraversal(view: Window): void {
+    const left = view.scrollX;
+    const top = view.scrollY;
+    view.requestAnimationFrame(() => {
+      if (view.scrollX !== left || view.scrollY !== top) {
+        view.scrollTo({ left, top, behavior: 'instant' });
+      }
+    });
   }
 
   async function land(
@@ -159,12 +189,23 @@ function bindAnchorFocus(doc: Document, signal: AbortSignal): void {
     smooth: boolean,
     restore: string | null,
   ): Promise<void> {
-    const entry = { ac: new AbortController(), restore, target };
+    const entry: PendingLanding = { ac: new AbortController(), restore, smooth, target };
     pending = entry;
+    if (restore !== null) {
+      // The glide has started on the first scroll event; changing scroll-behavior does not stop
+      // an in-progress smooth scroll, so the inline value goes back now (WR-01, 07-20).
+      const onFirstScroll = (): void => {
+        if (pending !== entry || entry.restore === null) return;
+        html.style.scrollBehavior = entry.restore;
+        entry.restore = null;
+      };
+      view.addEventListener('scroll', onFirstScroll, { once: true, signal: entry.ac.signal });
+    }
     const landed = await waitForLanding(view, smooth, entry.ac.signal);
     if (pending !== entry) return; // superseded or unbound: already restored
     pending = null;
-    if (restore !== null) html.style.scrollBehavior = restore;
+    if (entry.restore !== null) html.style.scrollBehavior = entry.restore;
+    entry.ac.abort(); // no listener outlives the navigation
     if (landed) focusWithFallback(doc, target);
   }
 
