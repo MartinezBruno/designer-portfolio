@@ -24,15 +24,13 @@ Visitors (potential clients) immediately feel her design sensibility through a s
 - [x] Project detail pages mirror the Behance content (image stack, collections, sanitized text, click-to-load Figma embed) with tools/category, "View on Behance", next/previous and a contact CTA, EN/ES, with localized share previews (PROJ-02, PROJ-03) — Validated in Phase 4: Project Detail & Discovery
 - [x] Contact section on Home with a working, spam-protected form (honeypot + Turnstile siteverify), localized validation and feedback, typed text kept on failure, "Ask about this" service pre-selection from cards, and a no-JS `mailto:` fallback, EN/ES (CONT-01..05, HOME-08). The local v1 build logs the email through the console mailer, and the Resend provider is ready for deploy — Validated in Phase 5: Contact
 - [x] Motion layer: scroll reveals, masked headline line rises, hero load sequence, playful cursor with "View" pill, magnetic buttons, image hover mat/zoom; reduced motion falls back to fades and an on-page header toggle switches motion live and persists (MOTN-01..04, 07, 08). GSAP is lazy-loaded only; eager homepage JS 14,643 B gzip (+6,107 B over the Phase 5 baseline) — Validated in Phase 6: Scroll & Interaction Motion
+- [x] Motion: page transitions, smooth/inertial scroll with parallax — `<ClientRouter />` soft navigation with an ink wipe, card-title morph and focus/title handoff, Lenis inertial scroll, CSS scroll-driven card parallax, collection-cell drift and detail-stack side entrances; a 10-navigation leak test keeps listener and animation counts constant; the contact form loads on demand with its height reserved so Home never jumps (MOTN-05, MOTN-06, MOTN-09). Eager homepage JS 17,918 B gzip under the 22,000 B ceiling — Validated in Phase 7: Page Transitions & Smooth Scroll
+- [x] Respects `prefers-reduced-motion` and remains accessible for transitions and smooth scroll — reduced motion crossfades pages and the header toggle disables transitions, smooth scroll and parallax; keyboard scrolling, anchor links (which move focus), Back during a glide and find-in-page keep working; manual UAT approved at 07-17 (Safari 26, Firefox 159, VoiceOver) — Validated in Phase 7: Page Transitions & Smooth Scroll
 
 ### Active
 
 **Jobs/Projects page**
 - [ ] Search + filtering ("a plus") — N/A while the catalog has fewer than 8 projects (Phase 4, D-16; currently 7). Revisit when `pnpm sync:behance` reports ≥8 (`NOTICE_AT`); dimensions would be category and tool (year dropped, D-17)
-
-**Cross-cutting**
-- [ ] Motion: page transitions, smooth/inertial scroll with parallax (Phase 7; reveals, cursor, magnetic and hover effects validated in Phase 6)
-- [ ] Respects `prefers-reduced-motion` and remains accessible for transitions and smooth scroll (Phase 7; Phase 6 motion verified with axe in every motion state)
 
 ### Out of Scope
 
@@ -79,6 +77,8 @@ Visitors (potential clients) immediately feel her design sensibility through a s
 | Taste skill required for all design work | User decision 2026-10-16 | — Pending (first full pass still to do) |
 | Project cards and detail pages show no project date | User decision 2026-10-17 (Phase 3) | ✓ Good — cards shipped without date; Phase 4 SC2/PROJ-03 amended |
 | Home latest work as an even 3-tile row | User decision 2026-10-17 (fixed count of 3) | ✓ Good — shipped Phase 3 |
+| `<ClientRouter />` for page transitions (not native cross-document view transitions) | Persisted cursor and Lenis root, scripted focus handoff and the title morph need same-document swaps | ✓ Good — shipped Phase 7 with cleanup on `astro:before-swap` and a 10-navigation leak test |
+| Eager JS ceiling 22,000 B gzip; every non-critical chunk loads on demand | User directive "defer anything that can be deferred" (Phase 7, 07-15) | ✓ Good — 17,918 B at Phase 7 close, enforced by `scripts/measure-bundle.ts` on every built page |
 
 ## Evolution
 
@@ -98,4 +98,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-02 after Phase 6 (Scroll & Interaction Motion): three-state motion gate with header toggle, scroll reveals, SplitText line rises, CSS hero sequence, hover mat/zoom, magnetic buttons, cursor follower; gsap 3.15.0 lazy-loaded; code review CR-01 and WR-01..05/07 fixed (WR-06 kept per spec); verification passed with human UAT; security review clean*
+*Last updated: 2026-11-05 after Phase 7 (Page Transitions & Smooth Scroll): ClientRouter soft navigation with ink wipe, title morph and focus handoff; Lenis inertial scroll; CSS scroll-driven parallax and stack entrances; lazy contact form with height reserve; eager JS 17,918 B gzip under the 22,000 B ceiling; gap closure 07-18..07-21 re-verified 4/4 truths; human UAT approved at 07-17; gap-closure code review 0 critical / 2 warning / 4 info left advisory in 07-REVIEW.md; security review clean*
