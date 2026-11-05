@@ -278,3 +278,91 @@ test.describe('no layout shift when the lazy form mounts (07-18)', () => {
     }
   });
 });
+
+// 07-21: the 07-18 tests use a fake widget with no height, so they missed the real one. Cloudflare's
+// compact widget is a 150x140 iframe, inline, inside a closed shadow root. An inline iframe sits on
+// the text baseline, so the slot inherited a 6 px line-box descent (146 px vs the 140 px reserve)
+// and the page grew 6 px after the widget rendered (smooth-scroll End test, 07-20 deferred item).
+// This fake has the real anatomy and size.
+const REAL_SIZE_TURNSTILE = `window.turnstile = {
+  render(el) {
+    const host = typeof el === 'string' ? document.querySelector(el) : el;
+    const widget = document.createElement('div');
+    widget.setAttribute('data-fake-widget', '');
+    const root = widget.attachShadow({ mode: 'closed' });
+    const frame = document.createElement('iframe');
+    frame.setAttribute('width', '150');
+    frame.setAttribute('height', '140');
+    frame.style.border = 'none';
+    root.appendChild(frame);
+    host.appendChild(widget);
+    return 'w1';
+  },
+  reset() {},
+  remove() {},
+  getResponse() { return undefined; },
+};`;
+
+test.describe('a real-size Turnstile widget fits the reserve (07-21)', () => {
+  const cases = [
+    { viewport: { width: 1280, height: 720 }, path: '/' },
+    { viewport: { width: 1440, height: 900 }, path: '/' },
+    { viewport: { width: 1440, height: 900 }, path: '/es/' },
+    { viewport: { width: 390, height: 844 }, path: '/' },
+  ];
+
+  for (const { viewport, path } of cases) {
+    test(`${viewport.width}x${viewport.height} ${path}: page height holds when the widget renders`, async ({
+      page,
+    }) => {
+      const label = `${viewport.width}x${viewport.height} ${path}`;
+      await page.setViewportSize(viewport);
+      await page.route('https://challenges.cloudflare.com/**', (route) =>
+        route.fulfill({ status: 200, contentType: 'text/javascript', body: REAL_SIZE_TURNSTILE }),
+      );
+      let held = false;
+      let release: () => void = () => {};
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      await page.route('**/_astro/contact-form-boot.*.js', async (route) => {
+        held = true;
+        await gate;
+        await route.continue();
+      });
+
+      await page.goto(path);
+      await settleMotion(page);
+      await page.evaluate(() => {
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
+      });
+      await twoFrames(page);
+      await expect.poll(() => held, { timeout: 10000 }).toBe(true);
+      const slot = page.locator('[data-turnstile]');
+      const reserved = await slot.evaluate((el) => el.getBoundingClientRect().height);
+      const before = await footerMetrics(page);
+
+      release();
+      await expect(page.locator('form[data-contact-form]')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('[data-turnstile] [data-fake-widget]')).toHaveCount(1, {
+        timeout: 10000,
+      });
+      await twoFrames(page);
+
+      const rendered = await slot.evaluate((el) => el.getBoundingClientRect().height);
+      const after = await footerMetrics(page);
+      expect(
+        Math.abs(rendered - reserved),
+        `${label}: slot ${reserved} -> ${rendered}`,
+      ).toBeLessThanOrEqual(1);
+      expect(
+        Math.abs(after.scrollHeight - before.scrollHeight),
+        `${label}: scrollHeight ${before.scrollHeight} -> ${after.scrollHeight}`,
+      ).toBeLessThanOrEqual(1);
+      expect(
+        Math.abs(after.docTop - before.docTop),
+        `${label}: footer document top moved`,
+      ).toBeLessThanOrEqual(1);
+    });
+  }
+});
