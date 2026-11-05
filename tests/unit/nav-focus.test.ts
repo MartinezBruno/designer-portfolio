@@ -1,6 +1,11 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { bindNavFocus, pickFocusTarget } from '../../src/lib/motion/nav-focus';
+import {
+  bindNavFocus,
+  ensureFocusable,
+  focusWithFallback,
+  pickFocusTarget,
+} from '../../src/lib/motion/nav-focus';
 
 // 07-01: focus after soft navigation (MOTN-05, 07 D-14, Research Pattern 5, threat T-07-01).
 
@@ -108,6 +113,47 @@ describe('bindNavFocus', () => {
     release();
     await flush();
     expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it('WR-01: a superseded navigation never focuses after its release', async () => {
+    const releases: (() => void)[] = [];
+    unbind = bindNavFocus(document, {
+      waitForRelease: () =>
+        new Promise<void>((resolve) => {
+          releases.push(resolve);
+        }),
+    });
+    // Navigation A.
+    document.dispatchEvent(new Event('astro:before-swap'));
+    document.dispatchEvent(new Event('astro:after-swap'));
+    document.dispatchEvent(new Event('astro:page-load'));
+    // Navigation B starts before A is released.
+    document.dispatchEvent(new Event('astro:before-swap'));
+    document.dispatchEvent(new Event('astro:after-swap'));
+    document.dispatchEvent(new Event('astro:page-load'));
+    await flush();
+    expect(releases).toHaveLength(2);
+    releases[0]?.();
+    await flush();
+    expect(focus).not.toHaveBeenCalled();
+    releases[1]?.();
+    await flush();
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it('WR-03: a hash element that cannot take focus falls through to main h1', async () => {
+    page(`${PAGE}<div id="gone" hidden>x</div>`);
+    window.history.replaceState(null, '', '/#gone');
+    const gone = document.getElementById('gone');
+    if (!gone) throw new Error('#gone missing');
+    // Simulates an element focus() does not land on (hidden, inert or display:none).
+    Object.defineProperty(gone, 'focus', { value: () => undefined });
+    unbind = bindNavFocus(document);
+    document.dispatchEvent(new Event('astro:after-swap'));
+    document.dispatchEvent(new Event('astro:page-load'));
+    await flush();
+    expect(document.activeElement).toBe(document.querySelector('main h1'));
+    window.history.replaceState(null, '', '/');
   });
 
   it('unbind stops listening', async () => {
@@ -272,6 +318,39 @@ describe('anchor hook (bindNavFocus)', () => {
     expect(html().style.scrollBehavior).toBe('');
   });
 
+  it('WR-02: popstate cancels a pending glide and its focus', async () => {
+    html().style.scrollBehavior = 'auto';
+    click('to-contact');
+    expect(html().style.scrollBehavior).toBe('smooth');
+    window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
+    expect(html().style.scrollBehavior).toBe('auto');
+    window.dispatchEvent(new Event('scrollend'));
+    await wait(50);
+    expect(focus).not.toHaveBeenCalled();
+  });
+
+  it('WR-02: astro:before-preparation cancels a pending glide and its focus', async () => {
+    click('to-contact');
+    expect(html().style.scrollBehavior).toBe('smooth');
+    document.dispatchEvent(new Event('astro:before-preparation'));
+    expect(html().style.scrollBehavior).toBe('');
+    await wait(1300);
+    expect(focus).not.toHaveBeenCalled();
+  });
+
+  it('WR-03: a non-focusable anchor target gets tabindex=-1 and takes focus', async () => {
+    document.getElementById('main')?.insertAdjacentHTML('beforeend', '<div id="note">n</div>');
+    document
+      .querySelector('header')
+      ?.insertAdjacentHTML('beforeend', '<a id="to-note" href="#note">Note</a>');
+    setMotion('reduced');
+    click('to-note');
+    await wait(100);
+    const note = document.getElementById('note');
+    expect(note?.getAttribute('tabindex')).toBe('-1');
+    expect(document.activeElement).toBe(note);
+  });
+
   const ignored: [string, string, MouseEventInit?][] = [
     ['a link inside a form (error summary)', 'summary-link'],
     ['a link whose target is a form control', 'to-field'],
@@ -333,15 +412,15 @@ describe('anchor hook (bindNavFocus)', () => {
     const checked = (): string | undefined =>
       document.querySelector<HTMLInputElement>('input[name="service"]:checked')?.value;
 
-    it('on: handles it locally, checks the chip, replaces the URL and glides', async () => {
+    it('on: handles it locally, checks the chip, replaces only the hash and glides', async () => {
       const state: unknown = window.history.state;
       click('ask');
       expect(prevented).toEqual([true]);
       expect(checked()).toBe('branding');
       expect(replaceState).toHaveBeenCalledTimes(1);
       expect(replaceState.mock.calls[0]?.[0]).toBe(state);
-      expect(String(replaceState.mock.calls[0]?.[2])).toMatch(/\/\?service=branding#contact$/);
-      expect(window.location.search).toBe('?service=branding');
+      expect(String(replaceState.mock.calls[0]?.[2])).toMatch(/\/#contact$/);
+      expect(window.location.search).toBe('');
       expect(window.location.hash).toBe('#contact');
       expect(pushState).not.toHaveBeenCalled();
       expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
@@ -377,6 +456,32 @@ describe('anchor hook (bindNavFocus)', () => {
       expect(prevented).toEqual([false]);
       expect(replaceState).not.toHaveBeenCalled();
     });
+
+    it('CR-01: never rewrites the search, so a second Ask click stays local', () => {
+      click('ask');
+      click('ask');
+      expect(prevented).toEqual([true, true]);
+      expect(replaceState).toHaveBeenCalledTimes(2);
+      for (const call of replaceState.mock.calls) {
+        const next = new URL(String(call[2]), window.location.href);
+        expect(next.search).toBe('');
+        expect(next.hash).toBe('#contact');
+      }
+      expect(window.location.search).toBe('');
+      expect(checked()).toBe('branding');
+      expect(pushState).not.toHaveBeenCalled();
+    });
+
+    it('CR-01: keeps the loaded ?service= in the URL while the chip follows the click', () => {
+      window.history.replaceState({ index: 3 }, '', '/?service=web-design');
+      replaceState.mockClear();
+      click('ask');
+      expect(prevented).toEqual([true]);
+      expect(checked()).toBe('branding');
+      expect(replaceState).toHaveBeenCalledTimes(1);
+      expect(window.location.search).toBe('?service=web-design');
+      expect(window.location.hash).toBe('#contact');
+    });
   });
 
   it('unbind removes the hook', async () => {
@@ -386,5 +491,59 @@ describe('anchor hook (bindNavFocus)', () => {
     window.dispatchEvent(new Event('scrollend'));
     await wait(100);
     expect(focus).not.toHaveBeenCalled();
+  });
+});
+
+// 07-11 WR-03: focus targets are made focusable, and focus never stays on body.
+describe('ensureFocusable / focusWithFallback', () => {
+  beforeEach(() => {
+    page(
+      `${PAGE}<div id="note">n</div><span id="kept" tabindex="0">k</span><button id="btn">b</button>`,
+    );
+    (document.activeElement as HTMLElement | null)?.blur();
+  });
+
+  it('adds tabindex=-1 to a plain element', () => {
+    const note = document.getElementById('note');
+    if (!note) throw new Error('#note missing');
+    expect(ensureFocusable(note)).toBe(note);
+    expect(note.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('keeps an existing tabindex and leaves native controls alone', () => {
+    const kept = document.getElementById('kept');
+    const btn = document.getElementById('btn');
+    if (!kept || !btn) throw new Error('fixture missing');
+    ensureFocusable(kept);
+    ensureFocusable(btn);
+    expect(kept.getAttribute('tabindex')).toBe('0');
+    expect(btn.hasAttribute('tabindex')).toBe(false);
+  });
+
+  it('focuses a plain div after making it focusable', () => {
+    const note = document.getElementById('note');
+    focusWithFallback(document, note);
+    expect(document.activeElement).toBe(note);
+  });
+
+  it('falls through to main h1, then #main, never body', () => {
+    const note = document.getElementById('note');
+    if (!note) throw new Error('#note missing');
+    Object.defineProperty(note, 'focus', { value: () => undefined });
+    focusWithFallback(document, note);
+    expect(document.activeElement).toBe(document.querySelector('main h1'));
+
+    page('<main id="main" tabindex="-1"><div id="note">n</div></main>');
+    const bare = document.getElementById('note');
+    if (!bare) throw new Error('#note missing');
+    Object.defineProperty(bare, 'focus', { value: () => undefined });
+    focusWithFallback(document, bare);
+    expect(document.activeElement).toBe(document.getElementById('main'));
+    expect(document.activeElement).not.toBe(document.body);
+  });
+
+  it('uses the fallback chain when there is no primary', () => {
+    focusWithFallback(document, null);
+    expect(document.activeElement).toBe(document.querySelector('main h1'));
   });
 });
