@@ -111,9 +111,9 @@ for (const size of WIDTHS) {
       expect(a.translate).not.toBe(b.translate);
       expect(b.offset).toBeGreaterThan(a.offset);
       for (const reading of [a, b]) {
-        // At rest the image sits 3% of the cell above it (overscan); the translate stays inside.
-        const travel = reading.offset + reading.frameHeight * 0.03;
-        expect(Math.abs(travel)).toBeLessThanOrEqual(reading.frameHeight * 0.03 + 0.5);
+        // At rest the image sits 1.5% of the cell above it (overscan); the translate stays inside.
+        const travel = reading.offset + reading.frameHeight * 0.015;
+        expect(Math.abs(travel)).toBeLessThanOrEqual(reading.frameHeight * 0.015 + 0.5);
         expect(reading.imageTop).toBeLessThanOrEqual(reading.frameTop + 0.5);
         expect(reading.imageBottom).toBeGreaterThanOrEqual(reading.frameBottom - 0.5);
       }

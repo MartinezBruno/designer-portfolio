@@ -479,12 +479,13 @@ a[data-nav-pressed] {
 
 /*
  * CollectionModule cell drift (07-14, user decision Q5 at 07-10): same engine, gentler tokens.
- * Arithmetic: the image is 106% of the cell, 2.6% of 106% = 2.756% of the cell per direction,
- * below the 3% overscan, so no image edge ever enters the cell and the grid stays seamless.
+ * Halved 2026-11-04 (user decision on Open Question 5) to limit cropping of mockup edge chrome.
+ * Arithmetic: the image is 103% of the cell, 1.3% of 103% = 1.339% of the cell per direction,
+ * below the 1.5% overscan, so no image edge ever enters the cell and the grid stays seamless.
  */
 [data-collection] [data-parallax-frame] {
-  --px-overscan: 3%;
-  --px-travel: 2.6%;
+  --px-overscan: 1.5%;
+  --px-travel: 1.3%;
 }
 
 @supports (animation-timeline: view()) {
