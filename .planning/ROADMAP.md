@@ -360,7 +360,7 @@ Plans:
 
 **Gap closure 2 — Wave 1** *(lazy contact form layout shift)*
 
-- [ ] 07-18-PLAN.md — Reserve the lazy contact form's height (scripting-only CSS stack) + held-chunk layout-shift e2e at 1440/390, taste review
+- [x] 07-18-PLAN.md — Reserve the lazy contact form's height (scripting-only CSS stack) + held-chunk layout-shift e2e at 1440/390, taste review
 
 **Gap closure 2 — Wave 2** *(blocked on Wave 1 completion)*
 
@@ -404,5 +404,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
-| 7. Page Transitions & Smooth Scroll | 17/17 | Gaps Found |  |
+| 7. Page Transitions & Smooth Scroll | 18/21 | In Progress|  |
 | 8. Quality Verification | 0/TBD | Not started | - |
