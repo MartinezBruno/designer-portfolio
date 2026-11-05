@@ -75,7 +75,7 @@ async function look(link: Locator, card: Locator | null): Promise<Look> {
   return { ...linkStyle, ...mat };
 }
 
-async function press(page: Page, link: Locator, touch: boolean): Promise<void> {
+async function press(link: Locator, touch: boolean): Promise<void> {
   if (touch) await link.tap({ noWaitAfter: true });
   else await link.click({ noWaitAfter: true });
 }
@@ -126,7 +126,7 @@ for (const profile of profiles) {
       const link = navProjects(page);
       const rest = await look(link, null);
       await stallDocuments(page, 1200);
-      await press(page, link, profile.touch);
+      await press(link, profile.touch);
       await expect(link).toHaveAttribute('data-nav-pressed', '');
       const pressed = await look(link, null);
       expect(pressed.decoration).toBe('underline');
@@ -147,7 +147,7 @@ for (const profile of profiles) {
       await page.waitForTimeout(500);
       const rest = await look(link, card);
       await stallDocuments(page, 1500);
-      await press(page, link, profile.touch);
+      await press(link, profile.touch);
       await expect(link).toHaveAttribute('data-nav-pressed', '');
       await expect
         .poll(async () => (await look(link, card)).matClip, { timeout: 1000 })
@@ -175,7 +175,7 @@ test.describe('pressed state under reduced', () => {
     const link = card.locator('a').first();
     const rest = await look(link, card);
     await stallDocuments(page, 1500);
-    await press(page, link, true);
+    await press(link, true);
     await expect(link).toHaveAttribute('data-nav-pressed', '');
     // No transition under reduced: the inset is there on the first read.
     const pressed = await look(link, card);
@@ -199,7 +199,7 @@ test.describe('pressed state under reduced', () => {
     await settleMotion(page);
     const link = navProjects(page);
     await stallDocuments(page, 800);
-    await press(page, link, true);
+    await press(link, true);
     await expect(link).toHaveAttribute('data-nav-pressed', '');
     await expectClearedAfterLoad(page);
   });
