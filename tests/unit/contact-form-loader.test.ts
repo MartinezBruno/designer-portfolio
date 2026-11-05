@@ -148,6 +148,39 @@ describe('createLazyContactForm', () => {
     expect(innerCleanup).toHaveBeenCalledTimes(1);
   });
 
+  it('hands focus to the form when the focused mailto link is hidden by the mount', async () => {
+    const inner = vi.fn<PageInit>((doc) => {
+      const form = doc.querySelector<HTMLFormElement>('[data-contact-form]');
+      const nojs = doc.querySelector<HTMLElement>('[data-contact-nojs]');
+      if (form) form.hidden = false;
+      if (nojs) nojs.hidden = true;
+      return undefined;
+    });
+    createLazyContactForm(() => Promise.resolve(inner))(document);
+    const link = document.querySelector<HTMLAnchorElement>('[data-contact-nojs] a');
+    link?.focus();
+    expect(document.activeElement).toBe(link);
+    await flush();
+    expect(inner).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(document.getElementById('contact-name'));
+  });
+
+  it('leaves focus alone when it was not in the mailto block', async () => {
+    history.replaceState(null, '', '/#contact');
+    const outside = document.createElement('button');
+    document.body.append(outside);
+    outside.focus();
+    createLazyContactForm(() =>
+      Promise.resolve<PageInit>((doc) => {
+        const nojs = doc.querySelector<HTMLElement>('[data-contact-nojs]');
+        if (nojs) nojs.hidden = true;
+        return undefined;
+      }),
+    )(document);
+    await flush();
+    expect(document.activeElement).toBe(outside);
+  });
+
   it('cleanup before the load resolves disconnects, unlistens and never mounts', async () => {
     const d = deferred<PageInit>();
     const inner = vi.fn<PageInit>(() => undefined);

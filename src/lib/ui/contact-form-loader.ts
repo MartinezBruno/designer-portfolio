@@ -46,7 +46,18 @@ export function createLazyContactForm(load: () => Promise<PageInit>): PageInit {
         (init) => {
           if (dead) return;
           stopTriggers();
+          // A keyboard user who tabbed onto the mailto link (that focusin is a trigger) must not
+          // be dropped to <body> when the controller hides the block: hand focus to the form.
+          const nojs = region.querySelector<HTMLElement>('[data-contact-nojs]');
+          const hadFocus = nojs?.contains(doc.activeElement) === true;
           inner = init(doc);
+          if (hadFocus && nojs?.hidden === true && !form.hidden) {
+            form
+              .querySelector<HTMLElement>(
+                'input[name="service"]:checked, input:not([type="hidden"]):not([tabindex="-1"]), textarea, button',
+              )
+              ?.focus();
+          }
         },
         (err: unknown) => {
           busy = false;
