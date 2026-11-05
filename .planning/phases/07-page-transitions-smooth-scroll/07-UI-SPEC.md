@@ -123,11 +123,13 @@ No colour token changes. Light theme only.
 
 **The wipe and the 60/30/10 split:** the ink panel fills the viewport for at most one frame-range of about 160ms per navigation (see Wipe timeline). It is a transient field of colour, not a resting surface, so it does not change the 60/30/10 split of any page at rest. `[Taste: "A section may change the whole field colour. Nothing fades into anything" — the panel is a flat field that travels, it never fades]`
 
-**The morphing title must stay readable over both ink and surface.** A plain ink snapshot would vanish while it crosses the ink panel. Contract: during the transition the two title images (`::view-transition-old(project-title)`, `::view-transition-new(project-title)`) get `filter: invert(1)` and the title group gets `mix-blend-mode: difference`. Per pixel this paints the title near-ink over surface and near-white over ink, with no timing to synchronise. `[Proposed; Inference: blend mode on a VT group composites against the wipe and root groups beneath it. Settled by the Wave 0 spike in Chromium, Safari 26 and Firefox 159]`
+~~**The morphing title must stay readable over both ink and surface.** A plain ink snapshot would vanish while it crosses the ink panel. Contract: during the transition the two title images (`::view-transition-old(project-title)`, `::view-transition-new(project-title)`) get `filter: invert(1)` and the title group gets `mix-blend-mode: difference`. Per pixel this paints the title near-ink over surface and near-white over ink, with no timing to synchronise.~~ (superseded 2026-11-04)
+
+**Amended 2026-11-04 (07-13, user decision at the 07-10 checkpoint):** **the morphing title is plain ink**: no `filter: invert` on its images and no `mix-blend-mode` on its group. The 07-10 captures showed the difference blend tinting the title blue over the InstaBlogs cover. While the title crosses the ink panel it is ink on ink and reads only faintly; the user accepts that, and the old/new hand-off (Title Morph) happens while the panel covers the viewport, so the swap is never seen. `[Verified: 07-13 captures 2-*-30/45/55/70, e2e computed mix-blend-mode normal and filter none]`
 
 | Pair (computed) | Result colour | Ratio | Requirement | Result |
 |-----------------|---------------|-------|-------------|--------|
-| morphing title over ink panel | `#CBD1D7` | 11.59:1 | none (transient, `aria-hidden` pseudo) | readable |
+| ~~morphing title over ink panel~~ | ~~`#CBD1D7`~~ | ~~11.59:1~~ | ~~none (transient, `aria-hidden` pseudo)~~ | ~~readable~~ (superseded 2026-11-04 by 07-13: plain ink, ink on ink while over the panel, by user decision) |
 | morphing title over surface | `#150F07` | 17.81:1 | none | readable |
 | morphing title over surface-alt | `#0A010B` | 17.03:1 | none | readable |
 | accent cursor dot over ink panel | `#0F70B7` on `#1A1714` | 3.42:1 | none (decorative) | visible |
@@ -171,8 +173,8 @@ Added next to the Phase 6 tokens in `global.css` and mirrored in `src/lib/motion
 
 | Token | Value | Used for |
 |-------|-------|----------|
-| `--t-wipe` | **560ms** | The panel's full pass and the title morph (same duration, so they read as one gesture) |
-| `--wipe-release` | **0.7** (× `--t-wipe` = 392ms) | Fraction of the wipe after which the arriving page's entrances are released (see Arrival) |
+| `--t-wipe` | ~~560ms~~ **480ms** (07-13, user decision Q2 at 07-10, 2026-11-04) | The panel's full pass and the title morph (same duration, so they read as one gesture) |
+| `--wipe-release` | **0.7** (× `--t-wipe` = ~~392ms~~ **336ms**, 07-13) | Fraction of the wipe after which the arriving page's entrances are released (see Arrival) |
 | `--t-nav-fade` | **320ms** (= `--t-fade`) | The `reduced` root crossfade. Reuses the Phase 6 fade duration so "reduced = opacity fades" has one tempo `[CONTEXT D-04; Upstream: 06 --t-fade]` |
 | `--px-overscan` | **4%** (cards, teaser). ~~3% (detail stack)~~ superseded 2026-11-02 by D-11a | How far the image extends past each top and bottom edge of its frame, as a share of the frame's height |
 | `--px-travel` | **3.5%** (cards, teaser). ~~2.6% (detail stack)~~ superseded 2026-11-02 by D-11a | Peak `translate` in each direction, as a share of the image's own height |
@@ -208,18 +210,20 @@ The panel travels **vertically**. Vertical keeps it in the family of the Phase 6
 
 The EN/ES switch uses the forward path, even on the same logical page. `[CONTEXT D-03]`
 
-### Timeline (one pass, `--t-wipe` = 560ms, `--ease-travel`)
+### Timeline (one pass, `--t-wipe` = ~~560ms~~ 480ms, `--ease-travel`)
+
+**Amended 2026-11-04 (07-13, user decision at the 07-10 checkpoint):** `--t-wipe` is 480ms. The percentages and panel positions below are unchanged (same curve); only the times scale by 480/560. Old times are struck through.
 
 Panel progress below is measured from the easing curve. `[Verified: numeric cubic-bezier evaluation, 2026-11-02]`
 
 | Time | Panel (forward) | Old page (`::view-transition-old(root)`) | New page (`::view-transition-new(root)`) |
 |------|-----------------|-------------------------------------------|--------------------------------------------|
 | 0ms | above the viewport | fully visible, still | hidden (`opacity: 0`) |
-| 140ms (25%) | leading edge at ~11% of the viewport | covered top 11% | hidden |
-| 280ms (50%) | covers 100% | **hidden by a step at 50%** (fully covered at that instant) | **shown by a step at 50%** |
-| 336ms (60%) | top ~60% uncovered | — | top 60% visible (live) |
-| **392ms (70%)** | top ~83% uncovered | — | **entrances released** (see Arrival) |
-| 560ms | below the viewport | — | fully visible |
+| ~~140ms~~ 120ms (25%) | leading edge at ~11% of the viewport | covered top 11% | hidden |
+| ~~280ms~~ 240ms (50%) | covers 100% | **hidden by a step at 50%** (fully covered at that instant) | **shown by a step at 50%** |
+| ~~336ms~~ 288ms (60%) | top ~60% uncovered | — | top 60% visible (live) |
+| **~~392ms~~ 336ms (70%)** | top ~83% uncovered | — | **entrances released** (see Arrival) |
+| ~~560ms~~ 480ms | below the viewport | — | fully visible |
 
 - Old and new roots **never crossfade under the ink**: the swap happens in one step while the panel fully covers the content. Their animations are `opacity` steps (`steps(1, jump-end)` or equivalent keyframes at 50%), with no default UA crossfade. `[Default; Taste: nothing fades into anything]`
 - The back traverse mirrors the panel path. The roots still switch at 50%. The release stays at 70%.
@@ -253,11 +257,11 @@ There is no progress bar, spinner or preloader. Hover prefetch (the router defau
 |------|----------|
 | What gets the name | A `display: inline-block; width: fit-content` span inside the clicked title link, never the stretched `<a>` (its `::after` covers the whole tile). Assigned in `astro:before-preparation` from `event.sourceElement`, only when it is inside `[data-card]` or the teaser |
 | Arriving name | The same name (`project-title`) on a `fit-content` span inside the new document's h1, set in `astro:before-swap` |
-| Uniqueness | Exactly one element per document carries `project-title`. Both names are cleared when the transition finishes, is skipped or is aborted `[Research: Pitfall 8]` |
+| Uniqueness | Exactly one element per document carries `project-title`. Both names are cleared when the transition finishes, is skipped or is aborted `[Research: Pitfall 8]`. 07-13 (IN-01): one frame after that, the arriving h1's wrapper span is unwrapped (nodes moved, never re-parsed), so the landed h1 has the same DOM as a full load. Measured: no change in the h1's text line boxes or height at 1440 and 390, EN and ES |
 | Path and timing | The group travels from the card title box to the h1 box over `--t-wipe` with `--ease-travel`, so it lands as the panel leaves. It sits above the panel and the header (stacking above) |
-| Image crossfade | Old (card title) fades out and new (h1) fades in **between 30% and 70%** of the flight, so the size and font change happens mid-air, never at the ends. Both images keep their aspect ratio (UA default `block-size: auto`); there is no stretch |
-| Colour | `filter: invert(1)` on both images and `mix-blend-mode: difference` on the group (see Color). The snapshot must not contain the hover underline or the focus ring: the decoration belongs to the `<a>`, and an inline-block descendant does not inherit its painting. `[Inference: CSS text-decoration is not propagated into atomic inline descendants. Check in the spike screenshot; if the underline appears, remove it from the named span for the capture]` |
-| Line count | A one-line card title may land as a two-line h1 (long ES titles). That is accepted; the crossfade covers it. The taste review checks InstaBlogs and the longest ES title at 390 and 1440 |
+| Image ~~crossfade~~ hand-off | ~~Old (card title) fades out and new (h1) fades in **between 30% and 70%** of the flight~~ (superseded 2026-11-04: the overlap showed a doubled title at 50%). **Amended 2026-11-04 (07-13, user decision at the 07-10 checkpoint):** the old image is opaque to 45% and gone by **50%**; the new one is hidden to 50% and opaque from **55%**. They are never visible together, and the swap falls in the stretch where the panel covers the viewport. The size and font change still happens mid-air. Both images keep their aspect ratio (UA default `block-size: auto`); there is no stretch |
+| Colour | ~~`filter: invert(1)` on both images and `mix-blend-mode: difference` on the group~~ **Plain ink, no filter or blend** (07-13, see Color). The snapshot must not contain the hover underline or the focus ring: the decoration belongs to the `<a>`, and an inline-block descendant does not inherit its painting. `[Inference: CSS text-decoration is not propagated into atomic inline descendants. Check in the spike screenshot; if the underline appears, remove it from the named span for the capture]` |
+| Line count | A one-line card title may land as a two-line h1 (long ES titles). That is accepted; the ~~crossfade~~ hand-off (07-13) covers it. The taste review checks InstaBlogs and the longest ES title at 390 and 1440 |
 | `lang` titles | When the title is wrapped in a `lang` span, the named span wraps it, so `lang` is untouched |
 | After landing | The h1 shows at once (`data-revealed data-reveal-instant`), keeps `tabindex="-1"` and receives focus (Arrival) |
 | Not morphed | The cover image (Phase 4 "no cover repeat" stays), the EN/ES switch on a detail page, back navigation, nav links, the "Previous" link in the teaser section, and any link outside a card |
@@ -293,7 +297,7 @@ There is no progress bar, spinner or preloader. Hover prefetch (the router defau
 ### Entrance after the wipe (D-16)
 
 - While a transition runs, `html[data-vt]` holds the arriving page: the Phase 6 hero keyframes are paused (`animation-play-state: paused`), and the page lifecycle has not mounted yet, so reveals stay in their armed/hidden start state. `[Research: Pattern 2, Pitfall 3]`
-- **Release** at `--wipe-release` (70% of `--t-wipe` = 392ms after the transition's animations start) or when the transition finishes, whichever comes first, capped at 1200ms after the swap so a stalled transition can never strand hidden content. Release removes `html[data-vt]`, mounts the page lifecycle and moves focus. The Phase 6 1.5s CSS failsafe still applies underneath. `[Default; Research: Pattern 2 (mount on finished) adjusted to 70% for the D-16 budget]`
+- **Release** at `--wipe-release` (70% of `--t-wipe` = ~~392ms~~ 336ms since 07-13 after the transition's animations start) or when the transition finishes, whichever comes first, capped at 1200ms after the swap so a stalled transition can never strand hidden content. Release removes `html[data-vt]`, mounts the page lifecycle and moves focus. The Phase 6 1.5s CSS failsafe still applies underneath. `[Default; Research: Pattern 2 (mount on finished) adjusted to 70% for the D-16 budget]`
 - Why 70%: at that moment the panel has uncovered the top ~83% of the viewport (forward path), and every page's first screen starts at the top, so nothing visible starts animating under the ink.
 - **Settled budget (click to last above-fold element at rest, prefetched):**
 
@@ -303,6 +307,8 @@ There is no progress bar, spinner or preloader. Hover prefetch (the router defau
 | Detail | 392ms | metadata settle at +210ms + 70ms per group, 560ms → ~840ms | **~1.23s** | ≤ about 1.2s |
 | Detail via morph | 392ms (title already landed) | same as detail | **~1.23s** | ≤ about 1.2s |
 | Home | 392ms | the full Phase 6 hero sequence, 960ms | **~1.35s** | accepted exception |
+
+07-13 measured with the 480ms wipe (5 runs, click to settled): Projects text 1097-1131ms, Detail via card and Detail via the EN/ES switch 1312-1316ms, Home all above-fold 1343-1348ms. The table above is the 560ms arithmetic and is kept for reference.
 
 The Home hero keeps its full timing because D-16 says entrances play "as they do on a fresh load" and the hero is the signature moment. This overshoot of about 150ms is accepted up front and recorded in the SUMMARY with the measured number. If the user wants Home inside 1.2s, the lever is a shorter `--t-wipe` (480ms), never a shortened hero. `[Default; Inference: totals are arithmetic from the tokens, measured in the e2e budget check]`
 
@@ -454,7 +460,7 @@ The Home hero keeps its full timing because D-16 says entrances play "as they do
 - **SC3:** the leak contract above.
 - **SC4:** with `reducedMotion: 'reduce'` and with the toggle pressed: no `wipe` or `project-title` pseudo-element animations (root crossfade only), no `html.lenis`, computed `translate` on every `[data-parallax]` and every `[data-stack-enter]` is `none`, and switching the toggle live (no reload) destroys Lenis and stops parallax. In `off` (`matchMedia` stubbed out), a navigation creates a new `navigation` performance entry (full load).
 - **No hidden content:** with JS disabled, nothing in this phase applies (no panel name, no overscan, no Lenis). With the motion chunk blocked after the gate, the Phase 6 failsafe still shows everything by 1.6s, and a soft navigation that never releases is released by the 1200ms cap.
-- **Vestibular:** the panel is a single flat pass of 560ms; it never flashes: one dark field per navigation. `[Inference]` Rapid clicking cannot exceed three flashes per second (WCAG 2.3.1), because a new navigation aborts the running one; the e2e clicks five links within one second and counts wipe animations to confirm. Parallax travel stays under 8% of the image, and the detail-stack side entrance is a single one-way 7% that ends at rest. All of it is off in `reduced`.
+- **Vestibular:** the panel is a single flat pass of ~~560ms~~ 480ms (07-13); it never flashes: one dark field per navigation. `[Inference]` Rapid clicking cannot exceed three flashes per second (WCAG 2.3.1), because a new navigation aborts the running one; the e2e clicks five links within one second and counts wipe animations to confirm. Parallax travel stays under 8% of the image, and the detail-stack side entrance is a single one-way 7% that ends at rest. All of it is off in `reduced`.
 - **axe:** zero WCAG 2.2 AA violations on every audited page and locale after a soft navigation (`settleMotion` also waits for `data-vt` and `data-astro-transition` to clear), in `on`, `reduced` and JS off. Phase 1–6 suites stay green under the router.
 - **Bundle:** the SUMMARY records, from a fresh `pnpm build`, the eager gzip JS on `/` against the Phase 6 baseline (14,643 B) and the router cost (+5,655 B) `[Research: Verified build]`. Proposed Phase 7 eager ceiling: **22,000 B gzip** `[Research: Open Question 1; to be confirmed by the user at planning]`. Lenis lazy chunk ≤ **6,000 B gzip** (measured 5,419 B). `scripts/measure-bundle.ts` fails if "GreenSock" or "lenisVersion" appears in an eager chunk.
 
@@ -479,7 +485,7 @@ node /Users/bmartinez/.claude/plugins/cache/taste-skill/taste-skill/2.0.0/skills
 
 **Extra screenshots** in `.taste-skill/transitions/`, at 1440 and 390, EN and ES, captured by pausing the view-transition animations (CDP `Animation` domain or `document.getAnimations()` with a set `currentTime`):
 1. Home → Projects wipe at 25%, 50%, 70% and 100% of `--t-wipe` (forward), and Projects → Home back at the same points
-2. Projects card → detail morph at 0%, 30%, 50%, 70% and 100%, for InstaBlogs and for the longest ES title (title readable over ink and over surface, no underline or ring in the snapshot, no stretch)
+2. Projects card → detail morph at 0%, 30%, (07-13: 45%,) 50%, (07-13: 55%,) 70% and 100%, for InstaBlogs and for the longest ES title (title readable over ink and over surface, no underline or ring in the snapshot, no stretch)
 3. Home `compact` card → detail morph at 50% (the 16px → 36px case)
 4. EN → ES switch on a detail page at 50% (header still, labels switched)
 5. `reduced` crossfade at 50% (no panel visible anywhere)
@@ -523,12 +529,12 @@ New npm dependency (not a registry): `lenis@1.3.27`, source `github.com/darkroom
 ## Open Questions (for the user or Martina, non-blocking)
 
 1. **Eager JS ceiling:** confirm 22,000 B gzip for `/` (the router alone takes it from 14,643 to 20,298 B).
-2. **Home settle time:** accept ~1.35s on Home (full hero after the wipe), or shorten `--t-wipe` to 480ms for all pages.
+2. ~~**Home settle time:** accept ~1.35s on Home (full hero after the wipe), or shorten `--t-wipe` to 480ms for all pages.~~ **Resolved 2026-11-04 (07-10 checkpoint, applied in 07-13):** `--t-wipe` is 480ms for all pages.
 3. **Wipe direction:** vertical (top-down forward, bottom-up back) is my pick for family with the Phase 6 vertical reveals. A horizontal sweep is a token-level swap if preferred.
 4. **Reverse morph** (detail h1 back into its card on Back) is left out of v1. Add it later if wanted.
 5. **CollectionModule grids** stay static. Confirm, or ask for the same gentle drift per cell.
 6. **Double announcement** (route announcer plus h1 focus): keep both until VoiceOver UAT; hide the announcer only if it is noisy.
-7. **Blend-mode fallback:** if an engine cannot blend the morphing title, that engine gets the wipe without the morph.
+7. ~~**Blend-mode fallback:** if an engine cannot blend the morphing title, that engine gets the wipe without the morph.~~ **Resolved 2026-11-04 (07-10 checkpoint, applied in 07-13):** the morph title is plain ink with no blend, so no fallback is needed.
 
 ---
 
