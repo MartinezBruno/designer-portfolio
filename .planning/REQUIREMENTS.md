@@ -68,11 +68,11 @@ v1 "done" = working local build (deploy is post-v1).
 - [x] **MOTN-02**: Visitor sees headline text split/reveal animations
 - [x] **MOTN-03**: Visitor on desktop (fine pointer) gets a custom cursor and magnetic buttons; touch devices keep native behavior
 - [x] **MOTN-04**: Visitor sees playful image hover effects on project cards
-- [ ] **MOTN-05**: Visitor sees animated page transitions; after navigation focus moves to the new page and its title updates
-- [ ] **MOTN-06**: Visitor experiences smooth/inertial scrolling with parallax images, without breaking keyboard scrolling, anchor links (which move focus) or find-in-page
+- [x] **MOTN-05**: Visitor sees animated page transitions; after navigation focus moves to the new page and its title updates
+- [x] **MOTN-06**: Visitor experiences smooth/inertial scrolling with parallax images, without breaking keyboard scrolling, anchor links (which move focus) or find-in-page
 - [x] **MOTN-07**: With `prefers-reduced-motion`, all non-essential motion is disabled or replaced by simple fades
 - [x] **MOTN-08**: Visitor can turn animations off with an on-page toggle
-- [ ] **MOTN-09**: Animations don't leak or duplicate across navigations (navigating 10× keeps listener/trigger counts constant)
+- [x] **MOTN-09**: Animations don't leak or duplicate across navigations (navigating 10× keeps listener/trigger counts constant)
 
 ### Quality (QUAL)
 
@@ -156,11 +156,11 @@ Updated during roadmap creation.
 | MOTN-02 | Phase 6 | Complete |
 | MOTN-03 | Phase 6 | Complete |
 | MOTN-04 | Phase 6 | Complete |
-| MOTN-05 | Phase 7 | Pending |
-| MOTN-06 | Phase 7 | Pending |
+| MOTN-05 | Phase 7 | Complete |
+| MOTN-06 | Phase 7 | Complete |
 | MOTN-07 | Phase 6 | Complete |
 | MOTN-08 | Phase 6 | Complete |
-| MOTN-09 | Phase 7 | Pending |
+| MOTN-09 | Phase 7 | Complete |
 | QUAL-01 | Phase 8 | Pending |
 | QUAL-02 | Phase 8 | Pending |
 | QUAL-03 | Phase 8 | Pending |

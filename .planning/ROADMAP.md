@@ -356,7 +356,7 @@ Plans:
 
 **Gap closure — Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 07-17-PLAN.md — Final gate (verify, bundle, taste) + manual UAT checkpoint (Safari 26, Firefox 159, VoiceOver Q6, morph fallback Q7, Figma wheel)
+- [x] 07-17-PLAN.md — Final gate (verify, bundle, taste) + manual UAT checkpoint (Safari 26, Firefox 159, VoiceOver Q6, morph fallback Q7, Figma wheel)
 **UI hint**: yes
 **Research flag**: Needs `/gsd:plan-phase --research-phase`. Open decision: `<ClientRouter />` vs native cross-document view transitions. Also research how Lenis/ScrollTrigger interact with scroll restoration, Safari/Firefox support, and the bundle budget.
 
@@ -388,5 +388,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
-| 7. Page Transitions & Smooth Scroll | 16/17 | In Progress|  |
+| 7. Page Transitions & Smooth Scroll | 17/17 | Complete   | 2026-11-05 |
 | 8. Quality Verification | 0/TBD | Not started | - |
