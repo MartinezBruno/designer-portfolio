@@ -40,7 +40,13 @@ describe('motion tokens', () => {
 
   it('has a reveal failsafe keyframe and never hides with visibility/display', () => {
     expect(css).toContain('@keyframes reveal-failsafe');
-    expect(css).not.toMatch(/visibility:\s*hidden|display:\s*none/);
+    // The one allowed hide is the 07-18 contact reserve: it parks the already-[hidden] lazy form
+    // in the grid cell so the column keeps its height, and visibility: hidden keeps the parked
+    // form out of the tab order and the accessibility tree. Nothing else may hide this way.
+    const code = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const hide of code.matchAll(/visibility:\s*hidden|display:\s*none/g)) {
+      expect(selectorAt(code, hide.index)).toMatch(/form\[data-contact-form\]\[hidden\]$/);
+    }
   });
 });
 
