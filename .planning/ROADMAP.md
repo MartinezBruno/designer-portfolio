@@ -341,9 +341,9 @@ Plans:
 
 **Gap closure — Wave 1**
 
-- [ ] 07-11-PLAN.md — nav-focus: CR-01 hash-only replaceState + e2e, WR-01 navToken, WR-02 cancel on popstate/before-preparation, WR-03 focus fallback
-- [ ] 07-12-PLAN.md — measure:bundle checks every built page (WR-04)
-- [ ] 07-13-PLAN.md — --t-wipe 480 ms, plain-ink non-ghosting morph, IN-01 h1 unwrap, taste review
+- [x] 07-11-PLAN.md — nav-focus: CR-01 hash-only replaceState + e2e, WR-01 navToken, WR-02 cancel on popstate/before-preparation, WR-03 focus fallback
+- [x] 07-12-PLAN.md — measure:bundle checks every built page (WR-04)
+- [x] 07-13-PLAN.md — --t-wipe 480 ms, plain-ink non-ghosting morph, IN-01 h1 unwrap, taste review
 
 **Gap closure — Wave 2** *(blocked on Wave 1 completion)*
 
@@ -388,5 +388,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 4. Project Detail & Discovery | 12/12 | Complete   | 2026-10-19 |
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
-| 7. Page Transitions & Smooth Scroll | 10/10 | Complete   | 2026-11-05 |
+| 7. Page Transitions & Smooth Scroll | 13/17 | In Progress|  |
 | 8. Quality Verification | 0/TBD | Not started | - |
