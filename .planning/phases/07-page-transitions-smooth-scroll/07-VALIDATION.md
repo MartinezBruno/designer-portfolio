@@ -75,7 +75,7 @@ Filled by the planner (2026-11-02) with plan task IDs; statuses set by 07-10 Tas
 | 07-15-T2 | Budget (Q1) / SC1 | Form loads on demand, no-JS block until mount, contact/a11y/anchors flows unchanged | e2e | `pnpm exec playwright test tests/e2e/contact-lazy.spec.ts tests/e2e/contact.spec.ts tests/e2e/a11y.spec.ts` | ✅ | ✅ green hermetic (2026-11-05); `@network` cases green in 07-17 full run 1, blocked in later runs by a local IPv6 outage to challenges.cloudflare.com (see 07-17-T1) |
 | 07-16-T1 | MOTN-05 (touch latency) | `data-nav-pressed` on the source link at before-preparation, cleared at before-swap/timer/unbind, none under `off` or back/forward | unit + e2e | `pnpm vitest run tests/unit/motion-navigation.test.ts && pnpm exec playwright test tests/e2e/nav-feedback.spec.ts` | ✅ | ✅ green (2026-11-05) |
 | 07-16-T2 | MOTN-05 (touch latency) | Tap -> feedback 1 ms; cold-gzip tap -> wipe median 218.5 ms (local gzip proxy, not the deployed edge) | measurement | see 07-16-SUMMARY (one-off Playwright measurement) | ✅ | ✅ recorded (2026-11-04) |
-| 07-17-T1 | Regression (all gaps) | Phase 1–7 suites green on the combined 07-11..07-16 result | full | `pnpm verify && pnpm build && pnpm measure:bundle` | ✅ | ⚠️ (2026-11-05) astro check 0 errors, eslint + prettier clean, 1,292 unit, secrets ok (1,018 files), bundle ok. Run 1: 792 e2e passed / 117 skipped / 3 failed: 07-15 lazy-form regressions in motion-toggle and motion-pointer specs, fixed in 7d3ac29 (stable 5/5, 10/10). Hermetic run after the fix (`E2E_OFFLINE=1`): 736 passed / 117 skipped / 1 failed (`smooth-scroll` keyboard End, 6 px short; 5/5 in isolation, recorded flaky). `@network` (19 tests) blocked by a local IPv6 outage to challenges.cloudflare.com (curl -6 times out, -4 answers in 0.1 s); not a code change. Needs a clean `pnpm verify` once the network is back |
+| 07-17-T1 | Regression (all gaps) | Phase 1–7 suites green on the combined 07-11..07-16 result | full | `pnpm verify && pnpm build && pnpm measure:bundle` | ✅ | ⚠️ (2026-11-05) astro check 0 errors, eslint + prettier clean, 1,292 unit, secrets ok (1,018 files), bundle ok. Run 1: 792 e2e passed / 117 skipped / 3 failed: 07-15 lazy-form regressions in motion-toggle and motion-pointer specs, fixed in 7d3ac29 (stable 5/5, 10/10). Hermetic run after the fix (`E2E_OFFLINE=1`): 736 passed / 117 skipped / 1 failed (`smooth-scroll` keyboard End, 6 px short; 5/5 in isolation, recorded flaky). `@network` (19 tests) blocked by a local IPv6 outage to challenges.cloudflare.com (curl -6 times out, -4 answers in 0.1 s); not a code change. User decision (C, 2026-11-05): run 1's 19/19 `@network` pass accepted, no rerun |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -100,12 +100,12 @@ Filled by the planner (2026-11-02) with plan task IDs; statuses set by 07-10 Tas
 | Real browser find bar (Cmd+F) not fighting Lenis | MOTN-06 | Native find UI not scriptable | Desktop Chrome/Safari/Firefox, Cmd+F a below-fold word, confirm it stays in view |
 | Safari/Firefox transition + fallback quality | MOTN-05 | Playwright runs Chromium only here | Navigate Home → Projects → detail → back in Safari and Firefox, confirm no flash or broken state |
 | Visual quality of wipe/morph | MOTN-05 | Taste judgment | taste skill `inspect.mjs` screenshots reviewed |
-| Safari 26: wipe, morph, back wipe, parallax incl. grid drift, Lenis glide, find bar | MOTN-05, MOTN-06 | Playwright runs Chromium only | 07-17 Task 2 step 1. Result: ⬜ pending user UAT |
-| Firefox 159: same as Safari, plus Q7 no-morph fallback (no flash, no doubled title) | MOTN-05 | Playwright runs Chromium only | 07-17 Task 2 step 2. Result: ⬜ pending user UAT |
-| VoiceOver (Q6): new page title/h1 announced once per navigation | MOTN-05 / D-14 | Screen reader output not scriptable | 07-17 Task 2 step 3. Result: ⬜ pending user UAT |
-| Keyboard Ask-about-this twice + skip link: no reload, message kept, focus on main | MOTN-05 / CR-01 | Real keyboard check of the 07-11 fix | 07-17 Task 2 step 4. Result: ⬜ pending user UAT |
-| Real Figma embed wheel on /projects/portfolio-web/ | MOTN-06 | Third-party iframe | 07-17 Task 2 step 5. Result: ⬜ pending user UAT |
-| Pressed cue on a real phone before the wipe | MOTN-05 | Real touch timing | 07-17 Task 2 step 6. Result: ⬜ pending user UAT |
+| Safari 26: wipe, morph, back wipe, parallax incl. grid drift, Lenis glide, find bar | MOTN-05, MOTN-06 | Playwright runs Chromium only | 07-17 Task 2 step 1. Result: ✅ pass, user reply "approved" (all 7 UAT steps, 2026-11-05) |
+| Firefox 159: same as Safari, plus Q7 no-morph fallback (no flash, no doubled title) | MOTN-05 | Playwright runs Chromium only | 07-17 Task 2 step 2. Result: ✅ pass, user reply "approved" (all 7 UAT steps, 2026-11-05) |
+| VoiceOver (Q6): new page title/h1 announced once per navigation | MOTN-05 / D-14 | Screen reader output not scriptable | 07-17 Task 2 step 3. Result: ✅ pass, user reply "approved" (all 7 UAT steps, 2026-11-05) |
+| Keyboard Ask-about-this twice + skip link: no reload, message kept, focus on main | MOTN-05 / CR-01 | Real keyboard check of the 07-11 fix | 07-17 Task 2 step 4. Result: ✅ pass, user reply "approved" (all 7 UAT steps, 2026-11-05) |
+| Real Figma embed wheel on /projects/portfolio-web/ | MOTN-06 | Third-party iframe | 07-17 Task 2 step 5. Result: ✅ pass, user reply "approved" (all 7 UAT steps, 2026-11-05) |
+| Pressed cue on a real phone before the wipe | MOTN-05 | Real touch timing | 07-17 Task 2 step 6. Result: ✅ pass, user reply "approved" (all 7 UAT steps, 2026-11-05) |
 
 ---
 
@@ -118,7 +118,14 @@ Filled by the planner (2026-11-02) with plan task IDs; statuses set by 07-10 Tas
 - Morph soft findings: remove the mid-morph doubled title and drop the difference blend so the title stays plain ink (gap).
 - Q6 (VoiceOver double announcement) and Q7 (per-engine no-morph fallback): pending manual UAT after the gaps.
 
-**Manual UAT (Safari 26, Firefox 159, VoiceOver, real Figma embed wheel, find bar): pending, after the gap fixes.**
+**Manual UAT (Safari 26, Firefox 159, VoiceOver, real Figma embed wheel, find bar): done in 07-17 Task 2. User reply: "approved" (2026-11-05), covering Q6 and Q7.**
+
+## 07-17 Checkpoint Decisions (2026-11-05)
+
+- UAT steps 1-7 (Safari 26, Firefox 159 + Q7, VoiceOver Q6, keyboard Ask + skip link, Figma embed wheel, pressed cue on touch, commit list review): "approved".
+- (A) **Open gap:** the lazy contact form (07-15) makes Home taller when it replaces the no-JS block: +450 px at 1440 and +793 px at 390 (no-JS block 120/144 px, form 682/937 px). Visitors below `#contact` when it mounts (End key, footer jump, Back restoring a lower position) see the footer jump. Fix direction: reserve the form's height. To plan with `/gsd:plan-phase 7 --gaps`.
+- (B) The inspect FAILs `icon-cards` (Home) and `focal-point`, `empty-screens` (Projects) stay accepted; the Phase 7 taste gate passes with them recorded.
+- (C) Run 1's 19/19 `@network` pass is accepted; later failures were a local IPv6 timeout to challenges.cloudflare.com.
 
 ---
 
@@ -129,6 +136,6 @@ Filled by the planner (2026-11-02) with plan task IDs; statuses set by 07-10 Tas
 - [x] Wave 0 covers all MISSING references
 - [x] No watch-mode flags
 - [x] Feedback latency < 120s
-- [ ] `nyquist_compliant: true` set in frontmatter (not set: the 07-10-T1 budget row is red until the user confirms or changes the eager ceiling)
+- [ ] `nyquist_compliant: true` set in frontmatter (not set: the budget row is green since 07-17, but the 07-17 open gap (A, contact form height jump) has no automated check yet)
 
-**Approval:** pending
+**Approval:** manual UAT approved by the user 2026-11-05 (07-17); open gap (A) to be planned with `--gaps`
