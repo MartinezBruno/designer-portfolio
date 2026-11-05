@@ -403,6 +403,59 @@ describe('toDetailView modules', () => {
     });
   });
 
+  describe('collection cell drift (07-14, Q5)', () => {
+    const img = (id: string): Project['modules'][number] => ({
+      kind: 'image',
+      image: { id, image: wide },
+      fullBleed: true,
+      caption: '',
+    });
+    const grid: Project['modules'][number] = {
+      kind: 'collection',
+      images: [
+        { id: '90', image: wide },
+        { id: '91', image: tall },
+        { id: '92', image: wide },
+      ],
+    };
+    const build = (overrides: Partial<Project>): View =>
+      toDetailView(project(overrides), 'en', categoryTitles, toolIcons, none);
+    const drifts = (view: View): boolean[] =>
+      (byKind(view, 'collection') as CollectionView[]).flatMap((module) =>
+        module.rows.flat().map((item) => item.drift),
+      );
+
+    it('drifts every cell except the eager one', () => {
+      expect(drifts(build({ modules: [grid, img('2')] }))).toEqual([false, true, true]);
+      expect(drifts(build({ modules: [img('1'), grid] }))).toEqual([true, true, true]);
+    });
+
+    it('keeps every cell static when the project opts out', () => {
+      expect(drifts(build({ modules: [img('1'), grid], stackMotion: false }))).toEqual([
+        false,
+        false,
+        false,
+      ]);
+    });
+
+    it('keeps a listed cell static and its neighbours drifting', () => {
+      expect(drifts(build({ modules: [img('1'), grid], stackMotion: ['91'] }))).toEqual([
+        true,
+        false,
+        true,
+      ]);
+    });
+
+    it('does not count drifting cells toward the image alternation', () => {
+      const view = build({ modules: [img('1'), img('2'), grid, img('3')] });
+      expect((byKind(view, 'image') as ImageView[]).map((module) => module.entrance)).toEqual([
+        null,
+        'left',
+        'right',
+      ]);
+    });
+  });
+
   it('keeps unknown modules and gives a project with zero modules one unknown note', () => {
     const unknown = toDetailView(
       project({ modules: [{ kind: 'unknown' }] }),
