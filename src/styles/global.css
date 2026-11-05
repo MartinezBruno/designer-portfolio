@@ -436,6 +436,28 @@ html[data-motion='reduced']::view-transition-new(root) {
 }
 
 /*
+ * Pressed state (07-16, MOTN-05; closes the 07-10 touch latency gap). navigation.ts marks the
+ * tapped link with data-nav-pressed when the router starts a soft navigation, before the fetch
+ * resolves. It reuses the hover vocabulary, never a spinner or bar (Phase 6 D-03, UI-SPEC
+ * "Loading feedback"): links take the accent underline at once, cards and the Next-project teaser
+ * take the Phase 6 mat inset. Nothing moves layout. Under 'on' the mat rides its existing rest
+ * transition (one declaration per layer, 06-06); under 'reduced' the mat has no transition, so the
+ * inset lands instantly, and no rule here touches transform, translate or scale. 'off' never marks.
+ */
+a[data-nav-pressed] {
+  color: var(--color-ink);
+  text-decoration-line: underline;
+  text-decoration-color: var(--color-accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+:is([data-motion='on'], [data-motion='reduced'])
+  [data-card]:has([data-nav-pressed])
+  [data-card-mat] {
+  clip-path: inset(12px);
+}
+
+/*
  * Parallax (MOTN-06; 07 D-09..D-13, D-18; UI-SPEC "Parallax"; Research Pattern 7, Pitfall 5).
  * Zero JS: CSS scroll-driven animations. Lazy card covers and the Next-project thumbnail drift
  * inside their frame as the page scrolls, on every pointer (D-12), under 'on' only. The frame is

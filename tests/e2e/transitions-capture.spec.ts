@@ -1,4 +1,6 @@
 import { mkdirSync } from 'node:fs';
+import { createServer, request as httpRequest, type Server } from 'node:http';
+import { gzipSync } from 'node:zlib';
 import { devices, expect, test, type Page } from '@playwright/test';
 import { en, type Dictionary } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
@@ -8,7 +10,7 @@ import { expectedDetails, expectedProjects, type ExpectedProject } from './helpe
 import { softNavigate, waitForNavigationIdle } from './helpers/navigation';
 
 // Opt-in capture of the Phase 7 navigation-transition screenshots (07 UI-SPEC "Verification",
-// extra items 1 to 8, plus the touch-latency measurement) for the taste-skill review. The
+// extra items 1 to 10, plus the touch-latency measurement) for the taste-skill review. The
 // behaviour itself is gated by transitions.spec.ts and transitions-reduced.spec.ts. Run with
 //   CAPTURE_TRANSITIONS=1 pnpm exec playwright test tests/e2e/transitions-capture.spec.ts
 // PNGs go to .taste-skill/transitions/ (gitignored), named {item}-{locale}-{width}-{pct}.png.
@@ -538,8 +540,72 @@ declare global {
   interface Window {
     __tapAt?: number;
     __vtAt?: number;
+    __pressAt?: number;
   }
 }
+
+/**
+ * Test-only gzip proxy (07-16, T-07-39): forwards every request to the preview origin and, when the
+ * client accepts gzip, compresses HTML, JS and CSS with `zlib.gzipSync`. Everything else streams
+ * through untouched. It approximates Cloudflare's edge compression; the edge itself is not
+ * measured here [Unverified] (the site is not deployed, PROJECT.md: v1 done = local build).
+ */
+function startGzipProxy(upstream: URL): Promise<Server> {
+  const compressible = /^(text\/html|text\/css|application\/javascript|text\/javascript)/;
+  const server = createServer((req, res) => {
+    const upstreamReq = httpRequest(
+      {
+        hostname: upstream.hostname,
+        port: upstream.port,
+        path: req.url,
+        method: req.method,
+        headers: { ...req.headers, host: upstream.host, 'accept-encoding': 'identity' },
+      },
+      (upstreamRes) => {
+        const type = String(upstreamRes.headers['content-type'] ?? '');
+        const accepts = /\bgzip\b/.test(String(req.headers['accept-encoding'] ?? ''));
+        if (!accepts || !compressible.test(type) || upstreamRes.headers['content-encoding']) {
+          res.writeHead(upstreamRes.statusCode ?? 502, upstreamRes.headers);
+          upstreamRes.pipe(res);
+          return;
+        }
+        const chunks: Buffer[] = [];
+        upstreamRes.on('data', (chunk: Buffer) => chunks.push(chunk));
+        upstreamRes.on('end', () => {
+          const body = gzipSync(Buffer.concat(chunks));
+          const headers = { ...upstreamRes.headers };
+          delete headers['content-length'];
+          delete headers['transfer-encoding'];
+          res.writeHead(upstreamRes.statusCode ?? 200, {
+            ...headers,
+            'content-encoding': 'gzip',
+            vary: 'accept-encoding',
+            'content-length': String(body.length),
+          });
+          res.end(body);
+        });
+      },
+    );
+    upstreamReq.on('error', () => {
+      res.writeHead(502);
+      res.end();
+    });
+    req.pipe(upstreamReq);
+  });
+  return new Promise((resolve) => {
+    server.listen(0, '127.0.0.1', () => {
+      resolve(server);
+    });
+  });
+}
+
+const median = (values: number[]): number => {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? ((sorted[mid - 1] ?? 0) + (sorted[mid] ?? 0)) / 2
+    : (sorted[mid] ?? 0);
+};
 
 test.describe('touch latency (Pixel 7, Fast 4G)', () => {
   test.use({
@@ -550,14 +616,40 @@ test.describe('touch latency (Pixel 7, Fast 4G)', () => {
     hasTouch: pixel7.hasTouch,
   });
 
+  let proxy: Server | undefined;
+  let proxyOrigin = '';
+
+  // Playwright requires a destructured fixtures argument; none is needed here.
+  // eslint-disable-next-line no-empty-pattern
+  test.beforeAll(async ({}, testInfo) => {
+    const baseURL = testInfo.project.use.baseURL;
+    if (baseURL === undefined) throw new Error('touch latency: no baseURL');
+    proxy = await startGzipProxy(new URL(baseURL));
+    const address = proxy.address();
+    if (address === null || typeof address === 'string') throw new Error('proxy: no port');
+    proxyOrigin = `http://127.0.0.1:${String(address.port)}`;
+  });
+
+  test.afterAll(async () => {
+    await new Promise<void>((resolve) => {
+      if (proxy === undefined) resolve();
+      else
+        proxy.close(() => {
+          resolve();
+        });
+    });
+  });
+
   // cold: HTTP cache disabled (every tap refetches the page). default: the browser cache and the
-  // router's touchstart prefetch work as on a real phone.
-  for (const cache of ['cold', 'default'] as const) {
+  // router's touchstart prefetch work as on a real phone. cold-gzip (07-16): cold, through the gzip
+  // proxy, approximating production compression on a cold cache.
+  for (const cache of ['cold', 'default', 'cold-gzip'] as const) {
     test(`median tap to startViewTransition over 10 taps (${cache} cache)`, async ({ page }) => {
       test.setTimeout(180_000);
+      const origin = cache === 'cold-gzip' ? proxyOrigin : '';
       const cdp = await page.context().newCDPSession(page);
       await cdp.send('Network.enable');
-      await cdp.send('Network.setCacheDisabled', { cacheDisabled: cache === 'cold' });
+      await cdp.send('Network.setCacheDisabled', { cacheDisabled: cache !== 'default' });
       await cdp.send('Network.emulateNetworkConditions', {
         offline: false,
         latency: 150,
@@ -572,6 +664,12 @@ test.describe('touch latency (Pixel 7, Fast 4G)', () => {
           },
           { capture: true },
         );
+        // 07-16: when the pressed marker first appears (tap -> visible feedback).
+        new MutationObserver(() => {
+          if (document.querySelector('[data-nav-pressed]') !== null) {
+            window.__pressAt ??= performance.now();
+          }
+        }).observe(document, { subtree: true, attributeFilter: ['data-nav-pressed'] });
         const original = document.startViewTransition?.bind(document);
         if (original === undefined) return;
         document.startViewTransition = ((callback?: ViewTransitionUpdateCallback) => {
@@ -581,21 +679,29 @@ test.describe('touch latency (Pixel 7, Fast 4G)', () => {
       });
 
       const samples: number[] = [];
+      const feedback: number[] = [];
       const fetched: string[] = [];
+      const encodings: string[] = [];
       for (let run = 0; run < 10; run += 1) {
-        await page.goto('/');
+        const response = await page.goto(`${origin}/`);
+        encodings.push(response?.headers()['content-encoding'] ?? 'identity');
         await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
         await page.evaluate(() => {
           delete window.__tapAt;
           delete window.__vtAt;
+          delete window.__pressAt;
         });
         const nav = page.getByRole('navigation', { name: en['nav.label'], exact: true });
         await nav.getByRole('link', { name: en['nav.projects'], exact: true }).tap();
         await expect
           .poll(() => page.evaluate(() => window.__vtAt !== undefined), { timeout: 10_000 })
           .toBe(true);
-        const sample = await page.evaluate(() => (window.__vtAt ?? 0) - (window.__tapAt ?? 0));
-        samples.push(Math.round(sample));
+        const [sample, press] = await page.evaluate(() => [
+          (window.__vtAt ?? 0) - (window.__tapAt ?? 0),
+          (window.__pressAt ?? Number.NaN) - (window.__tapAt ?? 0),
+        ]);
+        samples.push(Math.round(sample ?? 0));
+        feedback.push(Math.round(press ?? Number.NaN));
         // What the wait was spent on: every request issued after the tap, relative to the tap.
         fetched.push(
           await page.evaluate(() =>
@@ -604,28 +710,90 @@ test.describe('touch latency (Pixel 7, Fast 4G)', () => {
               .filter((entry) => entry.startTime >= (window.__tapAt ?? 0))
               .map(
                 (entry) =>
-                  `${new URL(entry.name).pathname} ${String(Math.round(entry.startTime - (window.__tapAt ?? 0)))}-${String(Math.round((entry as PerformanceResourceTiming).responseEnd - (window.__tapAt ?? 0)))}ms`,
+                  `${new URL(entry.name).pathname} ${String(Math.round(entry.startTime - (window.__tapAt ?? 0)))}-${String(Math.round((entry as PerformanceResourceTiming).responseEnd - (window.__tapAt ?? 0)))}ms ${String((entry as PerformanceResourceTiming).transferSize)}B`,
               )
               .join(' | '),
           ),
         );
         await waitForNavigationIdle(page);
       }
-      const sorted = [...samples].sort((a, b) => a - b);
-      const median = ((sorted[4] ?? 0) + (sorted[5] ?? 0)) / 2;
+      const latency = median(samples);
+      const press = median(feedback);
       test.info().annotations.push({
         type: `touch-latency-${cache}`,
-        description: `median ${String(median)} ms, samples ${samples.join(', ')} ms`,
+        description: `median ${String(latency)} ms, samples ${samples.join(', ')} ms`,
+      });
+      test.info().annotations.push({
+        type: `touch-feedback-${cache}`,
+        description: `median ${String(press)} ms, samples ${feedback.join(', ')} ms`,
       });
       test.info().annotations.push({
         type: `touch-latency-requests-${cache}`,
-        description: fetched[0] ?? '',
+        description: `${fetched[0] ?? ''} (document encoding ${encodings[0] ?? ''})`,
       });
       console.log(
-        `touch latency (${cache}) median ${String(median)} ms (samples ${samples.join(', ')})`,
+        `touch latency (${cache}) median ${String(latency)} ms (samples ${samples.join(', ')})`,
+      );
+      console.log(
+        `touch feedback (${cache}) median ${String(press)} ms (samples ${feedback.join(', ')})`,
       );
       console.log(`requests after the first tap: ${fetched[0] ?? ''}`);
+      console.log(`document encoding: ${encodings.join(', ')}`);
       expect(samples.every((value) => value > 0)).toBe(true);
+      expect(feedback.every((value) => Number.isFinite(value))).toBe(true);
+      if (cache === 'cold-gzip') expect(encodings.every((value) => value === 'gzip')).toBe(true);
+    });
+  }
+});
+
+// 10. Pressed state (07-16) at 390 on Pixel 7: the Projects nav link and a Home compact card, right
+//     after the tap, with the target document held 1500 ms so the cue is what is on screen.
+test.describe('item 10 pressed state 390', () => {
+  test.use({
+    viewport: pixel7.viewport,
+    userAgent: pixel7.userAgent,
+    deviceScaleFactor: pixel7.deviceScaleFactor,
+    isMobile: pixel7.isMobile,
+    hasTouch: pixel7.hasTouch,
+  });
+
+  async function stall(page: Page): Promise<void> {
+    await page.route('**/*', async (route) => {
+      const request = route.request();
+      if (request.resourceType() === 'document' || request.url().endsWith('/')) {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+      await route.continue();
+    });
+  }
+
+  for (const { locale, home, dict } of LOCALES) {
+    test(`10 pressed nav ${locale}`, async ({ page }) => {
+      await page.goto(home);
+      await settleMotion(page);
+      await stall(page);
+      const nav = page.getByRole('navigation', { name: dict['nav.label'], exact: true });
+      const link = nav.getByRole('link', { name: dict['nav.projects'], exact: true });
+      await link.tap({ noWaitAfter: true });
+      await expect(link).toHaveAttribute('data-nav-pressed', '');
+      await page.screenshot({ path: `${OUT}/10-pressed-nav-${locale}-390.png` });
+    });
+
+    test(`10 pressed card ${locale}`, async ({ page }) => {
+      await page.goto(home);
+      await settleMotion(page, { scrollThrough: true });
+      const card = page.locator('section[aria-labelledby="work-title"] article[data-card]').first();
+      await card.scrollIntoViewIfNeeded();
+      await settleMotion(page);
+      await stall(page);
+      const link = card.locator('h3 a');
+      await link.tap({ noWaitAfter: true });
+      await expect(link).toHaveAttribute('data-nav-pressed', '');
+      // The mat rides its 280 ms rest transition under 'on'; shoot once it has landed.
+      await expect
+        .poll(() => card.locator('[data-card-mat]').evaluate((el) => getComputedStyle(el).clipPath))
+        .toBe('inset(12px)');
+      await page.screenshot({ path: `${OUT}/10-pressed-card-${locale}-390.png` });
     });
   }
 });

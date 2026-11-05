@@ -247,6 +247,22 @@ The header is opaque `bg-surface` and `sticky top-0`, so the panel shows only be
 
 There is no progress bar, spinner or preloader. Hover prefetch (the router default) normally makes the fetch near-instant on fine pointers. `[Default; Upstream: Phase 6 D-03 no preloader]` `[Unverified]` On touch there is no hover, so a navigation may wait for the network before the wipe starts. The executor records the median click-to-wipe-start time on a throttled "Fast 4G" Pixel 7 profile in the SUMMARY. If it is over 300ms, it is raised with the user, not hidden.
 
+**Amended 2026-11-04 (07-16, closes the 07-10 touch latency follow-up).** 07-10 measured a 538.5 ms cold-cache median from tap to wipe start on the throttled Pixel 7. Two changes answer it:
+
+- **Pressed state.** On `astro:before-preparation` (the router has accepted a soft navigation and has not fetched yet), `navigation.ts` sets the constant attribute `data-nav-pressed` on `event.sourceElement.closest('a')`.
+  - **Clearing.** The marker is removed on `astro:before-swap`, when the next navigation starts, after a 3000 ms safety timeout, and on unbind. It never reaches the arriving page.
+  - **Look.** It reuses the hover vocabulary: a link takes the 2px accent underline (offset 4px) in ink text, and a card or the Next-project teaser takes the Phase 6 mat inset (`clip-path: inset(12px)`). There is no spinner, bar, new colour or token, and no layout shift.
+  - **Per motion state.** Under `on`, the mat rides its existing rest transition. A card title's own underline is not drawn while the 07-06 morph wrapper holds the title (the decoration does not reach the inline-block wrapper, as in the Title Morph Colour row), so the mat is the card's cue. Under `reduced`, the mat has no transition: the inset lands at once, and no transform, translate or scale changes. Under `off`, nothing is marked (it is a full page load).
+- **Latency profiles** (Pixel 7, CDP 150 ms latency, 1.6 Mbps down; 10 taps on the Projects nav link from Home, median):
+
+| Profile | Tap -> `data-nav-pressed` | Tap -> `startViewTransition` |
+|---------|---------------------------|------------------------------|
+| cold (HTTP cache disabled, uncompressed `astro preview`) | 1 ms | 537.5 ms |
+| default (browser cache and touchstart prefetch) | 1 ms | 297.5 ms |
+| cold-gzip (cache disabled, gzip proxy for HTML/JS/CSS; `/projects/` 6,511 B on the wire instead of 28,519 B) | 1 ms | 218.5 ms |
+
+The pressed column measures when the attribute is set in the DOM, not when it is painted, which happens one frame later. The cold-gzip profile approximates Cloudflare's edge compression with a local proxy `[Unverified: the deployed edge is not measured; the site is not deployed]`. The approximated production median is under 300 ms and the tap is acknowledged at once, so the 07-10 follow-up is **resolved**.
+
 ---
 
 ## Title Morph (card → detail, `on` only) `[CONTEXT D-02; Research: Pattern 4]`
