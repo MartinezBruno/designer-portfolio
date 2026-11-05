@@ -306,7 +306,7 @@ Plans:
   3. An automated test that navigates 10 times shows constant listener and ScrollTrigger counts, with no duplicated animations.
   4. Reduced motion and the Phase 6 toggle also disable transitions, smooth scroll, and parallax.
 
-**Plans**: 10 plans
+**Plans**: 17 plans (10 + 7 gap closure)
 Plans:
 **Wave 1**
 
@@ -338,6 +338,25 @@ Plans:
 **Wave 7** *(blocked on Wave 6 completion)*
 
 - [x] 07-10-PLAN.md — Phase gate: bundle guard (Lenis marker, 22 KB eager ceiling), full verify, full taste gate, Safari/Firefox/VoiceOver UAT, user sign-off
+
+**Gap closure — Wave 1**
+
+- [ ] 07-11-PLAN.md — nav-focus: CR-01 hash-only replaceState + e2e, WR-01 navToken, WR-02 cancel on popstate/before-preparation, WR-03 focus fallback
+- [ ] 07-12-PLAN.md — measure:bundle checks every built page (WR-04)
+- [ ] 07-13-PLAN.md — --t-wipe 480 ms, plain-ink non-ghosting morph, IN-01 h1 unwrap, taste review
+
+**Gap closure — Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 07-14-PLAN.md — CollectionModule grid drift (row unison, seamless, opt-out), taste seam review
+- [ ] 07-15-PLAN.md — Contact form controller loaded on demand; eager JS under 22,000 B on every route
+
+**Gap closure — Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 07-16-PLAN.md — Immediate pressed cue on tap + compressed cold-cache touch-latency measurement
+
+**Gap closure — Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 07-17-PLAN.md — Final gate (verify, bundle, taste) + manual UAT checkpoint (Safari 26, Firefox 159, VoiceOver Q6, morph fallback Q7, Figma wheel)
 **UI hint**: yes
 **Research flag**: Needs `/gsd:plan-phase --research-phase`. Open decision: `<ClientRouter />` vs native cross-document view transitions. Also research how Lenis/ScrollTrigger interact with scroll restoration, Safari/Firefox support, and the bundle budget.
 
