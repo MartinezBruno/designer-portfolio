@@ -455,6 +455,16 @@ html[data-motion='reduced']::view-transition-new(root) {
   --px-travel: 3.5%;
 }
 
+/*
+ * CollectionModule cell drift (07-14, user decision Q5 at 07-10): same engine, gentler tokens.
+ * Arithmetic: the image is 106% of the cell, 2.6% of 106% = 2.756% of the cell per direction,
+ * below the 3% overscan, so no image edge ever enters the cell and the grid stays seamless.
+ */
+[data-collection] [data-parallax-frame] {
+  --px-overscan: 3%;
+  --px-travel: 2.6%;
+}
+
 @supports (animation-timeline: view()) {
   [data-motion='on'] [data-parallax-frame] {
     view-timeline: --px block;

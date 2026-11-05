@@ -44,9 +44,10 @@ export function toModuleViews(project: Project, locale: Locale, title: string): 
     return { alt, eager: n === 1 };
   };
   const contentLang = project.contentLang === locale ? null : project.contentLang;
-  // Side entrance (07 D-11a). Only ImageModules move. The count covers eligible images only, in
-  // DOM order, starting at left, and never resets after a collection, text or embed, so two
-  // neighbouring moving images never enter from the same side.
+  // Side entrance (07 D-11a). Only ImageModules enter from a side. The count covers eligible
+  // images only, in DOM order, starting at left, and never resets after a collection, text or
+  // embed, so two neighbouring moving images never enter from the same side. Collection cells
+  // drift instead (07-14, Q5): same opt-out set, but they never count toward the alternation.
   const optedOut = project.stackMotion === false ? null : new Set(project.stackMotion);
   let moving = 0;
   const entranceOf = (image: SourceImage, eager: boolean): 'left' | 'right' | null => {
@@ -89,6 +90,7 @@ export function toModuleViews(project: Project, locale: Locale, title: string): 
                 widths: moduleWidths(image.image.width),
                 sizes: collectionItemSizes(ratio / sum),
                 eager,
+                drift: !eager && optedOut !== null && !optedOut.has(image.id),
               };
             }),
           );
