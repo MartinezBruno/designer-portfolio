@@ -4,6 +4,7 @@ import {
   collectEager,
   dynamicImports,
   findEagerMarkers,
+  pagesFromHtmlFiles,
   parseEntryScripts,
   staticImports,
 } from '../../scripts/bundle.ts';
@@ -140,5 +141,48 @@ describe('checkEagerCeiling', () => {
 
   it('accepts a total under the ceiling', () => {
     expect(checkEagerCeiling('/es/', 14_643, 22_000)).toBeUndefined();
+  });
+});
+
+describe('pagesFromHtmlFiles', () => {
+  const files = [
+    'index.html',
+    'es/index.html',
+    'projects/index.html',
+    'projects/website-instablogs/index.html',
+    'es/projects/index.html',
+    '404.html',
+  ];
+
+  it('maps index.html to its directory route and other files to their path', () => {
+    expect(pagesFromHtmlFiles(files)).toEqual([
+      { route: '/', html: 'index.html' },
+      { route: '/404.html', html: '404.html' },
+      { route: '/es/', html: 'es/index.html' },
+      { route: '/es/projects/', html: 'es/projects/index.html' },
+      { route: '/projects/', html: 'projects/index.html' },
+      {
+        route: '/projects/website-instablogs/',
+        html: 'projects/website-instablogs/index.html',
+      },
+    ]);
+  });
+
+  it('returns the same order for any input order', () => {
+    expect(pagesFromHtmlFiles([...files].reverse())).toEqual(pagesFromHtmlFiles(files));
+  });
+
+  it('normalises Windows separators', () => {
+    expect(pagesFromHtmlFiles(['projects\\a\\index.html'])).toEqual([
+      { route: '/projects/a/', html: 'projects/a/index.html' },
+    ]);
+  });
+
+  it('ignores non-HTML paths', () => {
+    expect(pagesFromHtmlFiles(['_astro/a.js', 'favicon.svg', 'es', 'sitemap.xml'])).toEqual([]);
+  });
+
+  it('returns an empty list for no input', () => {
+    expect(pagesFromHtmlFiles([])).toEqual([]);
   });
 });
