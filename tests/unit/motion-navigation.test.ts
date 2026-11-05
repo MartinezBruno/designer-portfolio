@@ -201,7 +201,7 @@ describe('bindNavigation release gate', () => {
     return { released: () => released };
   }
 
-  it('marks the arriving html with data-vt and releases 392 ms after ready under on', async () => {
+  it('marks the arriving html with data-vt and releases 336 ms after ready under on', async () => {
     setLiveState('on');
     const transition = fakeTransition();
     const next = swap(transition);
@@ -209,7 +209,7 @@ describe('bindNavigation release gate', () => {
     const state = tracked();
     await vi.advanceTimersByTimeAsync(100);
     transition.makeReady();
-    await vi.advanceTimersByTimeAsync(391);
+    await vi.advanceTimersByTimeAsync(335);
     expect(state.released()).toBe(false);
     expect(document.documentElement.hasAttribute('data-vt')).toBe(true);
     await vi.advanceTimersByTimeAsync(1);
@@ -240,7 +240,7 @@ describe('bindNavigation release gate', () => {
     expect(document.documentElement.hasAttribute('data-vt')).toBe(false);
   });
 
-  it('releases on finished under reduced, not at 392 ms after ready', async () => {
+  it('releases on finished under reduced, not at 336 ms after ready', async () => {
     setLiveState('reduced');
     const transition = fakeTransition();
     swap(transition);
@@ -433,8 +433,26 @@ describe('bindNavigation title morph', () => {
     );
   }
 
+  // Animation frames queued by the morph cleanup, run by `nextFrame()`.
+  let frames: (() => void)[] = [];
+
+  function nextFrame(): void {
+    const queued = frames;
+    frames = [];
+    for (const cb of queued) cb();
+  }
+
+  async function settle(): Promise<void> {
+    for (let i = 0; i < 4; i += 1) await Promise.resolve();
+  }
+
   beforeEach(() => {
-    navigation = bindNavigation(document);
+    frames = [];
+    navigation = bindNavigation(document, {
+      requestAnimationFrame: (cb) => {
+        frames.push(cb);
+      },
+    });
     setLiveState('on');
   });
 
@@ -599,5 +617,56 @@ describe('bindNavigation title morph', () => {
     expect(next.getElementById('project-title')?.hasAttribute('data-revealed')).toBe(false);
     expect(named(next)).toHaveLength(0);
     expect(named(document)).toHaveLength(0);
+  });
+
+  it('unwraps the landed h1 one frame after the transition finishes (IN-01)', async () => {
+    prepare(mount(CARD));
+    const next = parse(DETAIL);
+    const title = next.getElementById('project-title');
+    const lang = title?.querySelector('[lang]');
+    const transition = fakeTransition();
+    beforeSwap(next, transition);
+    transition.finish();
+    await settle();
+    // Unnamed at once, but the wrapper holds the snapshot box until the next frame.
+    expect(named(next)).toHaveLength(0);
+    expect(title?.querySelector('[data-morph-title]')).not.toBeNull();
+    nextFrame();
+    expect(title?.querySelector('[data-morph-title]')).toBeNull();
+    expect(title?.textContent).toBe('Señales');
+    expect(title?.querySelector('[lang]')).toBe(lang);
+    expect(lang?.parentElement).toBe(title);
+  });
+
+  it('an aborted transition leaves no wrapper on either side', async () => {
+    const link = mount(CARD);
+    const markup = link.innerHTML;
+    prepare(link);
+    const next = parse(DETAIL);
+    const transition = fakeTransition();
+    let abort: (reason: unknown) => void = () => undefined;
+    transition.finished = new Promise<void>((_, reject) => {
+      abort = reject;
+    });
+    beforeSwap(next, transition);
+    abort(new DOMException('Transition was aborted', 'AbortError'));
+    await settle();
+    nextFrame();
+    expect(document.querySelector('[data-morph-title]')).toBeNull();
+    expect(next.querySelector('[data-morph-title]')).toBeNull();
+    expect(link.innerHTML).toBe(markup);
+    expect(next.getElementById('project-title')?.textContent).toBe('Señales');
+  });
+
+  it('a skipped transition also unwraps the landed h1', async () => {
+    prepare(mount(CARD));
+    const next = parse(DETAIL);
+    const transition = fakeTransition();
+    beforeSwap(next, transition);
+    transition.skipTransition();
+    await settle();
+    nextFrame();
+    expect(next.querySelector('[data-morph-title]')).toBeNull();
+    expect(named(next)).toHaveLength(0);
   });
 });

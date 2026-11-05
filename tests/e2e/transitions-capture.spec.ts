@@ -36,7 +36,7 @@ const WIDTHS = [
 ] as const;
 
 const FRACTIONS = [0.25, 0.5, 0.7, 1] as const;
-const MORPH_FRACTIONS = [0, 0.3, 0.5, 0.7, 1] as const;
+const MORPH_FRACTIONS = [0, 0.3, 0.45, 0.5, 0.55, 0.7, 1] as const;
 const DETAIL_SLUG = 'website-instablogs';
 
 /**
@@ -142,7 +142,7 @@ for (const { width, height } of WIDTHS) {
       }
 
       // 2. Projects card -> detail title morph (07-06, D-02) for InstaBlogs and the project with
-      //    the longest ES title, at 0/30/50/70/100% of the flight.
+      //    the longest ES title, at 0/30/45/50/55/70/100% of the flight (45-55% is the 07-13 hand-off).
       for (const { key, href } of morphSubjects(locale)) {
         test(`2 morph ${key}`, async ({ page }) => {
           for (const fraction of MORPH_FRACTIONS) {
@@ -194,7 +194,7 @@ for (const { width, height } of WIDTHS) {
           .first()
           .click();
         await expect.poll(() => page.evaluate(() => window.__capturePaused === true)).toBe(true);
-        // The release timer runs at ready + 392 ms whatever the frozen frame shows.
+        // The release timer runs at ready + 336 ms whatever the frozen frame shows.
         await expect
           .poll(() => page.evaluate(() => !document.documentElement.hasAttribute('data-vt')))
           .toBe(true);

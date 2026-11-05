@@ -435,8 +435,8 @@ async function resetArrival(page: Page): Promise<void> {
   });
 }
 
-/** Release lands 392 ms after `ready` (70% of 560 ms); 12 ms tolerance for timer granularity. */
-const RELEASE_MIN_MS = 380;
+/** Release lands 336 ms after `ready` (70% of 480 ms); 12 ms tolerance for timer granularity. */
+const RELEASE_MIN_MS = 324;
 
 test.describe('arrival after the wipe (07-04)', () => {
   test('hold: entrances and h1 focus wait for the release, hero keyframes paused under data-vt', async ({
@@ -532,9 +532,9 @@ test.describe('arrival after the wipe (07-04)', () => {
     // Gated on what the UI-SPEC table models (text entrances). The above-the-fold image shutters
     // (card and cover picture scale) end later and are logged, not gated. Home (~1.35 s) is the
     // accepted exception and is logged only (UI-SPEC D-16).
-    // Detail measured ~1.38 s against the table's ~1.23 s: the Phase 6 metadata stagger runs
-    // longer than the table's arithmetic. Recorded in 07-04-SUMMARY as an open budget item (the
-    // UI-SPEC lever is a shorter --t-wipe, a user decision); 1450 ms only guards against regression.
+    // Detail measured ~1.38 s with the 560 ms wipe (07-04). With the 480 ms wipe (07-13, user
+    // decision) five runs measured 1312-1316 ms for both detail paths and 1343-1348 ms for Home
+    // (all above-fold); max + 100 ms rounded up to 50 is 1450, so 1450 ms stays a regression guard.
     expect(home.all).toBeGreaterThan(0);
     expect(projects.text).toBeLessThanOrEqual(1300);
     expect(viaCard.text).toBeLessThanOrEqual(1450);
@@ -671,7 +671,7 @@ test.describe('arrival after the wipe (07-04)', () => {
   }) => {
     // The arriving header's toggle is bound when the page is released (the page lifecycle mounts
     // then), and a view transition takes hit testing until it ends, so the earliest real press is
-    // at release, while the wipe still has ~170 ms to run.
+    // at release, while the wipe still has ~145 ms to run.
     await recordArrival(page);
     await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
@@ -689,8 +689,8 @@ test.describe('arrival after the wipe (07-04)', () => {
     const finishedAt = record.finished[0] ?? 0;
     expect(record.toggleAt).not.toBeNull();
     expect(finishedAt - (record.toggleAt ?? 0)).toBeLessThanOrEqual(250);
-    // skipTransition, not the natural end: the 560 ms wipe would finish at ready + 560.
-    expect(finishedAt - readyAt).toBeLessThan(520);
+    // skipTransition, not the natural end: the 480 ms wipe would finish at ready + 480.
+    expect(finishedAt - readyAt).toBeLessThan(460);
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
     await expect(page.locator('html')).not.toHaveAttribute('data-vt', /.*/);
     await expect(page.locator('html')).not.toHaveAttribute('data-wipe', /.*/);
@@ -716,7 +716,7 @@ test.describe('arrival after the wipe (07-04)', () => {
     const readyAt = record.ready[0]?.at ?? 0;
     const changeAt = record.motionChangeAt ?? Number.POSITIVE_INFINITY;
     // The switch landed while the wipe was still running, and ended it within 250 ms.
-    expect(changeAt - readyAt).toBeLessThan(560);
+    expect(changeAt - readyAt).toBeLessThan(480);
     expect((record.finished[0] ?? 0) - changeAt).toBeLessThanOrEqual(250);
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
     await expect(page.locator('html')).not.toHaveAttribute('data-vt', /.*/);
@@ -796,6 +796,9 @@ async function expectMorph(page: Page): Promise<void> {
   await expect(title).toHaveAttribute('data-revealed', '');
   await expect(title).toHaveAttribute('data-reveal-instant', '');
   expect(await restingTitleNames(page)).toBe(0);
+  // IN-01 (07-13): the landed h1 loses its morph wrapper, so it matches a full load.
+  await waitForNavigationIdle(page);
+  await expect(title.locator('[data-morph-title]')).toHaveCount(0);
 }
 
 async function expectNoMorph(page: Page): Promise<void> {
@@ -835,6 +838,79 @@ test.describe('morph: card title into the detail h1 (07-06, D-02)', () => {
     await softNavigate(page, link);
     await expect(page).toHaveURL(new RegExp(`${href ?? 'missing'}$`));
     await expectMorph(page);
+  });
+
+  test('the title hands off without a doubled frame, in plain ink (07-13)', async ({ page }) => {
+    // Pause the project-title animations at ready, seek them through the flight and read the old
+    // and new image opacities (user decision at 07-10: never both visible, no difference blend).
+    await page.addInitScript(() => {
+      const samples: { t: number; old: number; next: number }[] = [];
+      const out = { samples, blend: '', filters: [] as string[], animations: 0 };
+      (window as unknown as { __handoff: typeof out }).__handoff = out;
+      document.addEventListener('astro:before-swap', (event) => {
+        const transition = (event as Event & { viewTransition?: ViewTransition }).viewTransition;
+        if (transition === undefined) return;
+        void transition.ready.then(() => {
+          const root = document.documentElement;
+          const animations = document
+            .getAnimations()
+            .filter((a) =>
+              ((a.effect as KeyframeEffect | null)?.pseudoElement ?? '').includes('project-title'),
+            );
+          out.animations = animations.length;
+          if (animations.length === 0) return;
+          for (const a of animations) a.pause();
+          const timing = animations[0]?.effect?.getComputedTiming();
+          const duration = Number(timing?.duration ?? 0);
+          for (let i = 0; i <= 10; i += 1) {
+            const t = (duration * i) / 10;
+            for (const a of animations) a.currentTime = t;
+            samples.push({
+              t,
+              old: Number(getComputedStyle(root, '::view-transition-old(project-title)').opacity),
+              next: Number(getComputedStyle(root, '::view-transition-new(project-title)').opacity),
+            });
+          }
+          out.blend = getComputedStyle(root, '::view-transition-group(project-title)').mixBlendMode;
+          out.filters = [
+            getComputedStyle(root, '::view-transition-old(project-title)').filter,
+            getComputedStyle(root, '::view-transition-new(project-title)').filter,
+          ];
+          for (const a of animations) a.play();
+        });
+      });
+    });
+    await page.goto('/projects/');
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+    await softNavigate(page, page.locator(`main article a[href="/projects/${DETAIL_SLUG}/"]`));
+    await waitForNavigationIdle(page);
+    const handoff = await page.evaluate(
+      () =>
+        (
+          window as unknown as {
+            __handoff: {
+              samples: { t: number; old: number; next: number }[];
+              blend: string;
+              filters: string[];
+              animations: number;
+            };
+          }
+        ).__handoff,
+    );
+    test.info().annotations.push({
+      type: 'morph-handoff',
+      description: handoff.samples
+        .map((s) => `${String(Math.round(s.t))}ms old ${String(s.old)} new ${String(s.next)}`)
+        .join('; '),
+    });
+    expect(handoff.animations).toBeGreaterThan(0);
+    expect(handoff.samples).toHaveLength(11);
+    for (const sample of handoff.samples) expect(Math.min(sample.old, sample.next)).toBe(0);
+    expect(handoff.samples[0]?.old).toBe(1);
+    expect(handoff.samples[10]?.next).toBe(1);
+    expect(handoff.blend).toBe('normal');
+    for (const filter of handoff.filters) expect(filter).toBe('none');
+    await expect(page.locator('#project-title [data-morph-title]')).toHaveCount(0);
   });
 
   test('no morph for a nav link, the EN/ES switch or back', async ({ page }) => {

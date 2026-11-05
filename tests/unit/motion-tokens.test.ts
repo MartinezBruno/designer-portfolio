@@ -21,7 +21,7 @@ describe('motion tokens', () => {
   });
 
   it('defines the Phase 7 navigation tokens (07-02)', () => {
-    expect(cssMs('wipe')).toBe(560);
+    expect(cssMs('wipe')).toBe(480);
     expect(cssMs('wipe')).toBe(durations.wipe * 1000);
     expect(cssMs('nav-fade')).toBe(320);
     expect(css).toContain('--wipe-release: 0.7;');
@@ -160,5 +160,43 @@ describe('detail-stack side entrance (07-09, D-11a, UI-SPEC "Detail-stack side e
 
   it('drops the superseded stack parallax tokens', () => {
     expect(css).not.toContain("[data-parallax-frame='stack']");
+  });
+});
+
+describe('title morph CSS (07-13, user decision at 07-10)', () => {
+  /** Every rule body whose selector names the project-title transition pseudo-elements. */
+  function morphRules(): string[] {
+    return [...css.matchAll(/([^{}]*project-title\)[^{}]*)\{([^{}]*)\}/g)].map((m) => m[2] ?? '');
+  }
+
+  /** The offsets (in %) of the keyframe stops of `name` that set `opacity: <value>`. */
+  function stops(name: string, value: number): number[] {
+    const body = blockAt(css.indexOf('{', css.indexOf(`@keyframes ${name}`)));
+    const out: number[] = [];
+    for (const m of body.matchAll(/([\d%,\s]+)\{([^}]*)\}/g)) {
+      const opacity = /opacity:\s*([\d.]+)/.exec(m[2] ?? '')?.[1];
+      if (opacity === undefined || Number(opacity) !== value) continue;
+      for (const offset of (m[1] ?? '').split(',')) out.push(Number.parseFloat(offset));
+    }
+    return out;
+  }
+
+  it('draws the morph title in plain ink: no difference blend, no invert', () => {
+    const rules = morphRules();
+    expect(rules.length).toBeGreaterThanOrEqual(3);
+    for (const rule of rules) {
+      expect(rule).not.toMatch(/mix-blend-mode/);
+      expect(rule).not.toMatch(/invert\(/);
+    }
+  });
+
+  it('hides the old title before the new one appears (no doubled frame)', () => {
+    const outHidden = Math.min(...stops('morph-out', 0));
+    const inHidden = Math.max(...stops('morph-in', 0));
+    expect(Number.isFinite(outHidden)).toBe(true);
+    expect(Number.isFinite(inHidden)).toBe(true);
+    expect(outHidden).toBeLessThanOrEqual(inHidden);
+    expect(outHidden).toBeGreaterThanOrEqual(40);
+    expect(inHidden).toBeLessThanOrEqual(60);
   });
 });

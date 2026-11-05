@@ -11,7 +11,7 @@ export const durations = {
   line: 0.64,
   shutter: 0.72,
   /** Phase 7 navigation ink wipe, `--t-wipe` (07-02). */
-  wipe: 0.56,
+  wipe: 0.48,
 } as const;
 
 /**
