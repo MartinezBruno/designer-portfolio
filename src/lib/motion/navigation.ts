@@ -39,6 +39,11 @@ declare global {
  * - Live switching (D-18): a change away from `on` finishes the running transition at once with
  *   `skipTransition()`, so nothing is left half-wiped.
  *
+ * - Pressed state (07-16, touch latency gap from 07-10): when the router starts a soft navigation
+ *   under `on` or `reduced`, the tapped link gets `data-nav-pressed`, so a tap is acknowledged
+ *   before the next document arrives. It is cleared on the swap, at the next navigation, after
+ *   PRESS_TIMEOUT_MS and on unbind, so it never reaches the arriving page (T-07-38).
+ *
  * Only constants and the narrowed live state are written into the new document (T-07-02).
  * Handlers stay named so later Phase 7 plans can extend them locally.
  */
@@ -55,6 +60,9 @@ export const RELEASE_CAP_MS = 1200;
  */
 export const WIPE_LIMIT = 3;
 export const WIPE_WINDOW_MS = 1100;
+
+/** Safety net: a pressed marker whose navigation never swaps (stalled, aborted) clears itself. */
+export const PRESS_TIMEOUT_MS = 3000;
 
 export interface NavigationDeps {
   setTimeout?: (cb: () => void, ms: number) => number;
@@ -308,9 +316,37 @@ export function bindNavigation(doc: Document, deps: NavigationDeps = {}): Naviga
       });
   }
 
+  let pressed: Element | undefined;
+  let pressTimer: number | undefined;
+
+  function clearPressed(): void {
+    if (pressTimer !== undefined) clearTimer(pressTimer);
+    pressTimer = undefined;
+    pressed?.removeAttribute('data-nav-pressed');
+    pressed = undefined;
+  }
+
+  /**
+   * 07-16: the tapped link shows its pressed state the moment the router starts, ahead of the
+   * fetch (07-10 touch latency gap). Only the constant attribute is written (T-07-37). `off` and
+   * back/forward (no source element) mark nothing.
+   */
+  function markPressed(event: TransitionBeforePreparationEvent): void {
+    clearPressed();
+    if (event.defaultPrevented || currentMotionState(doc) === 'off') return;
+    const source: Element | undefined = event.sourceElement;
+    const link = source?.closest('a');
+    if (link == null) return;
+    link.setAttribute('data-nav-pressed', '');
+    pressed = link;
+    pressTimer = setTimer(clearPressed, PRESS_TIMEOUT_MS);
+  }
+
   doc.addEventListener('astro:before-preparation', preventOffNavigation, { signal });
+  doc.addEventListener('astro:before-preparation', markPressed, { signal });
   doc.addEventListener('astro:before-preparation', clearStaleWipe, { signal });
   doc.addEventListener('astro:before-preparation', nameMorphSource, { signal });
+  doc.addEventListener('astro:before-swap', clearPressed, { signal });
   doc.addEventListener('astro:before-swap', carryMotionState, { signal });
   doc.addEventListener('astro:before-swap', syncMotionToggle, { signal });
   doc.addEventListener('astro:before-swap', markWipe, { signal });
@@ -321,6 +357,7 @@ export function bindNavigation(doc: Document, deps: NavigationDeps = {}): Naviga
   return {
     unbind: () => {
       ac.abort();
+      clearPressed();
     },
     waitForRelease: () => pending?.release ?? Promise.resolve(),
   };
