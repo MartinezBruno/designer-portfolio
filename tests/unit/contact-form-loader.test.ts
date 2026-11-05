@@ -286,4 +286,107 @@ describe('createLazyContactForm', () => {
     }
     expect(load).toHaveBeenCalledTimes(2);
   });
+  describe('IN-02: press on the mailto block', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const pressMailto = (): void => {
+      document
+        .querySelector('[data-contact-nojs] a')
+        ?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    };
+
+    it('starts the load on the press but waits for the click before mounting', async () => {
+      const inner = vi.fn<PageInit>(revealForm);
+      const load = vi.fn(() => Promise.resolve(inner));
+      createLazyContactForm(load)(document);
+      pressMailto();
+      expect(load).toHaveBeenCalledTimes(1);
+      await flush();
+      expect(inner).not.toHaveBeenCalled();
+      document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+      expect(inner).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(0);
+      expect(inner).toHaveBeenCalledTimes(1);
+      vi.advanceTimersByTime(2000);
+      expect(inner).toHaveBeenCalledTimes(1);
+    });
+
+    it('mounts after a pointercancel', async () => {
+      const inner = vi.fn<PageInit>(revealForm);
+      createLazyContactForm(() => Promise.resolve(inner))(document);
+      pressMailto();
+      await flush();
+      expect(inner).not.toHaveBeenCalled();
+      document.dispatchEvent(new PointerEvent('pointercancel', { bubbles: true }));
+      vi.advanceTimersByTime(0);
+      expect(inner).toHaveBeenCalledTimes(1);
+    });
+
+    it('mounts at the 1000 ms cap when the press never ends', async () => {
+      const inner = vi.fn<PageInit>(revealForm);
+      createLazyContactForm(() => Promise.resolve(inner))(document);
+      pressMailto();
+      await flush();
+      vi.advanceTimersByTime(999);
+      expect(inner).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1);
+      expect(inner).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not defer a press outside the mailto block', async () => {
+      const inner = vi.fn<PageInit>(revealForm);
+      createLazyContactForm(() => Promise.resolve(inner))(document);
+      document
+        .getElementById('contact')
+        ?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      await flush();
+      expect(inner).toHaveBeenCalledTimes(1);
+    });
+
+    it('mounts at once when the press ended before the load resolved', async () => {
+      const d = deferred<PageInit>();
+      const inner = vi.fn<PageInit>(revealForm);
+      createLazyContactForm(() => d.promise)(document);
+      pressMailto();
+      document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+      vi.advanceTimersByTime(0);
+      d.resolve(inner);
+      await flush();
+      expect(inner).toHaveBeenCalledTimes(1);
+    });
+
+    it('cleanup while the mount is deferred never mounts and ignores a later release', async () => {
+      const inner = vi.fn<PageInit>(revealForm);
+      const cleanup = createLazyContactForm(() => Promise.resolve(inner))(document);
+      pressMailto();
+      await flush();
+      cleanup?.();
+      expect(vi.getTimerCount()).toBe(0);
+      document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+      vi.advanceTimersByTime(2000);
+      expect(inner).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('leaves no timer behind after a deferred mount', async () => {
+      const inner = vi.fn<PageInit>(revealForm);
+      createLazyContactForm(() => Promise.resolve(inner))(document);
+      pressMailto();
+      await flush();
+      document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+      vi.advanceTimersByTime(0);
+      expect(inner).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(0);
+      // Press tracking is gone after the mount: a new press and release schedule nothing.
+      pressMailto();
+      document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+      expect(vi.getTimerCount()).toBe(0);
+    });
+  });
 });
