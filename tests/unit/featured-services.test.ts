@@ -30,16 +30,16 @@ function classTokens(tag: string): string[] {
 }
 
 describe('service card', () => {
-  it('renders a styled li root with an h3 title and a disc bullet list', async () => {
+  it('renders an li root with an h3 title and a plain item list', async () => {
     const html = (await renderCard()).trim();
     const root = /^<li[^>]*>/.exec(html)?.[0] ?? '';
     expect(root).not.toBe('');
-    expect(classTokens(root)).toEqual(
-      expect.arrayContaining(['h-full', 'rounded-2xl', 'bg-surface-alt', 'p-6']),
-    );
+    expect(classTokens(root)).toEqual(expect.arrayContaining(['flex', 'flex-col', 'items-start']));
+    // Typographic index, not a card: no surface, radius or padding on the root.
+    expect(classTokens(root)).not.toEqual(expect.arrayContaining(['bg-surface-alt']));
     expect(html).toMatch(/<h3[^>]*>\s*Branding\s*<\/h3>/);
     const list = /<ul[^>]*>/.exec(html)?.[0] ?? '';
-    expect(classTokens(list)).toContain('list-disc');
+    expect(classTokens(list)).toEqual(expect.arrayContaining(['grid', 'sm:grid-cols-2']));
     expect(html.match(/<li[\s>]/g)?.length).toBe(7);
   });
 
@@ -50,14 +50,12 @@ describe('service card', () => {
     expect(bullets[0]).toBe('Visual identity');
   });
 
-  it('renders one decorative icon inside a round chip', async () => {
+  it('renders only the decorative link arrow, no icon chip', async () => {
     const html = await renderCard();
     const svgs = html.match(/<svg[^>]*>/g) ?? [];
-    // The service icon plus the link's trailing arrow, both decorative.
-    expect(svgs).toHaveLength(2);
+    // Redesign: no icon-topped card; the link's trailing arrow is the only icon.
+    expect(svgs).toHaveLength(1);
     for (const svg of svgs) expect(svg).toContain('aria-hidden="true"');
-    const chip = /<span[^>]*>\s*<svg/.exec(html)?.[0] ?? '';
-    expect(classTokens(chip)).toEqual(expect.arrayContaining(['size-12', 'rounded-full']));
   });
 
   it('only the Ask about this link is interactive', async () => {
@@ -65,23 +63,16 @@ describe('service card', () => {
     const anchors = html.match(/<a[\s>][^>]*>/g) ?? [];
     expect(anchors).toHaveLength(1);
     expect(anchors[0]).toContain('href="/?service=branding#contact"');
-    // The link is the card's last child, inside a mt-auto paragraph.
-    expect(html).toMatch(/<p class="mt-auto">\s*<a[^>]*>[\s\S]*<\/a>\s*<\/p>\s*<\/li>$/);
+    // The link sits beside the title (inside the heading row), before the item list.
+    expect(html).toMatch(/<\/h3>\s*<p class="shrink-0">\s*<a[^>]*>[\s\S]*<\/a>\s*<\/p>/);
+    expect(html.indexOf('</h3>')).toBeLessThan(html.indexOf('<ul'));
     // Visible label (hidden from the a11y tree), the full name for assistive tech, then the
     // decorative arrow.
     expect(html).toMatch(
       /<a[^>]*>\s*<span aria-hidden="true">Ask about this<\/span>\s*<span class="sr-only">Ask about this: Branding<\/span>\s*<svg[^>]*aria-hidden="true"/,
     );
     const root = /^<li[^>]*>/.exec(html)?.[0] ?? '';
-    expect(classTokens(root)).toEqual([
-      'bg-surface-alt',
-      'flex',
-      'h-full',
-      'flex-col',
-      'gap-4',
-      'rounded-2xl',
-      'p-6',
-    ]);
+    expect(classTokens(root)).toEqual(['flex', 'flex-col', 'items-start', 'gap-5']);
     // hover: lives only on the link's class list.
     const hoverTags = (html.match(/<[a-z][^>]*>/g) ?? []).filter((tag) => tag.includes('hover:'));
     expect(hoverTags).toEqual([anchors[0]]);
@@ -162,7 +153,7 @@ describe('featured services section', () => {
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
     const grid = /<ul[^>]*>/.exec(html)?.[0] ?? '';
     expect(classTokens(grid)).toEqual(
-      expect.arrayContaining(['grid', 'gap-6', 'sm:grid-cols-2', 'lg:grid-cols-4']),
+      expect.arrayContaining(['flex', 'flex-col', 'lg:col-span-8']),
     );
     expect(html.match(/<li[\s>]/g)).toHaveLength(22);
     const hrefs = [...html.matchAll(/<a[^>]*href="([^"]*)"/g)].map((m) => m[1]);

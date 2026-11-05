@@ -337,7 +337,9 @@ describe('createReveal', () => {
   it('shows elements above the viewport at mount instantly and leaves in-view and below armed', () => {
     vi.spyOn(window, 'scrollY', 'get').mockReturnValue(1500);
     vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(800);
-    const tops: Record<string, number> = { h: -600, a: -200, b: -60, c: 100, cover1: 300 };
+    // c straddles the top edge (top -30, bottom 30): a shutter's hidden clip keeps only its top
+    // line, which is off screen, so it could never reveal; it is shown at once like those above.
+    const tops: Record<string, number> = { h: -600, a: -200, b: -60, c: -30, cover1: 100 };
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
       this: HTMLElement,
     ) {
@@ -346,13 +348,13 @@ describe('createReveal', () => {
     });
     const cleanup = createReveal(makeDeps())(document);
     const io = FakeIntersectionObserver.last();
-    for (const id of ['h', 'a', 'b']) {
+    for (const id of ['h', 'a', 'b', 'c']) {
       expect(el(id).hasAttribute('data-revealed')).toBe(true);
       expect(el(id).hasAttribute('data-reveal-instant')).toBe(true);
       expect(io.observed.has(el(id))).toBe(false);
     }
-    // c straddles the top edge (bottom 160 > 0): in view, so it keeps its normal entrance.
-    for (const id of ['c', 'cover1', 'text2']) {
+    // cover1 is in view and text2 below: both keep their normal entrance.
+    for (const id of ['cover1', 'text2']) {
       expect(el(id).hasAttribute('data-revealed')).toBe(false);
       expect(el(id).hasAttribute('data-reveal-armed')).toBe(true);
       expect(io.observed.has(el(id))).toBe(true);

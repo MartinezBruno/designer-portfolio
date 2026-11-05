@@ -30,20 +30,20 @@ const full = variant === 'full';
 const sizeClasses: Record<TileSize, string> = {
   large: 'md:col-span-7',
   small: 'md:col-span-5',
-  'large-end': 'md:col-span-7 md:col-start-6',
+  'large-end': 'md:col-span-8 md:col-start-3',
   third: 'md:col-span-4',
 };
 const aspectClasses: Record<TileSize, string> = {
   large: 'aspect-[5/4]',
   small: 'aspect-[5/4] md:aspect-[7/8]',
   'large-end': 'aspect-[5/4]',
-  third: 'aspect-[5/4]',
+  third: 'aspect-[4/5]',
 };
 const sizesFor: Record<TileSize, string> = {
-  large: '(min-width: 1152px) 625px, (min-width: 768px) 57vw, 100vw',
-  small: '(min-width: 1152px) 440px, (min-width: 768px) 40vw, 100vw',
-  'large-end': '(min-width: 1152px) 625px, (min-width: 768px) 57vw, 100vw',
-  third: '(min-width: 1152px) 347px, (min-width: 768px) 31vw, 100vw',
+  large: '(min-width: 1408px) 790px, (min-width: 768px) 57vw, 100vw',
+  small: '(min-width: 1408px) 560px, (min-width: 768px) 40vw, 100vw',
+  'large-end': '(min-width: 1408px) 888px, (min-width: 768px) 66vw, 100vw',
+  third: '(min-width: 1408px) 440px, (min-width: 768px) 31vw, 100vw',
 };
 // Spread so lazy covers carry no fetchpriority attribute at all (exactOptionalPropertyTypes).
 const priority = eager ? { fetchpriority: 'high' as const } : {};
@@ -83,7 +83,9 @@ const parallaxImage = eager ? {} : { 'data-parallax': '' };
       <Heading
         class:list={[
           'text-ink text-pretty',
-          full ? 'font-display text-2xl font-semibold tracking-tight' : 'text-base font-semibold',
+          full
+            ? 'font-display text-4xl font-semibold tracking-tight'
+            : 'font-display text-2xl font-semibold tracking-tight',
         ]}
       >
         <a
@@ -98,9 +100,9 @@ const parallaxImage = eager ? {} : { 'data-parallax': '' };
         </a>
       </Heading>
       {full && project.summary !== null && (
-        <p class="text-ink max-w-[60ch] text-base">{project.summary}</p>
+        <p class="text-ink max-w-[60ch] text-lead">{project.summary}</p>
       )}
-      <dl class="text-ink-muted flex flex-wrap gap-x-4 gap-y-1 text-sm">
+      <dl class="text-ink-muted flex flex-wrap gap-x-4 gap-y-1 text-base">
         {project.category !== null && (
           <div class="flex gap-1">
             <dt class="sr-only">{t('projects.meta.category')}</dt>

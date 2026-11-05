@@ -12,19 +12,31 @@ const t = useTranslations(Astro.props.locale);
 const copyright = interpolate(t('footer.copyright'), { year: new Date().getFullYear() });
 ---
 
-<footer class="bg-surface-alt py-12">
-  <div class="mx-auto flex max-w-6xl flex-col gap-4 px-4 sm:px-6 lg:px-8">
-    <h2 class="font-display text-2xl">{t('footer.heading')}</h2>
-    <p>
-      <a
-        href={`mailto:${site.email}`}
-        class="decoration-accent focus-visible:outline-accent inline-flex min-h-11 items-center gap-1 text-base underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+<footer class="bg-accent text-accent-ink [&_a]:focus-visible:outline-accent-ink overflow-hidden pt-20 pb-8 lg:pt-28">
+  <div class="mx-auto flex max-w-[88rem] flex-col gap-16 px-4 sm:px-8 lg:px-12">
+    <div class="grid grid-cols-1 gap-x-8 gap-y-8 lg:grid-cols-12 lg:items-end">
+      <h2 class="font-display text-section font-semibold lg:col-span-5">{t('footer.heading')}</h2>
+      <div class="flex flex-col items-start gap-4 lg:col-span-7 lg:items-end">
+        <p>
+          <a
+            href={`mailto:${site.email}`}
+            class="font-display text-lead inline-flex min-h-11 items-center gap-3 font-semibold tracking-tight underline decoration-2 underline-offset-[6px] hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-4 sm:text-4xl motion-safe:transition-opacity motion-safe:duration-150"
+          >
+            <IconMail aria-hidden="true" focusable="false" class="size-6 shrink-0 sm:size-9" />
+            {site.email}
+          </a>
+        </p>
+        <SocialLinks locale={Astro.props.locale} />
+      </div>
+    </div>
+    <div class="flex flex-col gap-4">
+      <p
+        aria-hidden="true"
+        class="font-display -ml-[0.05em] text-[10.4vw] leading-[0.82] font-semibold tracking-[-0.045em] whitespace-nowrap 2xl:text-[9.4rem]"
       >
-        <IconMail aria-hidden="true" focusable="false" class="size-5" />
-        {site.email}
-      </a>
-    </p>
-    <SocialLinks locale={Astro.props.locale} />
-    <p class="text-ink-muted text-base">{copyright}</p>
+        {site.name}
+      </p>
+      <p class="text-base">{copyright}</p>
+    </div>
   </div>
 </footer>

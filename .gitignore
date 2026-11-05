@@ -41,3 +41,7 @@ tmp/
 
 # claude code local state (agent worktrees, settings)
 .claude/
+
+# impeccable working files (decision sketches, review screenshots)
+.impeccable/mocks/
+.impeccable/review/

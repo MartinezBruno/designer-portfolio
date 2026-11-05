@@ -19,7 +19,7 @@ const { href, label, newTabHint } = Astro.props;
   rel="noopener noreferrer"
   aria-label={`${label} ${newTabHint}`}
   data-magnetic="link"
-  class="text-ink hover:text-ink-muted focus-visible:outline-accent inline-flex min-h-11 min-w-11 items-center justify-center gap-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-150"
+  class="text-inherit hover:opacity-70 focus-visible:outline-accent inline-flex min-h-11 min-w-11 items-center justify-center gap-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-opacity motion-safe:duration-150"
 >
   <span data-magnetic-face class="inline-flex items-center justify-center gap-0.5">
     <slot />

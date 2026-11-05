@@ -20,9 +20,9 @@ const latest = await getLatestProjects(locale);
 
 <Hero locale={locale} available={available} />
 <RolesMarquee roles={roles} locale={locale} />
-<div class="flex flex-col gap-16 py-16">
-  <FeaturedServices services={services} locale={locale} />
+<div class="flex flex-col gap-32 pt-28 pb-32 lg:gap-44 lg:pt-40 lg:pb-44">
   <LatestWork projects={latest} locale={locale} />
+  <FeaturedServices services={services} locale={locale} />
   <ToolsRow tools={tools} locale={locale} />
   <ContactSection locale={locale} services={services} />
 </div>

@@ -129,31 +129,31 @@ describe('project card size', () => {
     );
   });
 
-  it('large-end spans 7 columns starting at column 6', async () => {
+  it('large-end spans 8 centred columns starting at column 3', async () => {
     const html = await render({ size: 'large-end' });
     expect(classTokens(rootTag(html))).toEqual(
-      expect.arrayContaining(['md:col-span-7', 'md:col-start-6']),
+      expect.arrayContaining(['md:col-span-8', 'md:col-start-3']),
     );
     expect(classTokens(mediaTag(html))).toContain('aspect-[5/4]');
   });
 
-  it('third spans 4 columns with an uncropped 5/4 cover', async () => {
+  it('third spans 4 columns with a portrait 4/5 cover', async () => {
     const html = await render({ size: 'third' });
     expect(classTokens(rootTag(html))).toContain('md:col-span-4');
     expect(classTokens(rootTag(html))).not.toContain('md:col-start-6');
-    expect(classTokens(mediaTag(html))).toContain('aspect-[5/4]');
+    expect(classTokens(mediaTag(html))).toContain('aspect-[4/5]');
     expect(classTokens(mediaTag(html))).not.toContain('md:aspect-[7/8]');
   });
 
   it('sets responsive sizes per tile size', async () => {
     expect(await render({ size: 'large' })).toContain(
-      'sizes="(min-width: 1152px) 625px, (min-width: 768px) 57vw, 100vw"',
+      'sizes="(min-width: 1408px) 790px, (min-width: 768px) 57vw, 100vw"',
     );
     expect(await render({ size: 'small' })).toContain(
-      'sizes="(min-width: 1152px) 440px, (min-width: 768px) 40vw, 100vw"',
+      'sizes="(min-width: 1408px) 560px, (min-width: 768px) 40vw, 100vw"',
     );
     expect(await render({ size: 'third' })).toContain(
-      'sizes="(min-width: 1152px) 347px, (min-width: 768px) 31vw, 100vw"',
+      'sizes="(min-width: 1408px) 440px, (min-width: 768px) 31vw, 100vw"',
     );
   });
 });

@@ -95,28 +95,16 @@ test.describe('scroll reveals on Home', () => {
   }
 });
 
-// 06-10 review decision 10: at 1440x900 the Services card tops sit inside the first screen but in
-// the trigger's bottom 12%. The mount-time viewport pass reveals them without any scroll.
+// 06-10 review decision 10, generalised for the redesign: whatever reveal blocks sit inside the
+// first 1440x900 screen are revealed by the mount-time viewport pass, without any scroll.
 test.describe('first screen at 1440x900', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('Services card tops inside the first screen reveal without scrolling', async ({ page }) => {
+  test('reveal blocks inside the first screen reveal without scrolling', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('load');
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
-    const cards = page.locator('section[aria-labelledby="services-title"] [data-reveal="settle"]');
-    const inFirstScreen = async (): Promise<boolean[]> =>
-      cards.evaluateAll((els) =>
-        els.map((el) => el.getBoundingClientRect().top < window.innerHeight),
-      );
-    // The four cards share one row at 1440, and its top sits inside the first screen.
-    const visible = await inFirstScreen();
-    expect(visible, 'every Services card top on the first screen').toEqual([
-      true,
-      true,
-      true,
-      true,
-    ]);
+    const cards = page.locator('#main [data-reveal]');
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
     await expect
       .poll(

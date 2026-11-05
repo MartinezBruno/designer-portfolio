@@ -3,9 +3,10 @@ import ToolIcon from '../ui/ToolIcon.astro';
 import type { ToolView } from '../../lib/content/home';
 import { useTranslations, type Locale } from '../../i18n/t';
 
-// Icon-only tool tiles (HOME-05, D-12..D-14). Each tile is a focusable image role named by
-// an always-present sr-only span; the visual tooltip is aria-hidden so the name is announced once.
-// CSS shows the tooltip on hover/focus-visible (works without JS); the script adds tap and Esc.
+// Tools (HOME-05). Redesign: every tool shows its name as visible text beside its mark, so touch
+// users and anyone who does not know a brand mark can read it (supersedes the icon-only tiles and
+// hover/focus tooltips of D-12..D-14). Nothing here is interactive, so nothing is a tab stop; the
+// mark is decorative and the visible name is the accessible text.
 interface Props {
   tools: readonly ToolView[];
   locale: Locale;
@@ -13,63 +14,31 @@ interface Props {
 
 const { tools, locale } = Astro.props;
 const t = useTranslations(locale);
-
-const tooltipBase =
-  'pointer-events-auto invisible absolute bottom-full z-10 pb-2 opacity-0 group-hover/tool:visible group-hover/tool:opacity-100 group-focus-visible/tool:visible group-focus-visible/tool:opacity-100 group-data-open/tool:visible group-data-open/tool:opacity-100 group-data-dismissed/tool:invisible! group-data-dismissed/tool:opacity-0! motion-safe:transition-[opacity,visibility] motion-safe:duration-150';
-
-const tileBase =
-  'group/tool border-ink/10 bg-surface text-ink focus-visible:outline-accent relative grid size-12 place-items-center rounded-2xl border focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-150';
-// Colors invert whenever the tooltip shows (hover, keyboard focus, tap); Esc dismissal reverts.
-const tileInverted =
-  'hover:border-ink hover:bg-ink hover:text-surface focus-visible:border-ink focus-visible:bg-ink focus-visible:text-surface data-open:border-ink data-open:bg-ink data-open:text-surface data-dismissed:border-ink/10! data-dismissed:bg-surface! data-dismissed:text-ink!';
-
-// Edge tiles anchor to their own side so the tooltip never overflows a 320px viewport.
-const anchor = (index: number): string => {
-  if (index === 0) return 'left-0';
-  if (index === tools.length - 1) return 'right-0';
-  return 'left-1/2 -translate-x-1/2';
-};
 ---
 
-<section
-  aria-labelledby="tools-title"
-  class="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 sm:px-6 lg:px-8"
->
-  <h2
-    id="tools-title"
-    data-reveal="lines"
-    class="font-display text-2xl font-semibold tracking-tight"
-  >
-    {t('tools.heading')}
-  </h2>
-  <ul class="flex flex-wrap gap-2 sm:gap-4" data-reveal-stagger="70">
-    {tools.map((tool, index) => (
-      <li class="relative [--reveal-travel:12px]" data-reveal="settle" data-reveal-delay="140">
-        <span
-          role="img"
-          tabindex="0"
-          aria-labelledby={`tool-${tool.id}-name`}
+<section aria-labelledby="tools-title" class="bg-surface-alt py-20 lg:py-28">
+  <div class="mx-auto flex w-full max-w-[88rem] flex-col gap-10 px-4 sm:px-8 lg:gap-14 lg:px-12">
+    <h2
+      id="tools-title"
+      data-reveal="lines"
+      class="font-display text-section max-w-[16ch] font-semibold text-balance"
+    >
+      {t('tools.heading')}
+    </h2>
+    <ul class="flex flex-wrap gap-x-10 gap-y-5 lg:gap-x-14" data-reveal-stagger="70">
+      {tools.map((tool) => (
+        <li
           data-tool
-          class:list={[tileBase, tileInverted]}
+          data-reveal="settle"
+          data-reveal-delay="140"
+          class="text-ink inline-flex items-center gap-3 [--reveal-travel:12px]"
         >
-          <ToolIcon name={tool.icon} />
-          <span id={`tool-${tool.id}-name`} class="sr-only">
-            {tool.name}
+          <span class="bg-surface grid size-12 shrink-0 place-items-center rounded-full sm:size-14">
+            <ToolIcon name={tool.icon} />
           </span>
-          <span aria-hidden="true" data-tooltip class:list={[tooltipBase, anchor(index)]}>
-            <span class="bg-ink text-surface block rounded-lg px-2 py-1 text-sm font-semibold whitespace-nowrap">
-              {tool.name}
-            </span>
-          </span>
-        </span>
-      </li>
-    ))}
-  </ul>
+          <span class="text-lead font-semibold">{tool.name}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
 </section>
-
-<script>
-  import { lifecycle } from '../../lib/motion';
-  import { initToolTooltips } from '../../lib/ui/tooltips';
-
-  lifecycle.register(initToolTooltips);
-</script>

@@ -188,12 +188,15 @@ export function createReveal(deps: RevealDeps): PageInit {
       el.setAttribute('data-revealed', '');
       el.setAttribute('data-reveal-instant', '');
     };
-    // Restored position (07 D-15): back/forward lands mid-page, and an element wholly above the
-    // viewport at mount is shown at once, so no entrance replays above the visitor. At scroll 0
-    // (every fresh load) nothing can be above, so no layout is read and first-load is unchanged.
+    // Restored position (07 D-15): back/forward lands mid-page, and an element that starts above
+    // the viewport at mount is shown at once, so no entrance replays above the visitor. That
+    // includes one straddling the top edge: a shutter's hidden clip leaves only its top line, which
+    // is off screen, so the observer would never see it intersect and it would stay blank. At
+    // scroll 0 (every fresh load) nothing can be above, so no layout is read and first-load is
+    // unchanged.
     const scrolled = (win?.scrollY ?? 0) > 0;
     const aboveViewport = (el: HTMLElement): boolean =>
-      scrolled && el.getBoundingClientRect().bottom <= 0;
+      scrolled && el.getBoundingClientRect().top < 0;
     const gateLines = deps.loadGsap !== undefined && currentMotionState(doc) === 'on';
     const toArm: HTMLElement[] = [];
     for (const el of elements) {
