@@ -677,7 +677,7 @@ html[data-vt]
  * shows, the hidden form is laid out invisibly in the same grid cell under it, so the column
  * already has the form's own height at every width and in both locales. The controller hides
  * [data-contact-nojs] in the same task it reveals the form, so the rule stops matching and normal
- * [hidden] semantics return (success swap included). scripting: enabled keeps no-JS visitors at
+ * [hidden] semantics return (success swap included). The scripting query keeps no-JS visitors at
  * the mailto block's height. visibility: hidden keeps the form out of hit testing, the tab order
  * and the accessibility tree; the layer lets the !important beat preflight's [hidden] rule.
  */
