@@ -165,11 +165,21 @@ test.describe('motion gate follows a reduced-motion change after load', () => {
       await expect(html).toHaveAttribute('data-motion', 'on');
       await expect(copyB).toBeVisible();
       await expect(toggle).toBeVisible();
+      // D-11 (WR-03): an explicit pause must not survive leaving the "on" state. The first click
+      // resumes the hover pause the pointer caused; the second is the explicit pause.
+      await toggle.click();
+      await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+      await toggle.click();
+      await page.mouse.move(0, 0);
+      await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+      await expect(band).toHaveAttribute('data-paused', '');
 
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await expect(html).toHaveAttribute('data-motion', 'reduced');
       await expect(copyB).toBeHidden();
       await expect(toggle).toBeHidden();
+      await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+      await expect(band).not.toHaveAttribute('data-paused');
       expect(await copyA.evaluate((el) => getComputedStyle(el).flexWrap)).toBe('wrap');
       expect(await copyA.evaluate((el) => getComputedStyle(el).animationName)).toBe('none');
       // Every role sits fully inside the band's clipping box (nothing cut off by overflow-hidden).
@@ -194,6 +204,10 @@ test.describe('motion gate follows a reduced-motion change after load', () => {
       await expect(html).toHaveAttribute('data-motion', 'on');
       await expect(copyB).toBeVisible();
       await expect(toggle).toBeVisible();
+      await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+      await expect
+        .poll(() => copyA.evaluate((el) => getComputedStyle(el).animationPlayState))
+        .toBe('running');
       expect(errors).toEqual([]);
     });
   }

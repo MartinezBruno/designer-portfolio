@@ -45,6 +45,15 @@ const style = (locator: Locator, prop: 'animationName' | 'animationPlayState'): 
 const marquee = (page: Page) => page.locator('[data-marquee]');
 const copyA = (page: Page) => page.locator('[data-marquee] ul:not([aria-hidden])').first();
 const copyB = (page: Page) => page.locator('[data-marquee] ul[aria-hidden="true"]');
+const marqueeToggle = (page: Page) => page.locator('[data-marquee-toggle]');
+
+/** WR-01 / D-10: the visible play state and aria-pressed are always asserted together. */
+async function expectBand(page: Page, paused: boolean): Promise<void> {
+  await expect(marqueeToggle(page)).toHaveAttribute('aria-pressed', paused ? 'true' : 'false');
+  await expect
+    .poll(() => style(copyA(page), 'animationPlayState'))
+    .toBe(paused ? 'paused' : 'running');
+}
 const servicesSection = (page: Page) => page.locator('section[aria-labelledby="services-title"]');
 const toolsSection = (page: Page) => page.locator('section[aria-labelledby="tools-title"]');
 
@@ -89,32 +98,29 @@ for (const [path, dict, locale] of cases) {
       expect(buttonBox?.height).toBe(bandBox?.height);
       expect(buttonBox?.height ?? 0).toBeGreaterThanOrEqual(44);
       await expect(button).toHaveAttribute('aria-pressed', 'false');
-      // WR-01: the visible play state must match aria-pressed while the pointer is still over
-      // the band and the button still has focus (hover/focus must not contradict the toggle).
+      // WR-01 / D-10: every play state is paired with aria-pressed. Clicking moves the pointer
+      // onto the band, which pauses it (aria-pressed "true"); the click then flips what is
+      // visible, so it resumes, and the next click is an explicit pause.
       await button.click();
-      await expect(button).toHaveAttribute('aria-pressed', 'true');
-      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('paused');
+      await expectBand(page, false);
       await button.click();
-      await expect(button).toHaveAttribute('aria-pressed', 'false');
-      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('running');
+      await expectBand(page, true);
       await button.click();
-      await expect(button).toHaveAttribute('aria-pressed', 'true');
-      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('paused');
+      await expectBand(page, false);
 
-      // Re-enter with the keyboard so the button has real :focus-visible focus.
+      // Re-enter with the keyboard so the button has real :focus-visible focus. The explicit
+      // "playing" choice still wins over the focus pause.
       await page.mouse.move(0, 0);
       await page.keyboard.press('Shift+Tab');
       await page.keyboard.press('Tab');
       expect(await button.evaluate((el) => el.matches(':focus-visible'))).toBe(true);
+      await expectBand(page, false);
       await page.keyboard.press('Space');
-      await expect(button).toHaveAttribute('aria-pressed', 'false');
-      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('running');
+      await expectBand(page, true);
       await page.keyboard.press('Enter');
-      await expect(button).toHaveAttribute('aria-pressed', 'true');
-      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('paused');
+      await expectBand(page, false);
       await page.keyboard.press('Enter');
-      await expect(button).toHaveAttribute('aria-pressed', 'false');
-      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('running');
+      await expectBand(page, true);
       await expect(button).toHaveAttribute('aria-label', dict['roles.pause']);
 
       // D-16: white role text on the accent band.
@@ -127,20 +133,42 @@ for (const [path, dict, locale] of cases) {
       );
     });
 
-    test('marquee: hovering the band pauses the animation', async ({ page }) => {
+    test('marquee: hovering pauses the band and aria-pressed follows', async ({ page }) => {
       await page.mouse.move(0, 0);
-      expect(await style(copyA(page), 'animationPlayState')).toBe('running');
+      await expectBand(page, false);
       await marquee(page).hover();
-      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('paused');
+      await expect(marqueeToggle(page)).toHaveAttribute('aria-pressed', 'true');
+      await expectBand(page, true);
       await page.mouse.move(0, 0);
-      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('running');
+      await expectBand(page, false);
     });
 
-    test('marquee: keyboard focus pauses the band and shows a white outline', async ({ page }) => {
+    test('marquee: a click while hovered resumes, a later click is an explicit pause', async ({
+      page,
+    }) => {
+      const button = marqueeToggle(page);
       await page.mouse.move(0, 0);
-      expect(await style(copyA(page), 'animationPlayState')).toBe('running');
+      await marquee(page).hover();
+      await expectBand(page, true);
+      await button.click();
+      await expectBand(page, false);
+      await page.mouse.move(0, 0);
+      await expectBand(page, false);
+
+      await button.click();
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+      await expectBand(page, true);
+      await page.mouse.move(0, 0);
+      await expectBand(page, true);
+    });
+
+    test('marquee: keyboard focus pauses with aria-pressed true and a white outline', async ({
+      page,
+    }) => {
+      await page.mouse.move(0, 0);
+      await expectBand(page, false);
       await tabUntil(page, '[data-marquee-toggle]');
-      const button = page.locator('[data-marquee-toggle]');
+      const button = marqueeToggle(page);
       const outline = await button.evaluate((el) => {
         const computed = getComputedStyle(el);
         return {
@@ -151,13 +179,25 @@ for (const [path, dict, locale] of cases) {
       });
       expect(outline.style).not.toBe('none');
       expect(outline.color).toBe('rgb(255, 255, 255)');
-      // Inset so the outline sits inside the band and is never clipped.
+      // Inset so the outline sits inside the band and is never clipped (D-12).
       expect(outline.offset).toBe('-4px');
-      await expect(button).toHaveAttribute('aria-pressed', 'false');
-      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('paused');
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+      await expectBand(page, true);
 
+      // Space while focused is an explicit resume, kept after focus moves on.
+      await page.keyboard.press('Space');
+      await expect(button).toBeFocused();
+      await expectBand(page, false);
       await page.keyboard.press('Tab');
-      await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('running');
+      await expectBand(page, false);
+
+      // Back on the toggle, Space is an explicit pause, kept after focus moves on.
+      await page.keyboard.press('Shift+Tab');
+      await expect(button).toBeFocused();
+      await page.keyboard.press('Space');
+      await expectBand(page, true);
+      await page.keyboard.press('Tab');
+      await expectBand(page, true);
     });
 
     test('services: four cards in order with their bullets', async ({ page }) => {
