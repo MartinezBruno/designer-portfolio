@@ -21,10 +21,27 @@ export interface ContactEmailOptions {
 }
 
 const HEADER_MAX = 200;
-const UNSPECIFIED = 'Sin especificar';
+
+/**
+ * Every Spanish literal in the email (Phase 5 D-16: the email is Spanish-only). Exported so
+ * scripts/spanish-review.ts lists it in 08-SPANISH-REVIEW.md: editing a value here changes both the
+ * email and the review file (run `pnpm review:spanish`).
+ */
+export const EMAIL_COPY_ES = {
+  unspecified: 'Sin especificar',
+  siteLanguageEn: 'Inglés (EN)',
+  siteLanguageEs: 'Español (ES)',
+  subjectPrefix: 'Nuevo mensaje web',
+  name: 'Nombre:',
+  email: 'Email:',
+  service: 'Servicio:',
+  siteLanguage: 'Idioma del sitio:',
+  message: 'Mensaje:',
+} as const;
+
 const SITE_LANGUAGE: Readonly<Record<Locale, string>> = {
-  en: 'Inglés (EN)',
-  es: 'Español (ES)',
+  en: EMAIL_COPY_ES.siteLanguageEn,
+  es: EMAIL_COPY_ES.siteLanguageEs,
 };
 
 /**
@@ -44,16 +61,16 @@ export function buildContactEmail(
 ): ContactEmail {
   const name = sanitizeHeader(input.name);
   const serviceLabel = sanitizeHeader(
-    input.service === 'other' ? UNSPECIFIED : options.serviceTitlesEs[input.service],
+    input.service === 'other' ? EMAIL_COPY_ES.unspecified : options.serviceTitlesEs[input.service],
   );
-  const subject = sanitizeHeader(`Nuevo mensaje web — ${serviceLabel} — ${name}`);
+  const subject = sanitizeHeader(`${EMAIL_COPY_ES.subjectPrefix} — ${serviceLabel} — ${name}`);
   const text = [
-    `Nombre: ${name}`,
-    `Email: ${input.email}`,
-    `Servicio: ${serviceLabel}`,
-    `Idioma del sitio: ${SITE_LANGUAGE[input.locale]}`,
+    `${EMAIL_COPY_ES.name} ${name}`,
+    `${EMAIL_COPY_ES.email} ${input.email}`,
+    `${EMAIL_COPY_ES.service} ${serviceLabel}`,
+    `${EMAIL_COPY_ES.siteLanguage} ${SITE_LANGUAGE[input.locale]}`,
     '',
-    'Mensaje:',
+    EMAIL_COPY_ES.message,
     input.message,
   ].join('\n');
 

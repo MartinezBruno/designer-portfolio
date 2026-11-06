@@ -18,6 +18,7 @@
     "test:e2e": "astro build && playwright test",
     "check:secrets": "node scripts/check-secrets.ts",
     "measure:bundle": "node scripts/measure-bundle.ts",
+    "review:spanish": "node scripts/spanish-review.ts",
     "sync:behance": "node scripts/sync-behance.ts",
     "verify": "pnpm lint && pnpm test && pnpm test:e2e && pnpm check:secrets"
   },

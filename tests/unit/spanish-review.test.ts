@@ -27,7 +27,9 @@ function row(key: string): string | undefined {
 function expectRow(key: string, enText: string, esText: string): void {
   const found = row(key);
   expect(found, `missing row ${key}`).toBeDefined();
-  expect(found).toBe(`| \`${key}\` | ${escapeCell(enText)} | ${escapeCell(esText)} | ${STATUS_DRAFT} |`);
+  expect(found).toBe(
+    `| \`${key}\` | ${escapeCell(enText)} | ${escapeCell(esText)} | ${STATUS_DRAFT} |`,
+  );
 }
 
 interface Localized {
@@ -49,7 +51,8 @@ describe('buildSpanishReview coverage', () => {
   });
 
   it('has a row for every role label, service title and item, and override string', () => {
-    for (const role of roles) expectRow(`roles.json#${role.id}.label`, role.label.en, role.label.es);
+    for (const role of roles)
+      expectRow(`roles.json#${role.id}.label`, role.label.en, role.label.es);
     for (const service of services) {
       expectRow(`services.json#${service.id}.title`, service.title.en, service.title.es);
       const count = Math.max(service.items.en.length, service.items.es.length);
