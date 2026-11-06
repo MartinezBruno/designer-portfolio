@@ -40,7 +40,7 @@ const categoryTitles: Record<CategoryId, string> = {
 function service(id: string, en: string, es: string): ServiceEntry {
   return {
     id,
-    data: { order: 1, icon: 'vector', title: { en, es }, items: { en: [], es: [] } },
+    data: { order: 1, title: { en, es }, items: { en: [], es: [] } },
   };
 }
 

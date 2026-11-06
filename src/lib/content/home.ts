@@ -5,7 +5,7 @@
  * HomeView is the only caller, through getHomeContent in queries.ts.
  */
 import type { Locale } from '../../i18n/config';
-import type { ServiceIconKey, ToolIconKey } from './icons';
+import type { ToolIconKey } from './icons';
 
 export type Localized<T> = Record<Locale, T>;
 
@@ -18,7 +18,6 @@ export interface ServiceEntry {
   id: string;
   data: {
     order: number;
-    icon: ServiceIconKey;
     title: Localized<string>;
     items: Localized<string[]>;
   };
@@ -35,7 +34,6 @@ export interface ProfileEntry {
 
 export interface ServiceView {
   id: string;
-  icon: ServiceIconKey;
   title: string;
   items: string[];
 }
@@ -95,7 +93,6 @@ export function buildRoles(entries: readonly RoleEntry[], locale: Locale): strin
 export function buildServices(entries: readonly ServiceEntry[], locale: Locale): ServiceView[] {
   return sortByOrder(assertCount(entries, 4, 'services')).map((entry) => ({
     id: entry.id,
-    icon: entry.data.icon,
     title: entry.data.title[locale],
     items: [...entry.data.items[locale]],
   }));

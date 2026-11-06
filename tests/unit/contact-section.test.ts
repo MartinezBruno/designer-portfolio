@@ -17,7 +17,6 @@ function servicesFor(locale: 'en' | 'es'): ServiceView[] {
     .sort((a, b) => a.order - b.order)
     .map((service) => ({
       id: service.id,
-      icon: service.icon as ServiceView['icon'],
       title: service.title[locale],
       items: service.items[locale],
     }));

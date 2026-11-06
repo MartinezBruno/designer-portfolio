@@ -7,7 +7,7 @@
 import { defineCollection } from 'astro:content';
 import { file } from 'astro/loaders';
 import { z } from 'astro/zod';
-import { serviceIconKeys, toolIconKeys } from './lib/content/icons';
+import { toolIconKeys } from './lib/content/icons';
 
 // Every localized field is required in both locales: a missing es value fails astro check/build.
 const localized = z.object({ en: z.string().min(1), es: z.string().min(1) });
@@ -26,7 +26,6 @@ const services = defineCollection({
   loader: file('src/data/services.json'),
   schema: z.object({
     order: z.number().int(),
-    icon: z.enum(serviceIconKeys),
     title: localized,
     items: localizedList,
   }),
