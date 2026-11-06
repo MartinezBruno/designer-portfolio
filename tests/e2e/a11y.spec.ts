@@ -3,7 +3,6 @@ import AxeBuilder from '@axe-core/playwright';
 import snapshot from '../../src/data/behance/snapshot.json' with { type: 'json' };
 import { site } from '../../src/data/site';
 import services from '../../src/data/services.json' with { type: 'json' };
-import tools from '../../src/data/tools.json' with { type: 'json' };
 import { interpolate } from '../../src/i18n/t';
 import { en, type Dictionary } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
@@ -98,7 +97,7 @@ for (const path of ['/', '/es/']) {
 }
 
 // UI-SPEC keyboard order on Home: skip link, wordmark, Projects, Contact, EN, ES, motion toggle, hero CTA,
-// invisible marquee pause toggle (button over the band), 4 service card links, 3 project links, See all, 5 tool tiles,
+// invisible marquee pause toggle (button over the band), 4 service card links, 3 project links, See all,
 // Contact section email, Behance, service radio, name, email, message (then Send message from the
 // footer with Shift+Tab), footer email, Behance. On the Projects pages: skip
 // link, wordmark, Projects, Contact, EN, ES, motion toggle, 7 project links (newest first), footer email, Behance.
@@ -128,10 +127,6 @@ function projectSteps(rows: readonly ExpectedProject[]): Step[] {
 }
 
 const projectsHrefFor = (homeHref: string): string => `${homeHref}projects/`;
-
-const toolSteps: Step[] = [...tools]
-  .sort((a, b) => a.order - b.order)
-  .map((tool) => ({ name: tool.name, role: 'img' }));
 
 // HOME-08 card links (05-07): one stop per service card, in services.json `order`.
 function serviceSteps(dict: Dictionary, homeHref: string): Step[] {
@@ -184,10 +179,10 @@ function expectedOrderFor(dict: Dictionary, homeHref: string): Step[] {
     ...headerSteps(dict, homeHref, '/', '/es/'),
     { name: dict['hero.cta'], href: `${homeHref}#contact` },
     { name: dict['roles.pause'], tag: 'BUTTON' },
-    ...serviceSteps(dict, homeHref),
+    // Redesign (finish review): the work comes before the services index.
     ...projectSteps(expectedHome(locale)),
     { name: dict['work.seeAll'], href: projectsHrefFor(homeHref) },
-    ...toolSteps,
+    ...serviceSteps(dict, homeHref),
     ...contactSteps(dict),
   ];
 }
@@ -590,51 +585,4 @@ test(`/ mid-reveal sample (200ms after scrolling to Services) has only transient
   ).toEqual([]);
 });
 
-for (const [path] of keyboardCases) {
-  test(`axe stays clean with a tool tooltip open on ${path}`, async ({ page }) => {
-    await page.goto(path);
-
-    let onTool = false;
-    for (let i = 0; i < 30 && !onTool; i++) {
-      await page.keyboard.press('Tab');
-      onTool = await page.evaluate(() => document.activeElement?.matches('[data-tool]') ?? false);
-    }
-    expect(onTool, 'Tab should reach a [data-tool] tile').toBe(true);
-
-    const tooltip = page.locator('[data-tool]:focus [data-tooltip]');
-    await expect(tooltip).toBeVisible();
-    await settleMotion(page);
-
-    const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
-    expect(violations).toEqual([]);
-  });
-}
-
-// WCAG 1.4.13 persistent: pointer movement over a neighbour must not hide the focused tooltip.
-for (const [path] of keyboardCases) {
-  test(`focused tool tooltip persists while another tile is hovered on ${path}`, async ({
-    page,
-  }) => {
-    await page.goto(path);
-    await page.mouse.move(0, 0);
-
-    let onTool = false;
-    for (let i = 0; i < 30 && !onTool; i++) {
-      await page.keyboard.press('Tab');
-      onTool = await page.evaluate(() => document.activeElement?.matches('[data-tool]') ?? false);
-    }
-    expect(onTool, 'Tab should reach a [data-tool] tile').toBe(true);
-
-    const tiles = page.locator('[data-tool]');
-    const focusedTooltip = page.locator('[data-tool]:focus [data-tooltip]');
-    await expect(focusedTooltip).toBeVisible();
-
-    await tiles.nth(2).hover();
-    await expect(tiles.nth(2).locator('[data-tooltip]')).toBeVisible();
-    await expect(focusedTooltip).toBeVisible();
-
-    await page.mouse.move(0, 0);
-    await expect(focusedTooltip).toBeVisible();
-    await expect(tiles.nth(2).locator('[data-tooltip]')).toBeHidden();
-  });
-}
+// Tool tooltips were removed in the redesign: tool names are visible text (see home-story).

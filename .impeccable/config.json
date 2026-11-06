@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "helvetica neue",
+        "files": [
+          ".impeccable/mocks/decision/assigned-r1.html"
+        ],
+        "createdAt": "2026-11-05T22:37:05.785Z",
+        "reason": "Claude: throwaway decision-round sketch, never shipped; system font only in the skeleton"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "helvetica neue",
+        "files": [
+          ".impeccable/mocks/decision/model-pick-r1.html"
+        ],
+        "createdAt": "2026-11-05T22:37:05.805Z",
+        "reason": "Claude: throwaway decision-round sketch, never shipped; system font only in the skeleton"
+      }
+    ]
+  }
+}

@@ -36,13 +36,13 @@ function classTokens(tag: string): string[] {
 }
 
 describe('ProjectIntro', () => {
-  it('renders one 36px display h1 with the title', async () => {
+  it('renders one section-size display h1 with the title', async () => {
     const html = await render();
     expect(html.match(/<h1[\s>]/g)).toHaveLength(1);
     const h1 = /<h1[^>]*>/.exec(html)?.[0] ?? '';
     expect(h1).toContain('id="project-title"');
     expect(classTokens(h1)).toEqual(
-      expect.arrayContaining(['font-display', 'text-4xl', 'font-semibold', 'tracking-tight']),
+      expect.arrayContaining(['font-display', 'text-4xl', 'sm:text-section', 'font-semibold']),
     );
     expect(html).toContain('Brand Refresh');
     expect(html).not.toMatch(/<h1[^>]*>\s*<span lang/);

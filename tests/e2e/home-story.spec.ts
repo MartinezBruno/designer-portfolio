@@ -17,9 +17,6 @@ const cases = [
   ['/es/', es, 'es'],
 ] as const;
 
-const INK = 'rgb(26, 23, 20)';
-const SURFACE = 'rgb(250, 247, 242)';
-
 function collectErrors(page: Page): string[] {
   const errors: string[] = [];
   page.on('console', (message) => {
@@ -163,28 +160,6 @@ for (const [path, dict, locale] of cases) {
       await expect.poll(() => style(copyA(page), 'animationPlayState')).toBe('running');
     });
 
-    test('tools: tiles invert colors on hover and keyboard focus', async ({ page }) => {
-      const tiles = toolsSection(page).locator('[data-tool]');
-      const colors = (index: number) =>
-        tiles.nth(index).evaluate((el) => {
-          const computed = getComputedStyle(el);
-          return { bg: computed.backgroundColor, fg: computed.color };
-        });
-
-      await page.mouse.move(0, 0);
-      expect(await colors(2)).toEqual({ bg: SURFACE, fg: INK });
-      await tiles.nth(2).hover();
-      await expect.poll(() => colors(2)).toEqual({ bg: INK, fg: SURFACE });
-      await page.mouse.move(0, 0);
-      await expect.poll(() => colors(2)).toEqual({ bg: SURFACE, fg: INK });
-
-      await tabUntil(page, '[data-tool]');
-      await expect.poll(() => colors(0)).toEqual({ bg: INK, fg: SURFACE });
-      // Esc hides the tooltip, so the tile returns to its resting colors.
-      await page.keyboard.press('Escape');
-      await expect.poll(() => colors(0)).toEqual({ bg: SURFACE, fg: INK });
-    });
-
     test('services: four cards in order with their bullets', async ({ page }) => {
       const section = servicesSection(page);
       await expect(section.getByRole('heading', { level: 2 })).toHaveText(dict['services.heading']);
@@ -206,34 +181,16 @@ for (const [path, dict, locale] of cases) {
       await expect(section.getByRole('link')).toHaveCount(4);
     });
 
-    test('tools: five icon-only tiles named by brand', async ({ page }) => {
+    test('tools: five tools with visible names and no tab stops', async ({ page }) => {
       const section = toolsSection(page);
-      await expect(section.getByRole('img')).toHaveCount(5);
-      for (const name of toolNames) {
-        await expect(section.getByRole('img', { name, exact: true })).toHaveCount(1);
+      const items = section.locator('[data-tool]');
+      await expect(items).toHaveCount(5);
+      for (const [index, name] of toolNames.entries()) {
+        await expect(items.nth(index)).toHaveText(name);
+        await expect(items.nth(index)).toBeVisible();
       }
-
-      const tooltips = section.locator('[data-tooltip]');
-      for (let index = 0; index < 5; index += 1) {
-        await expect(tooltips.nth(index)).toBeHidden();
-      }
-
-      // Keyboard focus shows the tooltip; Esc hides it while focus stays (WCAG 1.4.13).
-      const tiles = section.locator('[data-tool]');
-      await tabUntil(page, '[data-tool]');
-      await expect(tooltips.first()).toBeVisible();
-      await page.keyboard.press('Escape');
-      await expect(tooltips.first()).toBeHidden();
-      expect(await tiles.first().evaluate((el) => el === document.activeElement)).toBe(true);
-
-      // Hover shows it, and hovering the tooltip itself keeps it open.
-      await tiles.nth(2).hover();
-      await expect(tooltips.nth(2)).toBeVisible();
-      await tooltips.nth(2).hover();
-      await expect(tooltips.nth(2)).toBeVisible();
-
-      const bubble = tooltips.nth(2).locator('span').first();
-      expect(await bubble.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(INK);
+      expect(await section.locator('[tabindex], a, button').count()).toBe(0);
+      await expect(section.locator('[data-tooltip]')).toHaveCount(0);
     });
 
     test('availability: badge follows profile.json', async ({ page }) => {
@@ -276,32 +233,6 @@ for (const [path, dict, locale] of cases) {
     });
   });
 }
-
-test.describe('tools tap on touch', () => {
-  test.use({ hasTouch: true });
-
-  test('tools: tap toggles one tooltip at a time', async ({ page }) => {
-    const errors = collectErrors(page);
-    await page.goto('/');
-    const section = toolsSection(page);
-    const tiles = section.locator('[data-tool]');
-    const tooltips = section.locator('[data-tooltip]');
-
-    await tiles.nth(0).tap();
-    await expect(tiles.nth(0)).toHaveAttribute('data-open', '');
-    await expect(tooltips.nth(0)).toBeVisible();
-
-    await tiles.nth(1).tap();
-    await expect(tiles.nth(1)).toHaveAttribute('data-open', '');
-    await expect(tiles.nth(0)).not.toHaveAttribute('data-open');
-    await expect(tooltips.nth(1)).toBeVisible();
-    // The open (tapped) tile is inverted like on hover and focus.
-    await expect
-      .poll(() => tiles.nth(1).evaluate((el) => getComputedStyle(el).backgroundColor))
-      .toBe(INK);
-    expect(errors).toEqual([]);
-  });
-});
 
 test.describe('marquee tap on touch', () => {
   test.use({ hasTouch: true });
@@ -367,9 +298,10 @@ test.describe('static marquee without JavaScript', () => {
         await page.goto(path);
         await expectStaticMarquee(page, locale, 'off');
         await expect(servicesSection(page).getByRole('heading', { level: 3 })).toHaveCount(4);
-        await expect(toolsSection(page).getByRole('img')).toHaveCount(5);
-        for (const name of toolNames) {
-          await expect(toolsSection(page).getByRole('img', { name, exact: true })).toHaveCount(1);
+        const items = toolsSection(page).locator('[data-tool]');
+        await expect(items).toHaveCount(5);
+        for (const [index, name] of toolNames.entries()) {
+          await expect(items.nth(index)).toHaveText(name);
         }
       });
     });

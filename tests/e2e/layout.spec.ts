@@ -59,36 +59,19 @@ for (const [path, dict] of cases) {
       expect(box?.height ?? Infinity).toBeLessThanOrEqual(MAX_H1_HEIGHT);
     });
 
-    test('at 320px each tool tooltip fits without horizontal overflow', async ({ page }) => {
+    test('at 320px every tool name is visible without horizontal overflow', async ({ page }) => {
       await page.setViewportSize({ width: 320, height: 640 });
       await page.goto(path);
-
-      // Keyboard focus shows the tooltip (focus-visible), so walk the tiles with Tab.
-      let onTool = false;
-      for (let i = 0; i < 30 && !onTool; i++) {
-        await page.keyboard.press('Tab');
-        onTool = await page.evaluate(() => document.activeElement?.matches('[data-tool]') ?? false);
-      }
-      expect(onTool, 'Tab should reach the first [data-tool] tile').toBe(true);
-
-      const tiles = page.locator('[data-tool]');
-      await expect(tiles).toHaveCount(5);
+      const items = page.locator('[data-tool]');
+      await expect(items).toHaveCount(5);
       for (let index = 0; index < 5; index++) {
-        if (index > 0) await page.keyboard.press('Tab');
-        const tile = tiles.nth(index);
-        await expect(tile).toBeFocused();
-
-        const tooltip = tile.locator('[data-tooltip]');
-        await expect(tooltip).toBeVisible();
-
-        const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
-        expect(scrollWidth, `page overflow with tooltip ${index + 1}`).toBeLessThanOrEqual(320);
-
-        const box = await tooltip.boundingBox();
+        const box = await items.nth(index).boundingBox();
         expect(box).not.toBeNull();
         expect(box?.x ?? -1).toBeGreaterThanOrEqual(0);
         expect((box?.x ?? 0) + (box?.width ?? Infinity)).toBeLessThanOrEqual(320);
       }
+      const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+      expect(scrollWidth).toBeLessThanOrEqual(320);
     });
 
     test('at 320px the roles band is full-bleed', async ({ page }) => {

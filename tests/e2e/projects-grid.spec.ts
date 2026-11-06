@@ -50,8 +50,10 @@ for (const path of paths) {
         const rect = el.getBoundingClientRect();
         return { left: rect.left, right: rect.right };
       });
-      expect(Math.abs(e6.right - grid.right)).toBeLessThanOrEqual(1);
-      expect(e6.left).toBeGreaterThan(grid.left + 100);
+      // Redesign (finish review): the odd last tile is centred, not anchored right.
+      const gap = e6.left - grid.left;
+      expect(gap).toBeGreaterThan(100);
+      expect(Math.abs(gap - (grid.right - e6.right))).toBeLessThanOrEqual(2);
     });
 
     test('mobile is a single column, top to bottom', async ({ page }) => {

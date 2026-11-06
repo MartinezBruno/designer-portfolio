@@ -51,13 +51,13 @@ describe.each([
     const section = /<section[^>]*>/.exec(html)?.[0] ?? '';
     expect(section).toContain('id="contact"');
     expect(section).toContain('aria-labelledby="contact-title"');
-    expect(classTokens(section)).toEqual(expect.arrayContaining(['scroll-mt-24', 'max-w-6xl']));
+    expect(classTokens(section)).toEqual(expect.arrayContaining(['scroll-mt-24', 'max-w-[88rem]']));
 
     const h2 = /<h2[^>]*>([\s\S]*?)<\/h2>/.exec(html);
     expect(h2?.[0]).toContain('id="contact-title"');
     expect(h2?.[1]?.trim()).toBe(escapeHtml(dict['contact.heading']));
     expect(classTokens(h2?.[0] ?? '')).toEqual(
-      expect.arrayContaining(['font-display', 'text-4xl', 'font-semibold', 'tracking-tight']),
+      expect.arrayContaining(['font-display', 'text-4xl', 'sm:text-5xl', 'font-semibold']),
     );
     expect(html).toContain(escapeHtml(dict['contact.intro']));
   });
@@ -184,12 +184,12 @@ describe.each([
     const submit = openTag(html, /<button[^>]*data-contact-submit[^>]*>/);
     expect(submit).toContain('data-magnetic="pill"');
     expect(classTokens(submit)).toEqual(
-      expect.arrayContaining(['h-12', 'rounded-full', 'aria-disabled:cursor-progress']),
+      expect.arrayContaining(['h-14', 'rounded-full', 'aria-disabled:cursor-progress']),
     );
     expect(classTokens(submit)).not.toContain('bg-accent');
     const inner = /<button[^>]*data-contact-submit[^>]*>([\s\S]*?)<\/button>/.exec(html)?.[1] ?? '';
     const face = openTag(inner, /<span[^>]*data-magnetic-face[^>]*>/);
-    expect(classTokens(face)).toEqual(expect.arrayContaining(['bg-accent', 'px-6']));
+    expect(classTokens(face)).toEqual(expect.arrayContaining(['bg-accent', 'px-7']));
     for (const hook of ['data-contact-submit-label', 'data-icon-ready', 'data-icon-sending']) {
       expect(inner).toContain(hook);
     }

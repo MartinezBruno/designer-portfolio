@@ -9,10 +9,10 @@
   --font-sans: var(--font-inter);
   --font-display: var(--font-bricolage);
 
-  --color-surface: #faf7f2;
-  --color-surface-alt: #efe9e0;
-  --color-ink: #1a1714;
-  --color-ink-muted: #5e5750;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f2f3f5;
+  --color-ink: #111111;
+  --color-ink-muted: #565b61;
   --color-accent: #0f70b7;
   --color-accent-ink: #ffffff;
   /* Primary pill hover: a step darker, never lighter. The old bg-accent/90 lightened to #267ebd,
@@ -36,9 +36,13 @@
   /* Hero only: body-to-lead step (18px phone, 20px desktop) and the display headline. */
   --text-lead: clamp(1.125rem, 1rem + 0.5vw, 1.25rem);
   --text-lead--line-height: 1.5;
-  --text-display: clamp(3.5rem, 2rem + 9vw, 7rem);
-  --text-display--line-height: 0.9;
+  --text-display: clamp(3.75rem, 0.5rem + 11.5vw, 10.5rem);
+  --text-display--line-height: 0.86;
   --text-display--letter-spacing: -0.04em;
+  /* Section headings: one confident step below the display. */
+  --text-section: clamp(2.5rem, 1.25rem + 4.6vw, 5.5rem);
+  --text-section--line-height: 0.95;
+  --text-section--letter-spacing: -0.035em;
 
   /* Motion easings (UI-SPEC "Motion Tokens"); tokens.ts mirrors them for GSAP. */
   --ease-reveal: cubic-bezier(0.22, 1, 0.36, 1);
@@ -51,6 +55,16 @@
       transform: translateX(calc(-100% - var(--marquee-gap)));
     }
   }
+}
+
+/* Browser surfaces carry the palette. */
+::selection {
+  background-color: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+html {
+  accent-color: var(--color-accent);
+  caret-color: var(--color-accent);
 }
 
 /* Motion durations (UI-SPEC "Motion Tokens"); tokens.ts mirrors the GSAP ones in seconds. */
@@ -443,6 +457,8 @@ html[data-motion='reduced']::view-transition-new(root) {
  * take the Phase 6 mat inset. Nothing moves layout. Under 'on' the mat rides its existing rest
  * transition (one declaration per layer, 06-06); under 'reduced' the mat has no transition, so the
  * inset lands instantly, and no rule here touches transform, translate or scale. 'off' never marks.
+ * The nav links carry a 150 ms colour transition for hover; the pressed cue opts out of it so the
+ * accent underline lands on the same frame as the mark, not 150 ms later.
  */
 a[data-nav-pressed] {
   color: var(--color-ink);
@@ -450,6 +466,7 @@ a[data-nav-pressed] {
   text-decoration-color: var(--color-accent);
   text-decoration-thickness: 2px;
   text-underline-offset: 4px;
+  transition: none;
 }
 :is([data-motion='on'], [data-motion='reduced'])
   [data-card]:has([data-nav-pressed])

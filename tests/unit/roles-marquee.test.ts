@@ -95,15 +95,17 @@ describe('RolesMarquee', () => {
     expect(tokens).toContain('group-data-paused:[animation-play-state:paused]');
   });
 
-  it('uses the compact band size', async () => {
+  it('uses the large band size', async () => {
     const html = await render('en');
     const section = classTokens(firstTag(html, '<section[^>]*>'));
-    expect(section).toContain('py-4');
-    expect(section).not.toContain('py-8');
+    expect(section).toEqual(expect.arrayContaining(['py-6', 'lg:py-8']));
     const item = classTokens(firstTag(html, '<li[^>]*>'));
-    expect(item).toContain('motion-on:text-3xl');
-    expect(item).not.toContain('motion-on:text-5xl');
-    expect(classTokens(firstTag(html, '<svg[^>]*>'))).toContain('size-5');
+    // One size in every motion state: toggling motion never changes the band height.
+    expect(item).toEqual(expect.arrayContaining(['text-2xl', 'xl:text-[1.875rem]']));
+    expect(item.some((c) => c.startsWith('motion-on:text-'))).toBe(false);
+    expect(classTokens(firstTag(html, '<svg[^>]*>'))).toEqual(
+      expect.arrayContaining(['size-6', 'xl:size-7']),
+    );
   });
 
   it('hides every icon from assistive tech', async () => {

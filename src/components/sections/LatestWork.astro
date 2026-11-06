@@ -21,13 +21,9 @@ const t = useTranslations(locale);
 {projects.length > 0 && (
   <section
     aria-labelledby="work-title"
-    class="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 sm:px-6 lg:px-8"
+    class="mx-auto flex w-full max-w-[88rem] flex-col gap-10 px-4 sm:px-8 lg:gap-14 lg:px-12"
   >
-    <h2
-      id="work-title"
-      data-reveal="lines"
-      class="font-display text-2xl font-semibold tracking-tight"
-    >
+    <h2 id="work-title" data-reveal="lines" class="font-display text-section font-semibold">
       {t('work.heading')}
     </h2>
     <ProjectGrid
@@ -39,11 +35,11 @@ const t = useTranslations(locale);
     />
     <p data-reveal="settle" data-reveal-delay="280">
       <!-- Magnetic (D-12): the link keeps hit area and outline; the face (and its underline) moves.
-           The reveal stays on the <p>, never on the magnetic element. -->
+             The reveal stays on the <p>, never on the magnetic element. -->
       <a
         href={getRelativeLocaleUrl(locale, 'projects')}
         data-magnetic="link"
-        class="group/link text-ink focus-visible:outline-accent inline-flex min-h-11 items-center text-base font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
+        class="group/link text-ink focus-visible:outline-accent inline-flex min-h-11 items-center text-lead font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         <span
           data-magnetic-face

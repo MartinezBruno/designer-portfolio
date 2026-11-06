@@ -87,7 +87,7 @@ describe('ImageModule', () => {
     const out = await c.renderToString(ImageModule, {
       props: { ...imageProps, fullBleed: false, caption: 'Pie de foto', captionLang: 'es' },
     });
-    expect(out).toContain('max-w-6xl');
+    expect(out).toContain('max-w-[88rem]');
     expect(out).toMatch(/<figure\b/);
     expect(out).toMatch(/<figcaption lang="es"[^>]*>\s*Pie de foto\s*<\/figcaption>/);
     const bare = await c.renderToString(ImageModule, { props: imageProps });

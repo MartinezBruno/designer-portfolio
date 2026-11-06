@@ -6,12 +6,12 @@
 // only part GSAP translates. Used by ButtonLink and the contact submit. At rest the pair renders
 // exactly like the Phase 5 single-element pill.
 export const primaryShell =
-  'focus-visible:outline-accent inline-flex h-12 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2';
+  'focus-visible:outline-accent inline-flex h-14 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2';
 
 // One transition declaration for both the hover fill and the press scale; the press only applies
 // under `data-motion="on"`. GSAP's x/y write `transform`, the press writes `scale`, so they never clash.
 export const primaryFace =
-  'bg-accent text-accent-ink hover:bg-accent-hover inline-flex h-full items-center gap-2 rounded-full px-6 text-sm font-semibold motion-safe:transition-[background-color,scale] motion-safe:duration-150 motion-on:active:scale-[0.97]';
+  'bg-accent text-accent-ink hover:bg-accent-hover inline-flex h-full items-center gap-3 rounded-full px-7 text-base font-semibold motion-safe:transition-[background-color,scale] motion-safe:duration-150 motion-on:active:scale-[0.97]';
 
 // Ink pill: the secondary action (embed facade load, "Send another message"). Never magnetic.
 export const inkButton =

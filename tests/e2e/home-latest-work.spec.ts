@@ -26,15 +26,18 @@ test.describe('latest work', () => {
         await page.goto(path);
       });
 
-      test('sits between services and tools with the localized heading', async ({ page }) => {
+      test('sits after the roles band and before services with the localized heading', async ({
+        page,
+      }) => {
         const section = page.locator('section[aria-labelledby="work-title"]');
         await expect(section).toHaveCount(1);
         await expect(section.getByRole('heading', { level: 2 })).toHaveText(dict['work.heading']);
 
+        // Redesign (finish review): the work comes before the services index.
+        const roles = page.locator('section[aria-labelledby="roles-title"]');
         const services = page.locator('section[aria-labelledby="services-title"]');
-        const tools = page.locator('section[aria-labelledby="tools-title"]');
-        expect(await precedes(services, section)).toBe(true);
-        expect(await precedes(section, tools)).toBe(true);
+        expect(await precedes(roles, section)).toBe(true);
+        expect(await precedes(section, services)).toBe(true);
       });
 
       test('shows the selection as one even row from md', async ({ page }) => {

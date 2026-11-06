@@ -131,11 +131,11 @@ const dangerTitle = 'text-base font-semibold text-danger inline-flex items-cente
 
   <input type="hidden" name="locale" value={locale} />
 
-  <div class="flex flex-col items-start gap-6 sm:flex-row sm:items-end">
+  <div class="flex flex-row flex-wrap items-end justify-between gap-4 sm:gap-6">
     <!-- leading-[0]: the compact widget is an inline 150x140 iframe; inherited leading added a 6 px
          descent below it, so the slot outgrew its 140 px reserve (07-21). The note sets its own. -->
-    <div data-turnstile class="min-h-[140px] w-[150px] leading-[0]">
-      <p class="text-ink-muted text-sm">{t('contact.turnstile.loading')}</p>
+    <div data-turnstile class="bg-surface-alt min-h-[140px] w-[150px] text-[0px] leading-[0]">
+      <p class="text-ink-muted p-3 text-sm">{t('contact.turnstile.loading')}</p>
     </div>
     <button
       type="submit"

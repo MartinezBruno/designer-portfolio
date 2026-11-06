@@ -32,7 +32,7 @@ test.describe('hero without JavaScript', () => {
       });
       await expect(intro).toBeVisible();
       expect(await intro.evaluate((el) => el.tagName)).toBe('P');
-      expect(await intro.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(26, 23, 20)');
+      expect(await intro.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(17, 17, 17)');
 
       const img = page.locator('#main section[aria-labelledby="hero-title"] picture img');
       await expect(img).toBeVisible();
@@ -56,8 +56,8 @@ test.describe('hero without JavaScript', () => {
     });
 
     for (const [width, maxSide] of [
-      [375, 256],
-      [1280, 320],
+      [375, 128],
+      [1280, 256],
     ] as const) {
       test(`${path} hero portrait is a capped circle at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 900 });

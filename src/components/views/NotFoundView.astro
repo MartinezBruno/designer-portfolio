@@ -20,15 +20,15 @@ const esHome = getRelativeLocaleUrl('es', '/');
 
 <section
   aria-labelledby="not-found-title"
-  class="mx-auto flex max-w-6xl flex-col items-center gap-12 px-4 py-16 text-center sm:px-6 lg:px-8"
+  class="mx-auto flex max-w-[88rem] flex-col items-center gap-10 px-4 py-24 text-center sm:px-8 lg:px-12 lg:py-32"
 >
-  <p aria-hidden="true" class="font-display text-ink-muted text-5xl font-semibold">
+  <p aria-hidden="true" class="font-display text-accent text-display font-semibold">
     404
   </p>
   <h1 id="not-found-title" tabindex="-1" class="font-display text-5xl font-semibold tracking-tight">
     {t('notFound.heading')}
   </h1>
-  <p class="text-ink-muted text-base">{t('notFound.body')}</p>
+  <p class="text-ink text-lead">{t('notFound.body')}</p>
   <ButtonLink href={home}>
     {t('notFound.cta')}
     <Fragment slot="icon">

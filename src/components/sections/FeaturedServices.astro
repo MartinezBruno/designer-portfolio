@@ -21,16 +21,18 @@ const t = useTranslations(locale);
 
 <section
   aria-labelledby="services-title"
-  class="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 sm:px-6 lg:px-8"
+  class="mx-auto grid w-full max-w-[88rem] grid-cols-1 gap-x-8 gap-y-10 px-4 sm:px-8 lg:grid-cols-12 lg:px-12"
 >
-  <h2
-    id="services-title"
-    data-reveal="lines"
-    class="font-display text-2xl font-semibold tracking-tight"
-  >
-    {t('services.heading')}
-  </h2>
-  <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4" data-reveal-stagger="70">
+  <div class="lg:col-span-4">
+    <h2
+      id="services-title"
+      data-reveal="lines"
+      class="font-display text-section font-semibold text-balance lg:sticky lg:top-28 lg:text-[clamp(2.5rem,4.2vw,4rem)]"
+    >
+      {t('services.heading')}
+    </h2>
+  </div>
+  <ul class="flex flex-col gap-24 lg:col-span-8 lg:gap-20" data-reveal-stagger="70">
     {services.map((service) => (
       <ServiceCard
         title={service.title}

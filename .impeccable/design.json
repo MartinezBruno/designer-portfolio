@@ -1,0 +1,413 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-05T00:00:00Z",
+  "title": "Design System: Martina Fernandez Portfolio",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "Client Blue",
+        "canonical": "#0f70b7",
+        "tonalRamp": [
+          "#062b47",
+          "#09406a",
+          "#0c5590",
+          "#0f70b7",
+          "#3d8fcb",
+          "#74b0dc",
+          "#abd0eb",
+          "#e3eff8"
+        ]
+      },
+      "accent-hover": {
+        "role": "primary",
+        "displayName": "Deep Client Blue",
+        "canonical": "color-mix(in oklab, #0f70b7 88%, #111111)",
+        "tonalRamp": [
+          "#06253d",
+          "#09375c",
+          "#0c4a7c",
+          "#0e63a2",
+          "#3b84bd",
+          "#71a8d4",
+          "#a9cbe7",
+          "#e1edf7"
+        ]
+      },
+      "accent-ink": {
+        "role": "primary",
+        "displayName": "Blue-Field White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#5c5c5c",
+          "#7a7a7a",
+          "#9e9e9e",
+          "#c4c4c4",
+          "#e6e6e6",
+          "#ffffff"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Near-Black Ink",
+        "canonical": "#111111",
+        "tonalRamp": [
+          "#111111",
+          "#262626",
+          "#3d3d3d",
+          "#565656",
+          "#737373",
+          "#999999",
+          "#c2c2c2",
+          "#ebebeb"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Graphite",
+        "canonical": "#565b61",
+        "tonalRamp": [
+          "#1d1f21",
+          "#2f3236",
+          "#43474b",
+          "#565b61",
+          "#73787e",
+          "#9599a0",
+          "#bcc0c4",
+          "#e4e6e8"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Gallery White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#5c5c5c",
+          "#7a7a7a",
+          "#9e9e9e",
+          "#c4c4c4",
+          "#e6e6e6",
+          "#ffffff"
+        ]
+      },
+      "surface-alt": {
+        "role": "neutral",
+        "displayName": "Cool Grey Step",
+        "canonical": "#f2f3f5",
+        "tonalRamp": [
+          "#24262a",
+          "#3c3f44",
+          "#575b61",
+          "#767a81",
+          "#9a9ea5",
+          "#c1c4c9",
+          "#e1e3e6",
+          "#f2f3f5"
+        ]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Signal Red",
+        "canonical": "#b42318",
+        "tonalRamp": [
+          "#440d09",
+          "#6b150e",
+          "#911c13",
+          "#b42318",
+          "#d24c40",
+          "#e57f76",
+          "#f2b3ad",
+          "#fbe6e4"
+        ]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Signal Green",
+        "canonical": "#1f7a4d",
+        "tonalRamp": [
+          "#0b2c1c",
+          "#11432b",
+          "#185d3b",
+          "#1f7a4d",
+          "#3f9a6c",
+          "#71ba94",
+          "#a8d8bf",
+          "#e1f3ea"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero name, Projects h1 and the 404 numeral only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headings and the project-detail h1 from sm; two lines at most."
+      },
+      "title-lg": {
+        "displayName": "Title Large",
+        "purpose": "Service names on desktop, contact and project-band headings, 404 h1."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Full project card titles, next-project title, mobile detail h1."
+      },
+      "title-sm": {
+        "displayName": "Title Small",
+        "purpose": "Compact card titles, header wordmark, roles band base size."
+      },
+      "lead": {
+        "displayName": "Lead",
+        "purpose": "Intros, service item lists, card summaries; 46ch to 60ch measure."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text, nav links, button labels at 600."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Chips, motion toggle tooltip, cursor View pill, ink pill labels; sentence case, no tracking."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "ease-reveal",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Reveals, settles, hover clip-path, reduced crossfade. GSAP mirror power4.out."
+      },
+      {
+        "name": "ease-travel",
+        "value": "cubic-bezier(0.76, 0, 0.24, 1)",
+        "purpose": "Shutter, ink wipe, title morph, hero portrait. GSAP mirror power3.inOut."
+      },
+      {
+        "name": "ease-soft",
+        "value": "cubic-bezier(0.33, 1, 0.68, 1)",
+        "purpose": "Image scale on hover and reveal. GSAP mirror power2.out."
+      },
+      {
+        "name": "t-press",
+        "value": "140ms",
+        "purpose": "Press feedback."
+      },
+      {
+        "name": "t-hover",
+        "value": "180ms",
+        "purpose": "Hover state changes."
+      },
+      {
+        "name": "t-ui",
+        "value": "240ms",
+        "purpose": "UI state transitions."
+      },
+      {
+        "name": "t-fade",
+        "value": "320ms",
+        "purpose": "Opacity fades; every reveal under reduced."
+      },
+      {
+        "name": "t-settle",
+        "value": "560ms",
+        "purpose": "Settle reveal: fade plus 20px rise."
+      },
+      {
+        "name": "t-line",
+        "value": "640ms",
+        "purpose": "Heading line rise."
+      },
+      {
+        "name": "t-shutter",
+        "value": "720ms",
+        "purpose": "Cover shutter opening from the bottom edge."
+      },
+      {
+        "name": "t-hero",
+        "value": "720ms",
+        "purpose": "Hero headline line rise."
+      },
+      {
+        "name": "t-wipe",
+        "value": "560ms",
+        "purpose": "Ink wipe navigation pass and title morph; entrances release at 0.7."
+      },
+      {
+        "name": "t-nav-fade",
+        "value": "320ms",
+        "purpose": "Reduced-motion navigation crossfade."
+      },
+      {
+        "name": "marquee",
+        "value": "40s linear infinite",
+        "purpose": "Roles band loop under motion on only."
+      },
+      {
+        "name": "motion-gate",
+        "value": "html[data-motion=on|reduced], absent = off",
+        "purpose": "Every hidden start state and motion rule is scoped to this attribute; off shows everything."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      },
+      {
+        "name": "portrait-max",
+        "value": "1400px"
+      },
+      {
+        "name": "2xl",
+        "value": "1536px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Pill",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one filled blue action per view; magnetic face under motion on.",
+      "html": "<a href=\"#\" class=\"ds-btn-primary\">Let's work together <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12l14 0\"/><path d=\"M13 18l6 -6\"/><path d=\"M13 6l6 6\"/></svg></a>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 12px; height: 56px; padding: 0 28px; border-radius: 9999px; background: var(--color-accent, #0f70b7); color: var(--color-accent-ink, #ffffff); font-family: var(--font-sans), Inter, sans-serif; font-size: 16px; font-weight: 600; text-decoration: none; transition: background-color 150ms, scale 150ms; } .ds-btn-primary:hover { background: color-mix(in oklab, #0f70b7 88%, #111111); } .ds-btn-primary:active { scale: 0.97; } .ds-btn-primary:focus-visible { outline: 2px solid #0f70b7; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ink Pill",
+      "kind": "button",
+      "refersTo": "button-ink",
+      "description": "Secondary action; never magnetic.",
+      "html": "<button type=\"button\" class=\"ds-btn-ink\">Send another message</button>",
+      "css": ".ds-btn-ink { display: inline-flex; align-items: center; gap: 8px; height: 48px; padding: 0 24px; border: 0; border-radius: 9999px; background: #111111; color: #ffffff; font-family: var(--font-sans), Inter, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 150ms; } .ds-btn-ink:hover { background: rgb(17 17 17 / 0.9); } .ds-btn-ink:focus-visible { outline: 2px solid #0f70b7; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Link",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "Ink text with a 2px Client Blue underline and trailing arrow.",
+      "html": "<a href=\"#\" class=\"ds-link\">See all projects <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12l14 0\"/><path d=\"M13 18l6 -6\"/><path d=\"M13 6l6 6\"/></svg></a>",
+      "css": ".ds-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: #111111; font-family: var(--font-sans), Inter, sans-serif; font-size: 18px; font-weight: 600; text-decoration: none; text-decoration-color: #0f70b7; text-decoration-thickness: 2px; text-underline-offset: 4px; } .ds-link:hover, .ds-link:focus-visible { text-decoration-line: underline; } .ds-link:focus-visible { outline: 2px solid #0f70b7; outline-offset: 2px; }"
+    },
+    {
+      "name": "Service Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Single-choice radio pill; selected fills ink.",
+      "html": "<div class=\"ds-chips\"><span class=\"ds-chip\">Web design</span><span class=\"ds-chip ds-chip-selected\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12l5 5l10 -10\"/></svg> Not sure yet</span></div>",
+      "css": ".ds-chips { display: flex; gap: 8px; flex-wrap: wrap; } .ds-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 16px; border: 2px solid #565b61; border-radius: 9999px; background: #ffffff; color: #111111; font-family: var(--font-sans), Inter, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 150ms, border-color 150ms, color 150ms; } .ds-chip:hover { border-color: #111111; } .ds-chip-selected { border-color: #111111; background: #111111; color: #ffffff; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Square cool-grey field with a 2px bottom edge.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Your email</span><input class=\"ds-input\" type=\"email\" placeholder=\"you@example.com\"></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 8px; font-family: var(--font-sans), Inter, sans-serif; } .ds-field-label { font-size: 16px; font-weight: 600; color: #111111; } .ds-input { height: 48px; padding: 12px 16px; border: 0; border-bottom: 2px solid #565b61; border-radius: 0; background: #f2f3f5; color: #111111; font-size: 16px; } .ds-input:focus-visible { outline: 2px solid #0f70b7; outline-offset: 2px; } .ds-input[aria-invalid=true] { border-bottom-color: #b42318; }"
+    },
+    {
+      "name": "Site Header",
+      "kind": "nav",
+      "refersTo": "",
+      "description": "Sticky 64px white row, no border; wordmark left, links right.",
+      "html": "<header class=\"ds-header\"><a href=\"#\" class=\"ds-wordmark\">Martina Fernandez</a><nav class=\"ds-nav\"><a href=\"#\">Projects</a><a href=\"#\">Contact</a><span class=\"ds-lang\"><b>EN</b> / ES</span></nav></header>",
+      "css": ".ds-header { display: flex; align-items: center; justify-content: space-between; height: 64px; padding: 0 48px; background: #ffffff; } .ds-wordmark { font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif; font-size: 24px; font-weight: 600; letter-spacing: -0.025em; color: #111111; text-decoration: none; } .ds-nav { display: flex; align-items: center; gap: 24px; font-family: var(--font-sans), Inter, sans-serif; font-size: 16px; font-weight: 600; } .ds-nav a { color: #111111; text-decoration: none; transition: color 150ms; } .ds-nav a:hover { color: #0f70b7; } .ds-nav a:focus-visible { outline: 2px solid #0f70b7; outline-offset: 2px; } .ds-lang { font-size: 14px; color: #565b61; } .ds-lang b { color: #111111; text-decoration: underline; text-decoration-color: #0f70b7; text-underline-offset: 4px; }"
+    },
+    {
+      "name": "Project Tile",
+      "kind": "card",
+      "refersTo": "",
+      "description": "Square cover in a cool-grey well, title and meta on the page; hover insets the cover 12px.",
+      "html": "<article class=\"ds-tile\"><div class=\"ds-tile-frame\"><div class=\"ds-tile-mat\"><div class=\"ds-tile-img\"></div></div></div><h3 class=\"ds-tile-title\"><a href=\"#\">Reciclick website</a></h3><p class=\"ds-tile-meta\">Web design</p></article>",
+      "css": ".ds-tile { display: flex; flex-direction: column; gap: 8px; width: 320px; font-family: var(--font-sans), Inter, sans-serif; } .ds-tile-frame { aspect-ratio: 4 / 5; background: #f2f3f5; overflow: clip; margin-bottom: 8px; } .ds-tile-mat { width: 100%; height: 100%; clip-path: inset(0); transition: clip-path 280ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-tile-img { width: 100%; height: 100%; background: #5c7a4a; transition: scale 490ms cubic-bezier(0.33, 1, 0.68, 1); } .ds-tile:hover .ds-tile-mat { clip-path: inset(12px); transition-duration: 400ms; } .ds-tile:hover .ds-tile-img { scale: 1.05; transition-duration: 700ms; } .ds-tile-title { margin: 0; font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif; font-size: 24px; font-weight: 600; letter-spacing: -0.025em; } .ds-tile-title a { color: #111111; text-decoration-color: #0f70b7; text-decoration-thickness: 2px; text-underline-offset: 4px; text-decoration-line: none; } .ds-tile:hover .ds-tile-title a { text-decoration-line: underline; } .ds-tile-meta { margin: 0; font-size: 16px; color: #565b61; }"
+    },
+    {
+      "name": "Roles Band",
+      "kind": "custom",
+      "refersTo": "roles-band",
+      "description": "Full-bleed Client Blue marquee of roles; one font size in every motion state.",
+      "html": "<div class=\"ds-band\"><ul><li><span class=\"ds-star\">*</span> Branding</li><li><span class=\"ds-star\">*</span> Social media manager</li><li><span class=\"ds-star\">*</span> Graphic design</li></ul></div>",
+      "css": ".ds-band { background: #0f70b7; color: #ffffff; padding: 24px 0; overflow: hidden; } .ds-band ul { display: flex; justify-content: space-around; gap: 32px; margin: 0; padding: 0; list-style: none; } .ds-band li { display: inline-flex; align-items: center; gap: 16px; white-space: nowrap; font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif; font-size: 24px; font-weight: 600; letter-spacing: -0.025em; } .ds-star { color: rgb(255 255 255 / 0.7); }"
+    },
+    {
+      "name": "Tool List",
+      "kind": "custom",
+      "refersTo": "tool-item",
+      "description": "Tool marks in white circles on the cool-grey band, each followed by its visible name; not interactive.",
+      "html": "<ul class=\"ds-tools\"><li><span class=\"ds-mark\">Fi</span>Figma</li><li><span class=\"ds-mark\">Ps</span>Adobe Photoshop</li></ul>",
+      "css": ".ds-tools { display: flex; flex-wrap: wrap; gap: 20px 40px; margin: 0; padding: 48px; list-style: none; background: #f2f3f5; } .ds-tools li { display: inline-flex; align-items: center; gap: 12px; color: #111111; font-family: var(--font-sans), Inter, sans-serif; font-size: 20px; font-weight: 600; } .ds-mark { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 9999px; background: #ffffff; font-size: 14px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Gallery Wall in Client Blue",
+    "overview": "The category standard played straight, at Awwwards Site-of-the-Day craft. A pure white page carries a giant Bricolage Grotesque name, a strict 12-column grid gives the work the space, and the client blue arrives at page scale: the roles band under the hero, the footer block, link underlines, the cursor dot, the text selection. Everything else is ink on white with one tone step to a cool grey.\n\nDensity is low and confident. Sections are separated by large vertical space (128px, 176px on desktop) and a tone step to the cool grey surface, never by lines or boxes. Project imagery sits flush on the page with square corners and no frame; the type and the work do the talking. Headings rise line by line, covers open like shutters, and pages change under a flat ink wipe, all behind a three-state motion gate that falls back to fades or to stillness.\n\nThe world rejects the soft beige card-grid portfolio: rounded grey tiles, small headings, outlined boxes, shadows, gradients and tracked uppercase labels are not part of it.",
+    "keyCharacteristics": [
+      "White ground, near-black ink, client blue at page scale; one cool grey tone step for section changes and image wells.",
+      "Bricolage Grotesque display at very large sizes with tight negative tracking; Inter for all running text.",
+      "Strict 12-column grid inside an 88rem container with 16 / 32 / 48px gutters.",
+      "Square media, pill controls, no card boxes, no shadows at rest.",
+      "Motion is a system, not decoration: reveal kinds (settle, lines, shutter), a hero load sequence, ink-wipe navigation, magnetic pills and a custom cursor, every one gated on/reduced/off."
+    ],
+    "rules": [
+      {
+        "name": "The Page-Scale Blue Rule",
+        "body": "Client Blue is either a full-bleed field (band, footer) or a 2px line (underline, focus ring). Do not tint cards, chips or backgrounds with it at partial opacity.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Step Rule",
+        "body": "Section changes use space or the single tone step from white to cool grey. There is no third surface and no divider line.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two-Line Ceiling Rule",
+        "body": "Every headline wraps to at most two lines at every width; balance or cap its measure rather than letting it run to three.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sentence Case Rule",
+        "body": "All meta, labels and buttons are sentence case at their natural tracking. Negative tracking belongs to display sizes only.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Paper Rule",
+        "body": "Surfaces never lift. State is shown by fill change (blue to deep blue, white to ink), underline, or the card image's inset clip, never by shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use Client Blue as a full-bleed field or a 2px line (underline, focus ring), and white text on it.",
+      "Do separate sections with space (128px, 176px from lg) or the single step to cool grey.",
+      "Do set headings in Bricolage Grotesque semibold with negative tracking and keep every headline to two lines or fewer at every width.",
+      "Do keep image corners square and controls fully round (pills, chips, tool-mark circles).",
+      "Do place work on the 12-column grid inside the 88rem container with 16 / 32 / 48px gutters.",
+      "Do gate every new motion behind `data-motion` with an opacity-only reduced variant and a visible off state; use the reveal kinds and easing tokens rather than new curves.",
+      "Do keep the roles band at one font size across motion states.",
+      "Do darken, never lighten, a blue fill on hover so white text keeps 4.5:1."
+    ],
+    "donts": [
+      "Don't add eyebrows, kickers or tiny tracked uppercase labels above headings; meta is sentence case.",
+      "Don't use 1px hairline rules, divider lines or outlined boxes; the only borders are the 2px field bottom edge and the 2px chip outline.",
+      "Don't add shadows at rest, gradients, or card containers around projects or services.",
+      "Don't number projects or services with index numerals.",
+      "Don't round image or media corners; the circular portrait is a binding asset, not a pattern for other imagery.",
+      "Don't render the portrait above roughly 320 CSS px.",
+      "Don't use `motion-safe:` for new motion; it ignores the header toggle."
+    ]
+  }
+}
