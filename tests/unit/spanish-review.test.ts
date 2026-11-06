@@ -133,3 +133,43 @@ describe('buildContactEmail after the EMAIL_COPY_ES refactor', () => {
     expect(other.text).toContain('Servicio: Sin especificar\nIdioma del sitio: Español (ES)');
   });
 });
+
+const COPY_TODO_FILES = [
+  'src/i18n/ui.en.ts',
+  'src/i18n/ui.es.ts',
+  'src/content.config.ts',
+  'src/lib/projects/overrides-schema.ts',
+] as const;
+
+const NON_COPY_TODO_FILES = [
+  'src/data/site.ts',
+  'src/components/sections/Hero.astro',
+  'src/lib/contact/mailer/resend.ts',
+  'astro.config.ts',
+] as const;
+
+describe('TODO(martina) pointers (D-13)', () => {
+  it('points every copy TODO(martina) comment at 08-SPANISH-REVIEW.md', () => {
+    for (const file of COPY_TODO_FILES) {
+      const todos = readFileSync(file, 'utf8')
+        .split('\n')
+        .filter((line) => line.includes('TODO(martina)'));
+      expect(todos.length, `${file} has no TODO(martina)`).toBeGreaterThan(0);
+      for (const line of todos) expect(line, `${file}: ${line}`).toContain('08-SPANISH-REVIEW.md');
+    }
+  });
+
+  it('keeps the non-copy TODO(martina) items in place and listed in the review file', () => {
+    for (const file of NON_COPY_TODO_FILES) {
+      expect(readFileSync(file, 'utf8')).toContain('TODO(martina)');
+      expect(review).toContain(`- \`${file}:`);
+    }
+    for (const { location } of NON_COPY_TODOS) {
+      const match = /^(.+):(\d+)$/.exec(location);
+      if (!match) continue;
+      const [, file = '', line = '0'] = match;
+      const text = readFileSync(file, 'utf8').split('\n')[Number(line) - 1] ?? '';
+      expect(text, location).toContain('TODO(martina)');
+    }
+  });
+});
