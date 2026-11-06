@@ -9,7 +9,6 @@ async function renderCard(): Promise<string> {
   return container.renderToString(ServiceCard, {
     props: {
       title: 'Branding',
-      icon: 'palette',
       href: '/?service=branding#contact',
       locale: 'en',
       items: [
@@ -91,7 +90,6 @@ describe('service card', () => {
 const services: ServiceView[] = [
   {
     id: 'graphic-design',
-    icon: 'vector',
     title: 'Graphic design',
     items: [
       'Merchandise and packaging design',
@@ -102,7 +100,6 @@ const services: ServiceView[] = [
   },
   {
     id: 'web-design',
-    icon: 'layout',
     title: 'Web design',
     items: [
       'Wireframes and assets',
@@ -114,7 +111,6 @@ const services: ServiceView[] = [
   },
   {
     id: 'branding',
-    icon: 'palette',
     title: 'Branding',
     items: [
       'Visual identity',
@@ -127,7 +123,6 @@ const services: ServiceView[] = [
   },
   {
     id: 'social-media',
-    icon: 'speakerphone',
     title: 'Social media',
     items: ['Social media management', 'Story and post design', 'Feed design'],
   },

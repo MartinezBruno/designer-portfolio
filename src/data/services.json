@@ -2,7 +2,6 @@
   {
     "id": "graphic-design",
     "order": 1,
-    "icon": "vector",
     "title": { "en": "Graphic design", "es": "Diseño gráfico" },
     "items": {
       "en": [
@@ -22,7 +21,6 @@
   {
     "id": "web-design",
     "order": 2,
-    "icon": "layout",
     "title": { "en": "Web design", "es": "Diseño web" },
     "items": {
       "en": [
@@ -44,7 +42,6 @@
   {
     "id": "branding",
     "order": 3,
-    "icon": "palette",
     "title": { "en": "Branding", "es": "Branding" },
     "items": {
       "en": [
@@ -68,7 +65,6 @@
   {
     "id": "social-media",
     "order": 4,
-    "icon": "speakerphone",
     "title": { "en": "Social media", "es": "Social media" },
     "items": {
       "en": ["Social media management", "Story and post design", "Feed design"],

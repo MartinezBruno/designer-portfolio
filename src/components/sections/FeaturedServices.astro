@@ -37,7 +37,6 @@ const t = useTranslations(locale);
       <ServiceCard
         title={service.title}
         items={service.items}
-        icon={service.icon}
         href={`${getRelativeLocaleUrl(locale, '/')}?service=${service.id}#contact`}
         locale={locale}
       />

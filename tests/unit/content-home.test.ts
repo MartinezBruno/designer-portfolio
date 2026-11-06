@@ -15,7 +15,7 @@ import {
   type ServiceEntry,
   type ToolEntry,
 } from '../../src/lib/content/home';
-import { serviceIconKeys, toolIconKeys } from '../../src/lib/content/icons';
+import { toolIconKeys } from '../../src/lib/content/icons';
 
 // Direct JSON imports: the file() loader swallows parse errors, these fail pnpm test instead.
 describe('content files', () => {
@@ -66,10 +66,9 @@ describe('content files', () => {
     expect(branding?.items.en[0]).toBe('Visual identity');
   });
 
-  it('every service icon is a known service icon key', () => {
-    const keys: readonly string[] = serviceIconKeys;
+  it('services have no icon field', () => {
     for (const service of services) {
-      expect(keys).toContain(service.icon);
+      expect(Object.keys(service)).not.toContain('icon');
     }
   });
 
@@ -137,7 +136,6 @@ describe('home query layer', () => {
       id: 'branding',
       data: {
         order: 3,
-        icon: 'palette',
         title: { en: 'Branding', es: 'Branding' },
         items: { en: ['Visual identity', 'Logo'], es: ['Identidad visual', 'Logo'] },
       },
@@ -146,7 +144,6 @@ describe('home query layer', () => {
       id: 'graphic-design',
       data: {
         order: 1,
-        icon: 'vector',
         title: { en: 'Graphic design', es: 'Diseño gráfico' },
         items: { en: ['Watermarks'], es: ['Marcas de agua'] },
       },
@@ -155,7 +152,6 @@ describe('home query layer', () => {
       id: 'social-media',
       data: {
         order: 4,
-        icon: 'speakerphone',
         title: { en: 'Social media', es: 'Social media' },
         items: { en: ['Feed design'], es: ['Diseño del feed'] },
       },
@@ -164,7 +160,6 @@ describe('home query layer', () => {
       id: 'web-design',
       data: {
         order: 2,
-        icon: 'layout',
         title: { en: 'Web design', es: 'Diseño web' },
         items: { en: ['Prototyping'], es: ['Prototipado'] },
       },
@@ -245,10 +240,10 @@ describe('home query layer', () => {
     it('returns 4 ordered localized view models', () => {
       const views = buildServices(serviceFixture, 'en');
       expect(views).toEqual([
-        { id: 'graphic-design', icon: 'vector', title: 'Graphic design', items: ['Watermarks'] },
-        { id: 'web-design', icon: 'layout', title: 'Web design', items: ['Prototyping'] },
-        { id: 'branding', icon: 'palette', title: 'Branding', items: ['Visual identity', 'Logo'] },
-        { id: 'social-media', icon: 'speakerphone', title: 'Social media', items: ['Feed design'] },
+        { id: 'graphic-design', title: 'Graphic design', items: ['Watermarks'] },
+        { id: 'web-design', title: 'Web design', items: ['Prototyping'] },
+        { id: 'branding', title: 'Branding', items: ['Visual identity', 'Logo'] },
+        { id: 'social-media', title: 'Social media', items: ['Feed design'] },
       ]);
       for (const view of views) {
         expect(Object.keys(view)).not.toContain('description');
