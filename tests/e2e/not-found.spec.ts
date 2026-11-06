@@ -3,7 +3,10 @@ import { en } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
 
 // The Cloudflare adapter's preview serves the Spanish 404 for /es/* misses and the English 404
-// (with a Spanish cross-link) for every other miss. /es/404/ is still built and tested directly.
+// (with a Spanish cross-link) for every other miss. /es/404/ itself also returns HTTP 404
+// (Phase 1 WR-03 / Phase 8 D-17): src/pages/es/404.astro sets `prerender = false`, so no static
+// dist/client/es/404/index.html exists for the asset layer to serve as 200. The Worker renders the
+// route on demand and Astro gives localized 404 routes status 404.
 
 async function expectNoIndexWithoutCanonical(page: Page): Promise<void> {
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
@@ -43,8 +46,9 @@ test.describe('root 404', () => {
 });
 
 test.describe('Spanish 404', () => {
-  test('/es/404/ renders the Spanish 404', async ({ page }) => {
-    await page.goto('/es/404/');
+  test('/es/404/ returns the Spanish 404 with status 404', async ({ page }) => {
+    const response = await page.goto('/es/404/');
+    expect(response?.status()).toBe(404);
     await expect(page.locator('html')).toHaveAttribute('lang', 'es');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(es['notFound.heading']);
     await expect(page.getByRole('link', { name: es['notFound.cta'] })).toHaveAttribute(
@@ -55,5 +59,13 @@ test.describe('Spanish 404', () => {
 
     const toggle = page.getByRole('navigation', { name: 'Idioma' });
     await expect(toggle.getByRole('link', { name: 'English' })).toHaveAttribute('href', '/');
+  });
+
+  test('/es/404 (no trailing slash) returns the Spanish 404 with status 404', async ({ page }) => {
+    const response = await page.goto('/es/404');
+    expect(response?.status()).toBe(404);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(es['notFound.heading']);
+    await expectNoIndexWithoutCanonical(page);
   });
 });

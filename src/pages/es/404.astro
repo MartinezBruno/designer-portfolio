@@ -3,6 +3,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import NotFoundView from '../../components/views/NotFoundView.astro';
 import { useTranslations } from '../../i18n/t';
 
+// On demand, not prerendered: a static dist/client/es/404/index.html would be served by the
+// Workers asset layer as HTTP 200. Rendered by the Worker, Astro gives it status 404 (WR-03, D-17).
+export const prerender = false;
+
 const t = useTranslations('es');
 ---
 

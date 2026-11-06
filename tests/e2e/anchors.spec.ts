@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import services from '../../src/data/services.json' with { type: 'json' };
 import { interpolate } from '../../src/i18n/t';
 import { en } from '../../src/i18n/ui.en';
+import { es } from '../../src/i18n/ui.es';
 import { waitForNavigationIdle } from './helpers/navigation';
 import { settleMotion } from './helpers/motion';
 
@@ -232,14 +233,31 @@ test.describe('skip link', () => {
     });
   }
 
-  test('on: Tab once from the top, Enter focuses #main', async ({ page }) => {
-    await page.goto('/');
-    await page.keyboard.press('Tab');
-    const skip = page.getByRole('link', { name: en['a11y.skipToContent'], exact: true });
-    await expect(skip).toBeFocused();
-    await page.keyboard.press('Enter');
-    await expect(page.locator('#main')).toBeFocused();
-  });
+  const skipCases = [
+    { path: '/', label: en['a11y.skipToContent'] },
+    { path: '/es/', label: es['a11y.skipToContent'] },
+  ] as const;
+
+  for (const { path, label } of skipCases) {
+    test(`on: ${path} Tab once from the top keeps 16px padding, Enter focuses #main`, async ({
+      page,
+    }) => {
+      await page.goto(path);
+      await page.keyboard.press('Tab');
+      const skip = page.getByRole('link', { name: label, exact: true });
+      await expect(skip).toBeFocused();
+      // Phase 1 WR-02 / Phase 8 D-18: focus:not-sr-only resets padding, so the focused link
+      // needs its own horizontal padding.
+      const padding = await skip.evaluate((el) => {
+        const style = getComputedStyle(el);
+        return { paddingLeft: style.paddingLeft, paddingRight: style.paddingRight };
+      });
+      expect(padding.paddingLeft).toBe('16px');
+      expect(padding.paddingRight).toBe('16px');
+      await page.keyboard.press('Enter');
+      await expect(page.locator('#main')).toBeFocused();
+    });
+  }
 });
 
 test.describe('cross-page hash link', () => {
