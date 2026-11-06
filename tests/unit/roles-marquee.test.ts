@@ -84,15 +84,17 @@ describe('RolesMarquee', () => {
     expect(classTokens(firstTag(html, '<section[^>]*>'))).toContain('relative');
   });
 
-  it('pauses on hover, keyboard focus and the paused state', async () => {
+  it('pauses only through data-paused, which the controller syncs with aria-pressed', async () => {
     const html = await render('en');
-    const list = firstTag(html, '<ul[^>]*>');
-    const tokens = classTokens(list);
-    expect(tokens).toContain('group-hover:[animation-play-state:paused]');
-    expect(tokens).toContain(
-      'group-has-[[data-marquee-toggle]:focus-visible]:[animation-play-state:paused]',
-    );
-    expect(tokens).toContain('group-data-paused:[animation-play-state:paused]');
+    for (const list of html.match(/<ul[^>]*>/g) ?? []) {
+      const tokens = classTokens(list);
+      expect(tokens).toContain('group-data-paused:[animation-play-state:paused]');
+      // WR-01 (08-01): no CSS-only hover/focus pause and no data-playing override, so the
+      // visible play state can never disagree with aria-pressed.
+      const playState = tokens.filter((token) => token.includes('animation-play-state'));
+      expect(playState).toEqual(['group-data-paused:[animation-play-state:paused]']);
+    }
+    expect(html).not.toContain('data-playing');
   });
 
   it('uses the large band size', async () => {
