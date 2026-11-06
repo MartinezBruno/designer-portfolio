@@ -1,4 +1,5 @@
-// TODO(martina): review the polished copy in src/data/*.json (JSON has no comments).
+// TODO(martina): the copy in src/data/*.json is a draft; review in .planning/phases/08-quality-verification/08-SPANISH-REVIEW.md
+// (JSON has no comments; roles, services and project overrides are listed there).
 // - Spanish is her source copy; English is our translation (D-01).
 // - Service bullets were polished for parallel form and typos ("merchandasing", "en gral") (D-02).
 // - "Revisión y comentarios" / "Design reviews and feedback" replaces her ambiguous "Comentarios"

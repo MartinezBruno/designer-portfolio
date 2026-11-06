@@ -1,10 +1,10 @@
 // Source dictionary. Every UI string (visible or ARIA) lives here; ui.es.ts must match its keys.
-// Hero copy is a draft. TODO(martina): confirm final copy.
+// TODO(martina): Hero copy is a draft; review in .planning/phases/08-quality-verification/08-SPANISH-REVIEW.md.
 export const en = {
   'a11y.skipToContent': 'Skip to content',
   'a11y.newTab': '(opens in a new tab)',
   'nav.label': 'Main',
-  // TODO(martina): review Phase 3 copy (nav, projects page, Home work section).
+  // TODO(martina): Phase 3 copy (nav, projects page, Home work section), draft; review in .planning/phases/08-quality-verification/08-SPANISH-REVIEW.md.
   'nav.projects': 'Projects',
   'nav.contact': 'Contact',
   'lang.label': 'Language',
@@ -16,7 +16,7 @@ export const en = {
     'I design websites, brand visuals and social content that help small businesses look as good as they are.',
   'hero.imageAlt': 'Portrait of Martina Fernandez',
   'hero.cta': "Let's work together",
-  // TODO(martina): confirm Phase 2 copy (badge, section headings, pause label).
+  // TODO(martina): Phase 2 copy (badge, section headings, pause label), draft; review in .planning/phases/08-quality-verification/08-SPANISH-REVIEW.md.
   'availability.open': 'Open to new projects',
   'roles.heading': 'What I do',
   'roles.pause': 'Pause roles animation',
@@ -50,7 +50,7 @@ export const en = {
   'meta.projects.title': 'Projects — Martina Fernandez',
   'meta.projects.description':
     'Web design, branding and social media projects by Martina Fernandez, newest first.',
-  // TODO(martina): Phase 4 detail copy
+  // TODO(martina): Phase 4 detail copy, draft; review in .planning/phases/08-quality-verification/08-SPANISH-REVIEW.md.
   'detail.cta.button': "Let's work together",
   'detail.cta.heading': 'Need something like this?',
   'detail.cta.body': "Tell me what you need and I'll get back to you.",
@@ -68,7 +68,7 @@ export const en = {
   'detail.previous': 'Previous:',
   'meta.project.title': '{title} — Martina Fernandez',
   'meta.project.description': '{title}, a project by Martina Fernandez, graphic designer.',
-  // TODO(martina): Phase 5 contact copy
+  // TODO(martina): Phase 5 contact copy, draft; review in .planning/phases/08-quality-verification/08-SPANISH-REVIEW.md.
   'contact.submit': 'Send message',
   'contact.sending': 'Sending…',
   'contact.retry': 'Try again',
@@ -110,7 +110,7 @@ export const en = {
   'contact.nojs.subject': 'New project enquiry',
   'services.ask': 'Ask about this',
   'services.askTarget': ': {title}',
-  // TODO(martina): confirm Phase 6 copy (cursor label, motion toggle, OS hint).
+  // TODO(martina): Phase 6 copy (cursor label, motion toggle, OS hint), draft; review in .planning/phases/08-quality-verification/08-SPANISH-REVIEW.md.
   'cursor.view': 'View',
   'motion.toggle': 'Reduce motion',
   'motion.osLocked': 'Your device settings already reduce motion.',

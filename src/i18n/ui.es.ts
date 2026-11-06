@@ -5,7 +5,7 @@ export const es = {
   'a11y.skipToContent': 'Saltar al contenido',
   'a11y.newTab': '(se abre en una pestaña nueva)',
   'nav.label': 'Principal',
-  // TODO(martina): review Phase 3 copy (nav, projects page, Home work section).
+  // TODO(martina): Phase 3 copy (nav, projects page, Home work section), draft; review in .planning/phases/08-quality-verification/08-SPANISH-REVIEW.md.
   'nav.projects': 'Proyectos',
   'nav.contact': 'Contacto',
   'lang.label': 'Idioma',
@@ -17,7 +17,7 @@ export const es = {
     'Diseño webs, piezas de marca y contenido para redes que ayudan a pequeños negocios a verse tan bien como son.',
   'hero.imageAlt': 'Retrato de Martina Fernandez',
   'hero.cta': 'Trabajemos juntos',
-  // TODO(martina): confirm Phase 2 copy (badge, section headings, pause label).
+  // TODO(martina): Phase 2 copy (badge, section headings, pause label), draft; review in .planning/phases/08-quality-verification/08-SPANISH-REVIEW.md.
   'availability.open': 'Abierta a nuevos proyectos',
   'roles.heading': 'A qué me dedico',
   'roles.pause': 'Pausar animación de roles',
@@ -54,7 +54,7 @@ export const es = {
   'meta.projects.title': 'Proyectos — Martina Fernandez',
   'meta.projects.description':
     'Proyectos de diseño web, branding y redes sociales de Martina Fernandez, del más reciente al más antiguo.',
-  // TODO(martina): Phase 4 detail copy
+  // TODO(martina): Phase 4 detail copy, draft; review in .planning/phases/08-quality-verification/08-SPANISH-REVIEW.md.
   'detail.cta.button': 'Trabajemos juntos',
   'detail.cta.heading': '¿Necesitas algo así?',
   'detail.cta.body': 'Cuéntame qué necesitas y te respondo.',
@@ -72,7 +72,7 @@ export const es = {
   'detail.previous': 'Anterior:',
   'meta.project.title': '{title} — Martina Fernandez',
   'meta.project.description': '{title}, un proyecto de Martina Fernandez, diseñadora gráfica.',
-  // TODO(martina): Phase 5 contact copy
+  // TODO(martina): Phase 5 contact copy, draft; review in .planning/phases/08-quality-verification/08-SPANISH-REVIEW.md.
   'contact.submit': 'Enviar mensaje',
   'contact.sending': 'Enviando…',
   'contact.retry': 'Reintentar',
@@ -117,7 +117,7 @@ export const es = {
   'contact.nojs.subject': 'Nueva consulta de proyecto',
   'services.ask': 'Consultar',
   'services.askTarget': ': {title}',
-  // TODO(martina): confirm Phase 6 copy (cursor label, motion toggle, OS hint).
+  // TODO(martina): Phase 6 copy (cursor label, motion toggle, OS hint), draft; review in .planning/phases/08-quality-verification/08-SPANISH-REVIEW.md.
   'cursor.view': 'Ver',
   'motion.toggle': 'Reducir movimiento',
   'motion.osLocked': 'La configuración de tu dispositivo ya reduce el movimiento.',
