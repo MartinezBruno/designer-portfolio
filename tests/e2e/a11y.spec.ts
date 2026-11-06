@@ -14,11 +14,8 @@ import {
   type ExpectedProject,
 } from './helpers/projects';
 import { openContactForm } from './helpers/contact';
+import { AXE_TAGS } from './helpers/axe';
 import { settleMotion } from './helpers/motion';
-
-// Detail pages under axe: one with prose links, one with an embed, one image-led. The slugs are
-// resolved through the helper (snapshot + overrides), so a renamed or hidden project fails here.
-const AXE_DETAIL_SLUGS = ['website-instablogs', 'portfolio-web', 'sistema-visual'] as const;
 
 /**
  * 07-15: the contact controller loads on demand, so a fast Tab walk can reach the section before it
@@ -31,19 +28,8 @@ async function openContactAndReturnToTop(page: Page): Promise<void> {
   });
 }
 
-function detailPaths(): string[] {
-  return (['en', 'es'] as const).flatMap((locale) =>
-    AXE_DETAIL_SLUGS.map((slug) => {
-      const detail = expectedDetails(locale).find((entry) => entry.slug === slug);
-      if (detail === undefined) throw new Error(`a11y: no visible project with slug "${slug}"`);
-      return detail.href;
-    }),
-  );
-}
-
-const detailPages = detailPaths();
-
-// Phase 6 motion-state axe runs (V-18): Home, Projects and one detail page per locale.
+// Phase 6 motion-state cases (V-18): Home, Projects and one detail page per locale. Their axe runs
+// moved to a11y-sweep.spec.ts (every route); these feed the OS-locked tooltip and real JS-off checks.
 const MOTION_DETAIL_SLUG = 'website-instablogs';
 const motionStateCases = [
   { path: '/', dict: en },
@@ -57,27 +43,6 @@ const motionStateCases = [
   }),
 ];
 
-const pages = [
-  '/',
-  '/es/',
-  '/projects/',
-  '/es/projects/',
-  '/does-not-exist',
-  '/es/404/',
-  ...detailPages,
-];
-
-for (const path of pages) {
-  test(`${path} has zero WCAG 2.2 AA axe violations`, async ({ page }) => {
-    await page.goto(path);
-    await settleMotion(page);
-    const { violations } = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-      .analyze();
-    expect(violations).toEqual([]);
-  });
-}
-
 // Home with the form revealed and the Turnstile test widget rendered (05-05). Needs a real token
 // from challenges.cloudflare.com, hence @network.
 for (const path of ['/', '/es/']) {
@@ -89,9 +54,7 @@ for (const path of ['/', '/es/']) {
     await expect(page.locator('input[name="cf-turnstile-response"]')).toHaveValue(/.+/, {
       timeout: 15000,
     });
-    const { violations } = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-      .analyze();
+    const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
     expect(violations).toEqual([]);
   });
 }
@@ -216,8 +179,6 @@ const keyboardCases = [
   ['/', en, '/'],
   ['/es/', es, '/es/'],
 ] as const;
-
-const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 // Tab once and describe the newly focused element against one expected step.
 async function tabAndExpect(page: Page, step: Step): Promise<void> {
@@ -424,15 +385,6 @@ test.describe('with prefers-reduced-motion: reduce', () => {
   }
 
   for (const [path, dict, homeHref] of keyboardCases) {
-    test(`${path} has zero WCAG 2.2 AA axe violations under reduced motion`, async ({ page }) => {
-      await page.goto(path);
-      await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
-      // Phase 6 gate (V-18): every reveal has faded in, so axe sees the whole page settled.
-      await settleMotion(page, { scrollThrough: true });
-      const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
-      expect(violations).toEqual([]);
-    });
-
     test(`reduced-motion keyboard Tab order on ${path} skips the pause button`, async ({
       page,
     }) => {
@@ -450,16 +402,6 @@ test.describe('with prefers-reduced-motion: reduce', () => {
         await tabAndExpect(page, step);
       }
       await expectContactTail(page, dict);
-    });
-  }
-
-  for (const path of ['/projects/', '/es/projects/', ...detailPages]) {
-    test(`${path} has zero WCAG 2.2 AA axe violations under reduced motion`, async ({ page }) => {
-      await page.goto(path);
-      await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
-      await settleMotion(page, { scrollThrough: true });
-      const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
-      expect(violations).toEqual([]);
     });
   }
 
@@ -489,59 +431,9 @@ test.describe('with prefers-reduced-motion: reduce', () => {
   }
 });
 
-// Phase 6 gate (V-18), 'on': scroll the whole page so every reveal, line rise and shutter has run
-// and finished, then scan. No exclusions: WCAG evaluates the settled state.
-for (const { path } of motionStateCases) {
-  test(`${path} has zero axe violations in 'on' after every reveal settled`, async ({ page }) => {
-    await page.goto(path);
-    await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
-    await settleMotion(page, { scrollThrough: true });
-    const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
-    expect(violations).toEqual([]);
-  });
-}
-
-/**
- * Serves `path` with every <script> removed from the document and every script request aborted,
- * so no site code runs (no head gate, no reveal, no toggle). axe itself needs JavaScript to
- * inject, so `javaScriptEnabled: false` cannot host it; this reproduces the same page state while
- * keeping Playwright's own evaluation available. The site has no <noscript> or `scripting` media
- * query, so nothing else differs from a real JS-off visit (motion.spec.ts covers that one).
- */
-async function gotoWithoutSiteScripts(page: Page, path: string): Promise<void> {
-  await page.route('**/*', async (route) => {
-    const request = route.request();
-    if (request.resourceType() === 'script') {
-      await route.abort();
-      return;
-    }
-    if (request.resourceType() !== 'document') {
-      await route.continue();
-      return;
-    }
-    const response = await route.fetch();
-    const body = (await response.text()).replace(/<script\b[\s\S]*?<\/script>/gi, '');
-    await route.fulfill({ response, body });
-  });
-  await page.goto(path);
-}
-
-// Phase 6 gate (V-18), JS off: the markup default 'off' shows everything static.
-test.describe('with JavaScript off (site scripts stripped)', () => {
-  for (const { path } of motionStateCases) {
-    test(`${path} has zero axe violations with JS off`, async ({ page }) => {
-      await gotoWithoutSiteScripts(page, path);
-      await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
-      await expect(page.locator('[data-motion-toggle-root]')).toBeHidden();
-      await expect(page.locator('[data-reveal-armed], [data-revealed]')).toHaveCount(0);
-      const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
-      expect(violations).toEqual([]);
-    });
-  }
-});
-
-// The stripped-script runs above stand in for JS off; this pins that a real JS-off visit lands in
-// the same state they assert (markup default 'off', toggle not rendered, nothing armed).
+// The stripped-script axe runs (a11y-sweep.spec.ts) stand in for JS off; this pins that a real
+// JS-off visit lands in the same state they assert (markup default 'off', toggle not rendered,
+// nothing armed).
 test.describe('with javaScriptEnabled: false (state the stripped runs mirror)', () => {
   test.use({ javaScriptEnabled: false });
 
@@ -556,7 +448,7 @@ test.describe('with javaScriptEnabled: false (state the stripped runs mirror)', 
 });
 
 // Mid-reveal sample (UI-SPEC Accessibility Contract): 200ms after scrolling to Services. WCAG
-// judges the settled state (gated strictly above), so a mid-fade contrast finding here is only
+// judges the settled state (gated strictly in a11y-sweep.spec.ts), so a mid-fade contrast finding here is only
 // recorded as transient (the nodes go into a test annotation for the phase SUMMARY). Any rule other
 // than color-contrast fails.
 test(`/ mid-reveal sample (200ms after scrolling to Services) has only transient findings`, async ({
