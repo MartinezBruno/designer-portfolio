@@ -388,7 +388,32 @@ Plans:
   2. Every page passes axe checks in both EN and ES and can be fully used by keyboard alone, including the form, filters (if present), toggles, and navigation.
   3. Every piece of site copy has a Spanish draft marked for Martina's review, and a reviewer can find the full list of strings to review in one place.
 
-**Plans**: TBD
+**Plans**: 9 plans
+Plans:
+**Wave 1**
+
+- [ ] 08-01-PLAN.md — Marquee semantics: aria-pressed always matches the paused state, live reduced-motion reset (D-10..D-12)
+- [ ] 08-02-PLAN.md — Skip-link focus padding and /es/404/ returns HTTP 404 on Workers preview (D-17, D-18)
+- [ ] 08-03-PLAN.md — Remove dead HOME-04 service icon data and stale tooltip comment (D-15)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 08-04-PLAN.md — Every-route EN/ES axe sweep in on/reduced/off with build-output guard; trimmed-spec re-check (D-07, D-08, D-16)
+- [ ] 08-05-PLAN.md — Generated Spanish review file with coverage/freshness test; TODO(martina) repointed (D-13, D-14)
+- [ ] 08-07-PLAN.md — Taste-skill gate on the redesign, report-only, user reviews findings (D-20)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 08-06-PLAN.md — Keyboard-only journeys EN/ES (nav, toggles, marquee, detail, embed, contact) plus manual Tab pass (D-09)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 08-08-PLAN.md — Mobile Lighthouse (pinned 13.6.0, median of 5) for Home and the heaviest detail page, user sign-off (D-01..D-06)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 08-09-PLAN.md — Planning-docs hygiene and full gate on the combined result (D-19)
+
 **UI hint**: yes
 
 ## Progress
@@ -405,4 +430,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
 | 7. Page Transitions & Smooth Scroll | 21/21 | Complete   | 2026-11-05 |
-| 8. Quality Verification | 0/TBD | Not started | - |
+| 8. Quality Verification | 0/9 | Planned | - |
