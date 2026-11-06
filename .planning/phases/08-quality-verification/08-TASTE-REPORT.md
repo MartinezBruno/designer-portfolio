@@ -172,3 +172,14 @@ Not findings (test artefacts) [Verified]:
 - Build/e2e lock `tmp/build-e2e.lock` was held from `pnpm build` until the last probe and the preview stopped, then released.
 - The preview processes from this worktree (astro preview and workerd) were killed afterwards. Port 4483 returns 000.
 - Probe scripts are scratch files in `tmp/` (gitignored, not committed).
+
+## 7. User decision (2026-11-06, checkpoint Task 2)
+
+| Item | Decision | Follow-up |
+| --- | --- | --- |
+| A11Y-01: work-card cover mask stays closed after an instant jump | **Confirmed accessibility defect: "Confirm, fix later"** | Gap item for a later `/gsd:plan-phase 8 --gaps` plan. Not fixed in 08-07 |
+| T-01: footer name ends 66 px short of the right margin | **Deferred, logged** | Taste follow-up after Phase 8 |
+| T-02: soft, upscaled card covers (portrait crop of a landscape source) | **Deferred, logged** | Taste follow-up after Phase 8 |
+| T-04: bare, centred 404 (no picture, no motion) | **Deferred, logged** | Taste follow-up after Phase 8 |
+| T-03, T-05, T-06, T-07 | Seen, **not logged** | None |
+| Performance defects | None reported | None |
