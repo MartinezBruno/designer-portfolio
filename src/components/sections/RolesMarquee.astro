@@ -12,15 +12,17 @@ const t = useTranslations(locale);
 
 // Pause control (user decision at the 02-08 checkpoint): no visible button. A transparent
 // button covers the band as a sibling of the lists, so list semantics stay intact. Click/tap
-// or Space/Enter toggles aria-pressed + data-paused (WCAG 2.2.2). Until the user makes that
-// choice, hover and keyboard focus pause transiently. Once they choose "playing", data-playing
-// overrides hover/focus so the visible state always matches aria-pressed (WR-01).
-// White inset focus outline on the blue band (D-17). Hidden without motion.
+// or Space/Enter toggles the pause (WCAG 2.2.2). Until the user makes that choice, mouse hover
+// and keyboard focus pause transiently. The controller (lib/motion/marquee.ts) owns every pause
+// source and writes aria-pressed + data-paused together; data-paused is the only CSS pause
+// selector, so the visible state always matches aria-pressed (WR-01, WCAG 4.1.2). Leaving the
+// "on" motion state resets it (WR-03). White inset focus outline on the blue band (D-17).
+// Hidden without motion.
 
 // Shared by both copies. Without motion the first copy is a static wrapped list: it may shrink
 // to the band width (shrink-0 only with motion), otherwise it keeps its one-line width and clips.
 const copyClasses =
-  'flex min-w-full flex-wrap items-center justify-center gap-x-[var(--marquee-gap)] gap-y-2 px-4 sm:px-6 lg:px-8 motion-on:shrink-0 motion-on:flex-nowrap motion-on:justify-around motion-on:px-0 motion-on:animate-marquee motion-reduce:animate-none group-hover:[animation-play-state:paused] group-has-[[data-marquee-toggle]:focus-visible]:[animation-play-state:paused] group-data-paused:[animation-play-state:paused] group-data-playing:[animation-play-state:running]!';
+  'flex min-w-full flex-wrap items-center justify-center gap-x-[var(--marquee-gap)] gap-y-2 px-4 sm:px-6 lg:px-8 motion-on:shrink-0 motion-on:flex-nowrap motion-on:justify-around motion-on:px-0 motion-on:animate-marquee motion-reduce:animate-none group-data-paused:[animation-play-state:paused]';
 const itemClasses =
   'inline-flex items-center gap-4 whitespace-nowrap font-display text-2xl font-semibold tracking-tight text-accent-ink xl:text-[1.875rem] 2xl:text-[2.5rem]';
 ---

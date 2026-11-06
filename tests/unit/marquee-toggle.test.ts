@@ -20,7 +20,11 @@ function getSection(): HTMLElement {
   return section;
 }
 
-function pointer(target: Element, type: 'pointerenter' | 'pointerleave', pointerType = 'mouse'): void {
+function pointer(
+  target: Element,
+  type: 'pointerenter' | 'pointerleave',
+  pointerType = 'mouse',
+): void {
   target.dispatchEvent(new PointerEvent(type, { pointerType }));
 }
 
