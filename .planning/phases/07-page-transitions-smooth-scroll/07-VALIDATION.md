@@ -1,9 +1,9 @@
 ---
 phase: 7
 slug: page-transitions-smooth-scroll
-status: in-review
-nyquist_compliant: false
-wave_0_complete: false
+status: validated
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-11-02
 ---
 
@@ -96,7 +96,7 @@ Filled by the planner (2026-11-02) with plan task IDs; statuses set by 07-10 Tas
 - [x] `tests/e2e/helpers/navigation.ts` — `softNavigate(page, href)`, CDP listener counter
 - [x] e2e specs: transitions, smooth-scroll, parallax, navigation-leaks, transitions-reduced
 - [x] `settleMotion` helper extended to wait for VT attributes to clear
-- [ ] Wave 0 spike (folded into plans): Chromium wipe/morph captures in 07-02 and 07-06 (done, recaptured in 07-10); manual Safari/Firefox check pending: the user runs it after the gap fixes land
+- [x] Wave 0 spike (folded into plans): Chromium wipe/morph captures in 07-02 and 07-06 (done, recaptured in 07-10); manual Safari/Firefox check done in 07-17 Task 2 (user: "approved", 2026-11-05)
 
 ---
 
@@ -143,6 +143,23 @@ Filled by the planner (2026-11-02) with plan task IDs; statuses set by 07-10 Tas
 - [x] Wave 0 covers all MISSING references
 - [x] No watch-mode flags
 - [x] Feedback latency < 120s
-- [ ] `nyquist_compliant: true` set in frontmatter (not set: the budget row is green since 07-17, but the 07-17 open gap (A, contact form height jump) has no automated check yet)
+- [x] `nyquist_compliant: true` set in frontmatter (2026-11-06: gap (A) closed by 07-18 with `tests/e2e/contact-lazy.spec.ts -g "07-18"`, re-verified on HEAD b2ee4f6)
 
-**Approval:** manual UAT approved by the user 2026-11-05 (07-17); open gap (A) to be planned with `--gaps`
+**Approval:** manual UAT approved by the user 2026-11-05 (07-17); gap (A) closed by 07-18/07-21; Nyquist audit passed 2026-11-06
+
+---
+
+## Validation Audit 2026-11-06
+
+Re-run on HEAD `b2ee4f6`, after the post-phase `design/impeccable-redesign` merge (ff5bf7c, 42 src/test files changed).
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+- Unit: 16 Phase 7 files (`motion-*`, `nav-focus`, `lifecycle`, `smooth-scroll`, `service-preselect`, `projects-overrides`, `project-detail-site`, `project-modules`, `measure-bundle`, `contact-form-loader`, `contact-section`): **406 passed**
+- E2E (`pnpm build`, then `E2E_OFFLINE=1`): transitions, transitions-reduced, navigation-leaks, smooth-scroll, anchors, contact-preselect, parallax, stack-entrance, collection-motion, contact-lazy, nav-feedback: **123 passed, 0 failed**. `@network` cases were not run in this audit.
+- Bundle: ok, max eager 17,463 B on `/` (20 pages), markers clean
+- Gap (A) from 07-17 (contact form height jump): covered by the 07-18 e2e cases in `contact-lazy.spec.ts`, green above
