@@ -392,9 +392,9 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 08-01-PLAN.md — Marquee semantics: aria-pressed always matches the paused state, live reduced-motion reset (D-10..D-12)
-- [ ] 08-02-PLAN.md — Skip-link focus padding and /es/404/ returns HTTP 404 on Workers preview (D-17, D-18)
-- [ ] 08-03-PLAN.md — Remove dead HOME-04 service icon data and stale tooltip comment (D-15)
+- [x] 08-01-PLAN.md — Marquee semantics: aria-pressed always matches the paused state, live reduced-motion reset (D-10..D-12)
+- [x] 08-02-PLAN.md — Skip-link focus padding and /es/404/ returns HTTP 404 on Workers preview (D-17, D-18)
+- [x] 08-03-PLAN.md — Remove dead HOME-04 service icon data and stale tooltip comment (D-15)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -430,4 +430,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
 | 7. Page Transitions & Smooth Scroll | 21/21 | Complete   | 2026-11-05 |
-| 8. Quality Verification | 0/9 | Planned | - |
+| 8. Quality Verification | 3/9 | In Progress|  |
