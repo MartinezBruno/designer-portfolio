@@ -207,6 +207,16 @@ With compression both pages are **under 2.5 s**, but the detail page has only 70
 
 No other budget row missed: CLS 0, TBT 0, homepage JS 58.6 KiB gz and eager ≤ 17,661 B all pass.
 
+## Sign-off (2026-11-09)
+
+The user reviewed the Results and Misses at the 08-08 Task 3 checkpoint (D-06):
+
+- **Miss 1, Home LCP 3,189 ms:** "Fix (Recommended)". Fix → `/gsd:plan-phase 8 --gaps`. The hero lead `p[data-hero-lead]` must paint at full opacity in its first frame, for example with a slide-only settle. The taste-skill gate applies, and the page is re-measured afterwards.
+- **Miss 2, detail LCP 3,637 ms (all 7 EN detail pages 3.4–4.0 s):** "Fix (Recommended)". Fix → `/gsd:plan-phase 8 --gaps`. Defer GSAP/SplitText until after load or idle on detail pages, and/or fetch fewer below-fold images at load, to gain headroom. Re-measured afterwards.
+- **All other rows** (CLS, TBT, homepage JS gz, eager ceiling) pass. No sign-off is needed for them.
+
+**Re-measure rule:** both fixes change src/, so this report becomes stale once they land. Re-run it with the same D-01..D-06 protocol on the fix commit: mobile simulated, `pnpm dlx lighthouse@13.6.0`, 7 selection runs, then 5 runs each on Home and the heaviest EN detail page. Its Context must record the new commit, matching `git log -1 --format=%h -- src`. Then re-run the 08-09 full gate, all before Phase 8 is marked complete. Until then, QUAL-01 is measured but **not yet met**.
+
 ## How to reproduce
 
 ```bash
