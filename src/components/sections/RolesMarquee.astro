@@ -14,10 +14,10 @@ const t = useTranslations(locale);
 // button covers the band as a sibling of the lists, so list semantics stay intact. Click/tap
 // or Space/Enter toggles the pause (WCAG 2.2.2). Until the user makes that choice, mouse hover
 // and keyboard focus pause transiently. The controller (lib/motion/marquee.ts) owns every pause
-// source and writes aria-pressed + data-paused together; data-paused is the only CSS pause
-// selector, so the visible state always matches aria-pressed (WR-01, WCAG 4.1.2). Leaving the
-// "on" motion state resets it (WR-03). White inset focus outline on the blue band (D-17).
-// Hidden without motion.
+// source; data-paused is the only CSS pause selector. aria-pressed exposes only the explicit
+// choice, so the first activation always pauses (08 WR-01, option-a); the transient hover/focus
+// pause is visual only. Leaving the "on" motion state resets it (WR-03). White inset focus
+// outline on the blue band (D-17). Hidden without motion.
 
 // Shared by both copies. Without motion the first copy is a static wrapped list: it may shrink
 // to the band width (shrink-0 only with motion), otherwise it keeps its one-line width and clips.

@@ -146,18 +146,23 @@ for (const { locale, prefix, dict, other, otherPrefix } of cases) {
         const band = page.locator('[data-marquee] ul:not([aria-hidden])').first();
         const playState = (): Promise<string> =>
           band.evaluate((el) => getComputedStyle(el).animationPlayState);
-        const expectBand = async (paused: boolean): Promise<void> => {
-          await expect(toggle).toHaveAttribute('aria-pressed', paused ? 'true' : 'false');
+        // 08 WR-01 (option-a): aria-pressed is the explicit choice only; `paused` is visible.
+        const expectBand = async (pressed: boolean, paused = pressed): Promise<void> => {
+          await expect(toggle).toHaveAttribute('aria-pressed', pressed ? 'true' : 'false');
           await expect.poll(playState).toBe(paused ? 'paused' : 'running');
         };
 
         await expectBand(false);
         await tabUntil(page, '[data-marquee-toggle]');
-        // 08-01 / WCAG 2.2.2: keyboard focus alone holds the band (no explicit choice yet).
+        // 08-01 / WCAG 2.2.2: keyboard focus alone holds the band visually, but it is not a user
+        // choice, so aria-pressed stays "false".
+        await expectBand(false, true);
+        // The first Space is an explicit pause, the second an explicit resume.
+        await page.keyboard.press('Space');
         await expectBand(true);
-        // Space flips what is visible: an explicit resume, then an explicit pause.
         await page.keyboard.press('Space');
         await expectBand(false);
+        // Space once more: an explicit pause again.
         await page.keyboard.press('Space');
         await expectBand(true);
         await expect(toggle).toBeFocused();

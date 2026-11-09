@@ -84,13 +84,13 @@ describe('RolesMarquee', () => {
     expect(classTokens(firstTag(html, '<section[^>]*>'))).toContain('relative');
   });
 
-  it('pauses only through data-paused, which the controller syncs with aria-pressed', async () => {
+  it('pauses only through data-paused, which the controller owns', async () => {
     const html = await render('en');
     for (const list of html.match(/<ul[^>]*>/g) ?? []) {
       const tokens = classTokens(list);
       expect(tokens).toContain('group-data-paused:[animation-play-state:paused]');
-      // WR-01 (08-01): no CSS-only hover/focus pause and no data-playing override, so the
-      // visible play state can never disagree with aria-pressed.
+      // WR-01 (08-01, 08-10): no CSS-only hover/focus pause and no data-playing override; the
+      // controller owns every pause source (aria-pressed exposes only the explicit choice).
       const playState = tokens.filter((token) => token.includes('animation-play-state'));
       expect(playState).toEqual(['group-data-paused:[animation-play-state:paused]']);
     }

@@ -28,10 +28,20 @@ function pointer(
   target.dispatchEvent(new PointerEvent(type, { pointerType }));
 }
 
-/** aria-pressed and data-paused must always agree (WR-01). */
-function expectPaused(paused: boolean): void {
-  expect(getButton().getAttribute('aria-pressed')).toBe(String(paused));
+/** aria-pressed exposes only the explicit choice (08 WR-01, option-a). */
+function expectPressed(pressed: boolean): void {
+  expect(getButton().getAttribute('aria-pressed')).toBe(String(pressed));
+}
+
+/** data-paused is the effective (visible) pause state. */
+function expectBandPaused(paused: boolean): void {
   expect(getSection().hasAttribute('data-paused')).toBe(paused);
+}
+
+/** An explicit choice: aria-pressed and data-paused agree. */
+function expectPaused(paused: boolean): void {
+  expectPressed(paused);
+  expectBandPaused(paused);
 }
 
 // happy-dom cannot evaluate :focus-visible, so the tests inject the check.
@@ -86,12 +96,13 @@ describe('initMarqueeToggles', () => {
     cleanup?.();
   });
 
-  it('mirrors a mouse hover pause in aria-pressed and data-paused', () => {
+  it('pauses visually on mouse hover without announcing it as pressed', () => {
     const cleanup = initMarqueeToggles(document);
     expectPaused(false);
 
     pointer(getSection(), 'pointerenter');
-    expectPaused(true);
+    expectBandPaused(true);
+    expectPressed(false);
 
     pointer(getSection(), 'pointerleave');
     expectPaused(false);
@@ -111,36 +122,38 @@ describe('initMarqueeToggles', () => {
     cleanup?.();
   });
 
-  it('lets an explicit click win over the hover pause', () => {
+  it('pauses on the first click while hovered, and the next click resumes', () => {
     const cleanup = initMarqueeToggles(document);
     const section = getSection();
 
     pointer(section, 'pointerenter');
+    expectBandPaused(true);
+    expectPressed(false);
+
+    // WR-01: the first click is always an explicit pause, even while hovered.
+    getButton().click();
+    expectPaused(true);
+    pointer(section, 'pointerleave');
     expectPaused(true);
 
-    // Click while hovered resumes, matching what the user sees.
-    getButton().click();
-    expectPaused(false);
-    pointer(section, 'pointerleave');
-    expectPaused(false);
-
-    // A second click is an explicit pause that survives leaving.
+    // The next click is an explicit resume that survives hovering again.
     pointer(section, 'pointerenter');
-    expectPaused(false);
+    expectPaused(true);
     getButton().click();
-    expectPaused(true);
+    expectPaused(false);
     pointer(section, 'pointerleave');
-    expectPaused(true);
+    expectPaused(false);
 
     cleanup?.();
   });
 
-  it('pauses transiently on keyboard focus and resumes on blur', () => {
+  it('pauses visually on keyboard focus (aria-pressed stays false) and resumes on blur', () => {
     const cleanup = initMarqueeToggles(document, alwaysFocusVisible);
     const button = getButton();
 
     button.dispatchEvent(new FocusEvent('focus'));
-    expectPaused(true);
+    expectBandPaused(true);
+    expectPressed(false);
 
     button.dispatchEvent(new FocusEvent('blur'));
     expectPaused(false);
@@ -155,12 +168,20 @@ describe('initMarqueeToggles', () => {
     cleanup?.();
   });
 
-  it('lets Space/click while keyboard-focused resume, then keeps the choice after blur', () => {
+  it('pauses on the first Space/click while keyboard-focused, then keeps the choice after blur', () => {
     const cleanup = initMarqueeToggles(document, alwaysFocusVisible);
     const button = getButton();
 
     button.dispatchEvent(new FocusEvent('focus'));
+    expectBandPaused(true);
+    expectPressed(false);
+    button.click();
     expectPaused(true);
+    button.dispatchEvent(new FocusEvent('blur'));
+    expectPaused(true);
+
+    // The next activation resumes, and the explicit resume holds after a later blur.
+    button.dispatchEvent(new FocusEvent('focus'));
     button.click();
     expectPaused(false);
     button.dispatchEvent(new FocusEvent('blur'));
@@ -204,7 +225,8 @@ describe('initMarqueeToggles', () => {
   it('clears a hover pause on motion change to "off"', () => {
     const cleanup = initMarqueeToggles(document);
     pointer(getSection(), 'pointerenter');
-    expectPaused(true);
+    expectBandPaused(true);
+    expectPressed(false);
 
     document.documentElement.dataset['motion'] = 'off';
     dispatchMotionChange(document, 'off');
