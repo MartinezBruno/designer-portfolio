@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
-import { en } from '../../src/i18n/ui.en';
+import services from '../../src/data/services.json' with { type: 'json' };
+import { interpolate } from '../../src/i18n/t';
+import { en, type Dictionary } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
 import { headerSteps, tabAndExpect, tabUntil } from './helpers/keyboard';
 import { waitForNavigationIdle } from './helpers/navigation';
@@ -9,11 +11,16 @@ import { expectedDetails, expectedProjects } from './helpers/projects';
 // and ES. Only page.keyboard moves focus or activates controls here: no clicks and no .focus().
 // Filters (PROJ-04..07) are N/A: with 7 projects (fewer than 8) the Projects page renders no filter
 // controls, so there is nothing to test (recorded in 08-06-SUMMARY.md).
+//
+// Turnstile: the hermetic journeys abort challenges.cloudflare.com (no token is needed for them).
+// Only the success / "Send another" journey needs a real test-key token, hence @network.
 
 const cases = [
   { locale: 'en', prefix: '/', dict: en, other: 'es', otherPrefix: '/es/' },
   { locale: 'es', prefix: '/es/', dict: es, other: 'en', otherPrefix: '/' },
 ] as const;
+
+const ordered = [...services].sort((a, b) => a.order - b.order);
 
 function collectErrors(page: Page, ignore: RegExp | null = null): string[] {
   const errors: string[] = [];
@@ -25,6 +32,19 @@ function collectErrors(page: Page, ignore: RegExp | null = null): string[] {
   });
   page.on('pageerror', (error) => errors.push(error.message));
   return errors;
+}
+
+// An aborted Turnstile script logs a failed resource load; that is the blocking, not a site error.
+const TURNSTILE_BLOCKED = /challenges\.cloudflare\.com|net::ERR_FAILED/;
+
+async function blockTurnstile(page: Page): Promise<void> {
+  await page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
+}
+
+async function waitForTurnstileToken(page: Page): Promise<void> {
+  await expect(page.locator('input[name="cf-turnstile-response"]')).toHaveValue(/.+/, {
+    timeout: 15000,
+  });
 }
 
 /** Loads a page and waits until the page scripts have mounted (the head gate resolved 'on'). */
@@ -44,6 +64,18 @@ async function enterAndArrive(page: Page, path: string): Promise<void> {
 
 const focusedTag = (page: Page): Promise<string | undefined> =>
   page.evaluate(() => document.activeElement?.tagName);
+
+/** Keyboard path to the form: header Contact link, Enter, then the section takes focus. */
+async function reachContactByKeyboard(page: Page, prefix: string): Promise<void> {
+  await tabUntil(page, `header a[href="${prefix}#contact"]`);
+  await page.keyboard.press('Enter');
+  await expect(page.locator('section#contact')).toBeFocused({ timeout: 10000 });
+  await expect(page.locator('form[data-contact-form]')).toBeVisible({ timeout: 10000 });
+}
+
+function askLinkName(dict: Dictionary, title: string): string {
+  return `${dict['services.ask']}${interpolate(dict['services.askTarget'], { title })}`.trim();
+}
 
 for (const { locale, prefix, dict, other, otherPrefix } of cases) {
   test.describe(`keyboard journeys (${locale})`, () => {
@@ -178,6 +210,114 @@ for (const { locale, prefix, dict, other, otherPrefix } of cases) {
         await page.keyboard.press('Enter');
         await expect(page.locator('[data-embed-facade] iframe')).toHaveCount(1);
         await expect.poll(() => focusedTag(page)).toBe('IFRAME');
+      });
+    });
+
+    test.describe('services and contact form (Turnstile blocked)', () => {
+      let errors: string[] = [];
+
+      test.beforeEach(async ({ page }) => {
+        errors = collectErrors(page, TURNSTILE_BLOCKED);
+        await blockTurnstile(page);
+      });
+
+      test.afterEach(() => {
+        expect(errors).toEqual([]);
+      });
+
+      test(`8. "Ask about this" preselects its service on ${prefix}`, async ({ page }) => {
+        const service = ordered[0];
+        if (service === undefined) throw new Error('no services');
+        await open(page, prefix);
+        const href = `${prefix}?service=${service.id}#contact`;
+        await tabUntil(page, `a[href="${href}"]`, { max: 40 });
+        const link = page.locator(`a[href="${href}"]`);
+        await expect(link).toHaveAccessibleName(askLinkName(dict, service.title[locale]));
+        await page.keyboard.press('Enter');
+
+        await expect(page.locator('form[data-contact-form]')).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('section#contact')).toBeInViewport();
+        await expect(page.locator(`#contact-service-${service.id}`)).toBeChecked();
+        await expect(page.locator('#contact-service-other')).not.toBeChecked();
+        // The next Tab continues inside the Contact section.
+        await expect(page.locator('section#contact')).toBeFocused();
+        await page.keyboard.press('Tab');
+        expect(
+          await page.evaluate(() => document.activeElement?.closest('section#contact') !== null),
+        ).toBe(true);
+      });
+
+      test(`9. empty submit focuses the first invalid field on ${prefix}`, async ({ page }) => {
+        await open(page, prefix);
+        await reachContactByKeyboard(page, prefix);
+        await tabUntil(page, '[data-contact-submit]');
+        await page.keyboard.press('Enter');
+
+        for (const field of ['name', 'email', 'message'] as const) {
+          await expect(page.locator(`#contact-${field}`)).toHaveAttribute('aria-invalid', 'true');
+        }
+        await expect(page.locator('#contact-name-error')).toBeVisible();
+        await expect(page.locator('#contact-name')).toBeFocused();
+      });
+    });
+
+    test.describe('contact form success @network', () => {
+      let errors: string[] = [];
+
+      test.beforeEach(({ page }) => {
+        errors = collectErrors(page);
+      });
+
+      test.afterEach(() => {
+        expect(errors).toEqual([]);
+      });
+
+      test(`10. fill, send and "Send another" by keyboard on ${prefix} @network`, async ({
+        page,
+      }) => {
+        const service = ordered[0];
+        if (service === undefined) throw new Error('no services');
+        await open(page, prefix);
+        await reachContactByKeyboard(page, prefix);
+
+        // The radio group is one stop (the checked "other" chip, last); ArrowRight wraps to the first.
+        await tabUntil(page, 'input[name="service"]');
+        await expect(page.locator('#contact-service-other')).toBeFocused();
+        await page.keyboard.press('ArrowRight');
+        await expect(page.locator(`#contact-service-${service.id}`)).toBeChecked();
+        await expect(page.locator(`#contact-service-${service.id}`)).toBeFocused();
+
+        await page.keyboard.press('Tab');
+        await expect(page.locator('#contact-name')).toBeFocused();
+        await page.keyboard.type('Ana López');
+        await page.keyboard.press('Tab');
+        await expect(page.locator('#contact-email')).toBeFocused();
+        await page.keyboard.type('ana@example.com');
+        await page.keyboard.press('Tab');
+        await expect(page.locator('#contact-message')).toBeFocused();
+        await page.keyboard.type('Necesito una identidad visual para mi café.');
+
+        await waitForTurnstileToken(page);
+        await tabUntil(page, '[data-contact-submit]');
+        await page.keyboard.press('Enter');
+
+        const heading = page.getByRole('heading', {
+          level: 3,
+          name: dict['contact.success.heading'],
+        });
+        await expect(heading).toBeFocused({ timeout: 15000 });
+
+        await tabUntil(page, '[data-contact-again]');
+        await expect(page.locator('[data-contact-again]')).toHaveText(
+          dict['contact.success.again'],
+        );
+        await page.keyboard.press('Enter');
+        await expect(page.locator('form[data-contact-form]')).toBeVisible();
+        for (const field of ['name', 'email', 'message'] as const) {
+          await expect(page.locator(`#contact-${field}`)).toHaveValue('');
+        }
+        await expect(page.locator('#contact-service-other')).toBeChecked();
+        await expect(page.locator('#contact-name')).toBeFocused();
       });
     });
   });
