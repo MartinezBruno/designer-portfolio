@@ -1,7 +1,7 @@
 ---
 phase: 06-scroll-interaction-motion
 verified: 2026-11-02T00:00:00Z
-status: human_needed
+status: passed
 score: 5/5 roadmap success criteria verified by code and tests; 3 timing/geometry fixes need human confirmation
 human_verification:
   - test: "CR-01: scroll a below-the-fold magnetic target (e.g. detail contact-band button) into view, wait for its reveal to finish, then hover it"
@@ -19,6 +19,7 @@ human_verification:
 
 **Phase Goal:** A visitor feels Martina's design sensibility through scroll reveals, headline text animations, a playful cursor, magnetic buttons, and image hover effects. Anyone who prefers less motion gets a calm, fully usable site.
 **Status:** human_needed (no gaps; only the three review-fix items flagged "requires human verification")
+Human UAT passed 3/3 (06-HUMAN-UAT.md, 2026-11-02); status updated in Phase 8 (D-19).
 **Re-verification:** No
 
 ## Observable Truths (roadmap success criteria)

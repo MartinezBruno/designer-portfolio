@@ -27,12 +27,12 @@ v1 "done" = working local build (deploy is post-v1).
 ### Homepage (HOME)
 
 - [x] **HOME-01**: Visitor sees a hero with greeting, professional title, description and her image, visible immediately without waiting on JavaScript
-- [ ] **HOME-02**: Visitor sees a marquee of all the roles/jobs she does (web design, social media manager, etc.)
-- [ ] **HOME-03**: Visitor can pause the marquee (pause on hover/focus or control); it is static under reduced motion and screen readers hear each role once
-- [ ] **HOME-04**: Visitor sees her 4 most featured services
-- [ ] **HOME-05**: Visitor sees the apps/tools she uses
+- [x] **HOME-02**: Visitor sees a marquee of all the roles/jobs she does (web design, social media manager, etc.)
+- [x] **HOME-03**: Visitor can pause the marquee (pause on hover/focus or control); it is static under reduced motion and screen readers hear each role once
+- [x] **HOME-04**: Visitor sees her 4 most featured services
+- [x] **HOME-05**: Visitor sees the apps/tools she uses
 - [x] **HOME-06**: Visitor sees her 3 latest Behance projects (sorted by publish date) linking to their detail pages
-- [ ] **HOME-07**: Visitor sees an "available for projects" badge whose state she controls via content
+- [x] **HOME-07**: Visitor sees an "available for projects" badge whose state she controls via content
 - [x] **HOME-08**: Visitor can click a service and land on the contact form with that service pre-selected
 
 ### Behance Data (DATA)
@@ -127,12 +127,12 @@ Updated during roadmap creation.
 | I18N-06 | Phase 1 | Complete |
 | I18N-07 | Phase 1 | Complete |
 | HOME-01 | Phase 1 | Complete |
-| HOME-02 | Phase 2 | Pending |
-| HOME-03 | Phase 2 | Pending |
-| HOME-04 | Phase 2 | Pending |
-| HOME-05 | Phase 2 | Pending |
+| HOME-02 | Phase 2 | Complete |
+| HOME-03 | Phase 2 | Complete |
+| HOME-04 | Phase 2 | Complete |
+| HOME-05 | Phase 2 | Complete |
 | HOME-06 | Phase 3 | Complete |
-| HOME-07 | Phase 2 | Pending |
+| HOME-07 | Phase 2 | Complete |
 | HOME-08 | Phase 5 | Complete |
 | DATA-01 | Phase 3 | Complete |
 | DATA-02 | Phase 3 | Complete |
