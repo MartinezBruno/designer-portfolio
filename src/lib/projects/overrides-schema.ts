@@ -2,8 +2,8 @@
  * Schema for src/data/project-overrides.json (DATA-05), keyed by Behance id. Node-safe (astro/zod
  * only, .ts value imports) so scripts/sync-behance.ts and the e2e helpers apply the same rules.
  *
- * Every drafted value in src/data/project-overrides.json is TODO(martina) — JSON has no comments
- * (same convention as content.config.ts).
+ * TODO(martina): every value in src/data/project-overrides.json is a draft, listed in 08-SPANISH-REVIEW.md
+ * (.planning/phases/08-quality-verification/) because JSON has no comments (same as content.config.ts).
  */
 import { z } from 'astro/zod';
 import { locales } from '../../i18n/config.ts';
