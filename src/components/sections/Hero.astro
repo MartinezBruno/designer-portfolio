@@ -44,20 +44,23 @@ const contactHref = `${getRelativeLocaleUrl(locale, '/')}#contact`;
       </span>
     </h1>
     <div class="order-first lg:order-none lg:col-span-3 lg:self-start lg:justify-self-end">
-      <!-- The portrait asset is a 321px circle crop on white; it never renders past its pixels. -->
+      <!-- 3:4 arch on the accent ground (sketch 001): semicircle top, 1.25rem bottom corners; the cutout's transparent pixels show the blue. -->
       <Picture
         src={portrait}
         {...pictureFormat}
         alt={t('hero.imageAlt')}
         loading="eager"
         fetchpriority="high"
-        width={321}
-        height={324}
+        width={600}
+        height={800}
+        widths={[256, 448, 600]}
+        sizes="(min-width: 87.5rem) 19rem, (min-width: 64rem) 16rem, (min-width: 40rem) 11rem, 8rem"
         pictureAttributes={{
           'data-hero-portrait': '',
-          class: 'block w-32 sm:w-44 lg:w-64 min-[87.5rem]:w-[19rem]',
+          class:
+            'block w-32 sm:w-44 lg:w-64 min-[87.5rem]:w-[19rem] overflow-hidden bg-accent rounded-[50%_50%_1.25rem_1.25rem/37.5%_37.5%_1.25rem_1.25rem]',
         }}
-        class="aspect-square w-full rounded-full object-contain"
+        class="block aspect-[3/4] w-full object-cover object-[50%_6%]"
       />
     </div>
     <p data-hero-lead class="text-ink text-lead max-w-[46ch] text-pretty lg:col-span-6 lg:pt-2">

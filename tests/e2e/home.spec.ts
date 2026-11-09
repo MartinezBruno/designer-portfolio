@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { site } from '../../src/data/site';
 import { en } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
@@ -59,31 +59,63 @@ test.describe('hero without JavaScript', () => {
       [375, 128],
       [1280, 256],
     ] as const) {
-      test(`${path} hero portrait is a capped circle at ${width}px`, async ({ page }) => {
+      test(`${path} hero portrait is a 3:4 arch on the accent ground at ${width}px`, async ({
+        page,
+      }) => {
         await page.setViewportSize({ width, height: 900 });
         await page.goto(path);
-        const img = page.locator('#main section[aria-labelledby="hero-title"] picture img');
-        await expect(img).toHaveAttribute('width', '321');
-        await expect(img).toHaveAttribute('height', '324');
-        const box = await img.boundingBox();
-        expect(box).not.toBeNull();
-        // Square, and capped near the 321px source so it is not upscaled much.
-        expect(Math.abs((box?.width ?? 0) - (box?.height ?? 0))).toBeLessThanOrEqual(1);
-        expect(box?.width).toBe(maxSide);
-        const computed = await img.evaluate((el) => {
-          const style = getComputedStyle(el);
-          return { bg: style.backgroundColor, fit: style.objectFit, radius: style.borderRadius };
-        });
-        // Transparent corners show the page: no placeholder fill, no cover crop.
-        expect(computed.bg).toBe('rgba(0, 0, 0, 0)');
-        expect(computed.fit).toBe('contain');
-        expect(computed.radius).not.toBe('0px');
-        const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
-        expect(scrollWidth).toBeLessThanOrEqual(width);
+        await expectArch(page, width, maxSide);
       });
     }
   }
 });
+
+test.describe('hero portrait arch with reduced motion', () => {
+  test.use({ reducedMotion: 'reduce' });
+
+  test('/ keeps the same static arch at 375px', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 900 });
+    await page.goto('/');
+    await expectArch(page, 375, 128);
+    const picture = page.locator('#main section[aria-labelledby="hero-title"] picture');
+    expect(await picture.evaluate((el) => getComputedStyle(el).clipPath)).toBe('none');
+  });
+});
+
+/** Sketch 001 arch: 3:4, semicircle top, 1.25rem bottom corners, accent ground, real dimensions. */
+async function expectArch(page: Page, width: number, maxSide: number): Promise<void> {
+  const picture = page.locator('#main section[aria-labelledby="hero-title"] picture');
+  const img = picture.locator('img');
+  await expect(img).toHaveAttribute('width', '600');
+  await expect(img).toHaveAttribute('height', '800');
+  const box = await img.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box?.width).toBe(maxSide);
+  expect(Math.abs((box?.height ?? 0) - (maxSide * 4) / 3)).toBeLessThanOrEqual(1);
+  const imgStyle = await img.evaluate((el) => {
+    const style = getComputedStyle(el);
+    return { bg: style.backgroundColor, fit: style.objectFit, position: style.objectPosition };
+  });
+  // The cutout's transparent pixels show the picture's accent ground, not an img fill.
+  expect(imgStyle.bg).toBe('rgba(0, 0, 0, 0)');
+  expect(imgStyle.fit).toBe('cover');
+  expect(imgStyle.position).toBe('50% 6%');
+  const frame = await picture.evaluate((el) => {
+    const style = getComputedStyle(el);
+    return {
+      bg: style.backgroundColor,
+      overflowX: style.overflowX,
+      bottomLeft: style.borderBottomLeftRadius,
+      topLeft: style.borderTopLeftRadius,
+    };
+  });
+  expect(frame.bg).toBe('rgb(15, 112, 183)');
+  expect(frame.overflowX).toBe('hidden');
+  expect(frame.bottomLeft).toBe('20px');
+  expect(frame.topLeft).toBe('50% 37.5%');
+  const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+  expect(scrollWidth).toBeLessThanOrEqual(width);
+}
 
 test.describe('hero headline typography', () => {
   for (const [path, dict] of cases) {
