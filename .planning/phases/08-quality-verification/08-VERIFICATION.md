@@ -38,6 +38,22 @@ gaps:
         issue: "pathname = Astro.url.pathname for kind notFound"
     missing:
       - "Pin the pathname for notFound pages (review fix), update SeoHead/NotFoundView comments"
+  - truth: "Hero portrait shape fits the current 3:4 cutout asset (user-requested addition to the Phase 8 gap scope, 2026-11-09)"
+    status: failed
+    reason: "Hero.astro renders the 2310x3080 (3:4) background-removed cutout as aspect-square rounded-full object-contain with stale width={321} height={324} and a stale '321px circle crop' comment. The circle letterboxes and clips the figure. The user chose a new shape in sketch 001 (.planning/sketches/001-hero-portrait-shape): C's arch with D's accent-blue background."
+    artifacts:
+      - path: "src/components/sections/Hero.astro"
+        issue: "Lines ~49-63: circle mask, object-contain, stale 321x324 dimensions and comment"
+      - path: "src/assets/hero/portrait.png"
+        issue: "Hair-edge halo shows on the blue ground; 1.67 MB source PNG"
+      - path: ".planning/sketches/001-hero-portrait-shape/README.md"
+        issue: "Winning variant spec (arch radius, ground colour, object-position)"
+    missing:
+      - "Clean the cutout's hair halo (refined edge or defringe pass) before it sits on #0f70b7"
+      - "Render the portrait as a 3:4 arch (semicircle top, 1.25rem bottom corners, overflow hidden) on bg-accent with object-cover at object-position 50% 6%; real width/height for zero CLS; drop the stale 321x324 and comment"
+      - "Keep the D-03 shutter/scale entrance working on the arch (first frame never blank), no parallax (Phase 7 D-09), and reduced-motion parity"
+      - "Re-measure Home LCP: a larger portrait may become the LCP element (fold into the Home LCP fix and the Lighthouse re-run)"
+      - "taste-skill gate (lint.mjs, inspect.mjs, screenshots at 390 and 1440, EN and ES) and update any unit/e2e tests that assert rounded-full or aspect-square on the portrait"
 deferred: []
 ---
 
@@ -83,6 +99,8 @@ All three IDs are claimed by plans; no orphaned Phase 8 requirements.
 ## Gaps Summary
 
 Two roadmap criteria are unmet. QUAL-01 needs a performance fix and re-measure (Home LCP element is the hero lead text with ~1 s render delay; detail pages are held back by the shared render-blocking CSS, fonts and JS), then a Lighthouse re-run. QUAL-02 needs the A11Y-01 mask fix, a stable @network contact journey (WR-03), and a decision or fix on WR-01. After those changes, re-run the full gate and Lighthouse because src will change. QUAL-03 is complete.
+
+Added at the user's request (2026-11-09): change the hero portrait from the circle to the arch on an accent-blue ground chosen in sketch 001. This needs a cleaned cutout, the taste-skill gate, and it is folded into the Home LCP re-measure.
 
 _Verified: 2026-11-09_
 _Verifier: Claude (gsd-verifier)_
