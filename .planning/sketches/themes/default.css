@@ -1,0 +1,22 @@
+/* Mirrors src/styles/global.css @theme tokens (Phase 8 state). Variables only. */
+:root {
+  --color-surface: #ffffff;
+  --color-surface-alt: #f2f3f5;
+  --color-ink: #111111;
+  --color-ink-muted: #565b61;
+  --color-accent: #0f70b7;
+  --color-accent-ink: #ffffff;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+
+  --text-lead: clamp(1.125rem, 1rem + 0.5vw, 1.25rem);
+  --text-display: clamp(3.75rem, 0.5rem + 11.5vw, 10.5rem);
+
+  --ease-reveal: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-travel: cubic-bezier(0.76, 0, 0.24, 1);
+  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+
+  --radius-card: 1.25rem;
+  --radius-full: 9999px;
+}

@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 001 · Hero portrait shape</title>
+<link rel="stylesheet" href="../themes/default.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Inter:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: var(--font-sans); color: var(--color-ink); background: #e9eaec; padding-top: 52px; }
+
+  /* ---------- variant nav (sketch chrome, not design) ---------- */
+  #variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 9998; background: #fff; border-bottom: 1px solid #ddd;
+    padding: 8px 16px; display: flex; gap: 6px; flex-wrap: wrap; font: 13px system-ui; }
+  .variant-tab { border: 1px solid #ccc; background: #fff; border-radius: 6px; padding: 6px 10px; cursor: pointer; font: inherit; }
+  .variant-tab.active { background: #111; color: #fff; border-color: #111; }
+  .note { max-width: 88rem; margin: 12px auto 0; padding: 10px 16px; font: 13px/1.45 system-ui; color: #333;
+    background: #fff8d6; border: 1px solid #ecdf9a; border-radius: 8px; }
+
+  /* ---------- page frame (viewport preview uses container queries) ---------- */
+  #frame { margin: 12px auto 80px; background: var(--color-surface); container-type: inline-size; width: 100%;
+    max-width: 100%; transition: max-width .25s; box-shadow: 0 0 0 1px #d5d6d9; overflow: hidden; }
+
+  /* ---------- hero (mirrors Hero.astro) ---------- */
+  .hero { max-width: 88rem; margin: 0 auto; padding: 40px 16px 56px; }
+  .grid { display: grid; grid-template-columns: 1fr; column-gap: 32px; row-gap: 40px; }
+  h1 { font-family: var(--font-display); font-size: var(--text-display); line-height: .86; letter-spacing: -.04em;
+    font-weight: 600; margin-left: -.05em; }
+  h1 span { display: block; }
+  .portrait-col { order: -1; }
+  .lead { font-size: var(--text-lead); line-height: 1.5; max-width: 46ch; text-wrap: pretty; }
+  .cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 20px 32px; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; background: var(--color-accent); color: #fff;
+    padding: 14px 24px; border-radius: 999px; font-weight: 600; text-decoration: none; }
+  .badge { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--color-ink-muted); }
+  .badge::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #1f7a4d; }
+
+  @container (min-width: 640px) { .hero { padding: 56px 32px 56px; } }
+  @container (min-width: 1024px) {
+    .hero { padding: 80px 48px 80px; }
+    .grid { grid-template-columns: repeat(12, 1fr); }
+    h1 { grid-column: span 9; align-self: end; }
+    .portrait-col { order: 0; grid-column: span 3; align-self: start; justify-self: end; }
+    .lead { grid-column: span 6; padding-top: 8px; }
+    .cta-row { grid-column: span 6; flex-direction: row-reverse; justify-content: flex-start; align-self: start; }
+  }
+
+  /* ---------- marquee band ---------- */
+  .marquee { background: var(--color-accent); color: #fff; overflow: hidden; padding: 22px 0; }
+  .marquee-track { display: flex; gap: 48px; width: max-content; animation: mq 40s linear infinite;
+    font-family: var(--font-display); font-weight: 600; font-size: clamp(2rem, 1rem + 4vw, 4.5rem); letter-spacing: -.03em; }
+  .marquee-track span::after { content: '✦'; margin-left: 48px; font-size: .5em; vertical-align: middle; }
+  @keyframes mq { to { transform: translateX(-50%); } }
+
+  /* ---------- portrait shapes ---------- */
+  .portrait { display: block; position: relative; width: 8rem; }
+  @container (min-width: 640px)  { .portrait { width: 11rem; } }
+  @container (min-width: 1024px) { .portrait { width: 16rem; } }
+  @container (min-width: 1400px) { .portrait { width: 19rem; } }
+  .portrait img { display: block; width: 100%; }
+
+  /* A: current — square box, circle mask, object-contain on white (what ships today) */
+  .shape-a .portrait img { aspect-ratio: 1; border-radius: 50%; object-fit: contain; }
+
+  /* B: 4:5 rounded rectangle on a tinted ground (stand-in for the original photo background) */
+  .shape-b .portrait { overflow: hidden; border-radius: var(--radius-card); background: var(--bg, var(--color-surface-alt)); }
+  .shape-b .portrait img { aspect-ratio: 4/5; object-fit: cover; object-position: 50% 8%; }
+
+  /* C: arch — round top, square-ish bottom */
+  .shape-c .portrait { overflow: hidden; border-radius: 50% 50% var(--radius-card) var(--radius-card) / 37.5% 37.5% var(--radius-card) var(--radius-card); background: var(--bg, var(--color-surface-alt)); }
+  .shape-c .portrait img { aspect-ratio: 3/4; object-fit: cover; object-position: 50% 6%; }
+
+  /* Synthesis (winner): C's arch + D's accent-blue ground */
+  .shape-e .portrait { overflow: hidden; border-radius: 50% 50% var(--radius-card) var(--radius-card) / 37.5% 37.5% var(--radius-card) var(--radius-card); background: var(--bg, var(--color-accent)); }
+  .shape-e .portrait img { aspect-ratio: 3/4; object-fit: cover; object-position: 50% 6%; }
+
+  /* D: break-out — figure rises out of a blue block; only the bottom is clipped */
+  .shape-d .portrait { aspect-ratio: 4/5; }
+  .shape-d .portrait::before { content: ''; position: absolute; inset: 22% 0 0 0; background: var(--bg, var(--color-accent)); border-radius: var(--radius-card); }
+  .shape-d .portrait img { position: absolute; inset: 0; height: 100%; object-fit: cover; object-position: 50% 0;
+    clip-path: inset(-20% 0 0 0 round 0 0 var(--radius-card) var(--radius-card)); }
+
+  /* ---------- D-03 entrance: shutter + scale (same values as global.css) ---------- */
+  .play .portrait { animation: shutter 840ms var(--ease-travel) 120ms both; }
+  .play .portrait img { animation: scale 840ms var(--ease-soft) 120ms both; }
+  .play h1 span span { animation: rise 900ms var(--ease-reveal) both; }
+  @keyframes shutter { from { clip-path: inset(35% 0 0 0); } to { clip-path: inset(0); } }
+  @keyframes scale { from { scale: 1.08; } to { scale: none; } }
+  @keyframes rise { from { translate: 0 60%; } to { translate: none; } }
+  /* D needs its overflow kept during the shutter: open from the bottom of the block instead */
+  .play.shape-d .portrait { animation-name: shutter-d; }
+  @keyframes shutter-d { from { clip-path: inset(45% -10% 0 -10%); } to { clip-path: inset(-30% -10% 0 -10%); } }
+  h1 > span { overflow: hidden; }
+
+  /* ---------- side-by-side compare ---------- */
+  [hidden] { display: none !important; }
+  .compare { display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; padding: 32px; }
+  .compare figure { display: grid; gap: 12px; justify-items: center; align-content: start; }
+  .compare figcaption { font: 600 13px system-ui; }
+  .compare .portrait { width: 100% !important; max-width: 15rem; }
+  @container (max-width: 900px) { .compare { grid-template-columns: repeat(2, 1fr); } }
+
+  /* ---------- toolbar ---------- */
+  #sketch-tools { position: fixed; bottom: 12px; right: 12px; z-index: 9999; font: 12px system-ui; background: rgba(0,0,0,.75);
+    color: #fff; padding: 8px 10px; border-radius: 8px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; max-width: calc(100vw - 24px); }
+  #sketch-tools button, #sketch-tools select { font: inherit; background: #333; color: #fff; border: 1px solid #555; border-radius: 5px; padding: 4px 8px; cursor: pointer; }
+  #sketch-tools .sep { width: 1px; height: 18px; background: #666; }
+</style>
+</head>
+<body>
+
+<div id="variant-nav">
+  <button class="variant-tab active" data-v="a">A: Círculo (actual)</button>
+  <button class="variant-tab" data-v="b">B: Rectángulo 4:5</button>
+  <button class="variant-tab" data-v="c">C: Arco</button>
+  <button class="variant-tab" data-v="d">D: Recorte sobre bloque azul</button>
+  <button class="variant-tab" data-v="e">★ Síntesis: arco C + azul D (elegida)</button>
+  <button class="variant-tab" data-v="all">Comparar todas</button>
+</div>
+
+<p class="note" id="note"></p>
+
+<div id="frame">
+  <section class="hero" id="hero">
+    <div class="grid">
+      <h1><span><span>Hola, soy</span></span> <span><span>Martina.</span></span></h1>
+      <div class="portrait-col"><picture class="portrait"><img src="portrait.png" alt="Retrato de Martina Fernandez"></picture></div>
+      <p class="lead">Diseñadora gráfica para web y redes sociales. Diseño webs, piezas de marca y contenido para redes que ayudan a pequeños negocios a verse tan bien como son.</p>
+      <div class="cta-row">
+        <a class="btn" href="#">Trabajemos juntos →</a>
+        <span class="badge">Abierta a nuevos proyectos</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="compare" id="compare" hidden>
+    <figure class="shape-a"><picture class="portrait"><img src="portrait.png" alt=""></picture><figcaption>A: Círculo (actual)</figcaption></figure>
+    <figure class="shape-b"><picture class="portrait"><img src="portrait.png" alt=""></picture><figcaption>B: Rectángulo 4:5</figcaption></figure>
+    <figure class="shape-c"><picture class="portrait"><img src="portrait.png" alt=""></picture><figcaption>C: Arco</figcaption></figure>
+    <figure class="shape-e"><picture class="portrait"><img src="portrait.png" alt=""></picture><figcaption>★ Síntesis: arco + azul</figcaption></figure>
+    <figure class="shape-d"><picture class="portrait"><img src="portrait.png" alt=""></picture><figcaption>D: Recorte sobre bloque azul</figcaption></figure>
+  </section>
+
+  <div class="marquee" aria-hidden="true"><div class="marquee-track">
+    <span>Diseño web</span><span>Redes sociales</span><span>Identidad de marca</span><span>Contenido</span>
+    <span>Diseño web</span><span>Redes sociales</span><span>Identidad de marca</span><span>Contenido</span>
+  </div></div>
+</div>
+
+<div id="sketch-tools">
+  <button data-w="375">Móvil 375</button>
+  <button data-w="768">Tablet 768</button>
+  <button data-w="1280">Desktop 1280</button>
+  <button data-w="0">Ancho total</button>
+  <span class="sep"></span>
+  <label>Fondo
+    <select id="bg">
+      <option value="">por defecto</option>
+      <option value="#f2f3f5">gris surface-alt</option>
+      <option value="#0f70b7">azul accent</option>
+      <option value="#e8eef6">azul muy claro</option>
+      <option value="#111111">tinta</option>
+    </select>
+  </label>
+  <span class="sep"></span>
+  <button id="replay">▶ Repetir entrada (D-03)</button>
+</div>
+
+<script>
+  const notes = {
+    a: 'A: lo que se ve hoy. El recorte vertical (3:4) entra con object-contain en un cuadrado con máscara circular, así que queda chico y con aire a los costados. Lectura: foto de perfil.',
+    b: 'B: rectángulo 4:5, el mismo formato que las tarjetas de proyectos. El fondo gris sustituye a la foto original con su fondo, si Martina la tiene. Lectura: editorial y sobria.',
+    c: 'C: arco, arriba redondo y abajo recto. Conserva algo de la suavidad del círculo, muestra hombros y estampado, y sigue siendo vertical. Lectura: cálida, con más personalidad.',
+    d: 'D: la figura sale por arriba de un bloque azul (el mismo azul de la banda y el footer). Es el más llamativo, pero deja a la vista el halo del pelo sobre el blanco, así que habría que limpiar el recorte.',
+    e: 'Elegida: el arco de C con el fondo azul accent de D. Une el retrato con la banda de roles y el footer. Antes de implementar hay que limpiar el halo del pelo, que se nota sobre el azul.',
+    all: 'Las 5 formas al mismo ancho. Usa "Fondo" para probar los fondos de B, C y D.'
+  };
+  const hero = document.getElementById('hero'), compare = document.getElementById('compare');
+  let current = 'a';
+  function show(v) {
+    current = v;
+    document.querySelectorAll('.variant-tab').forEach(t => t.classList.toggle('active', t.dataset.v === v));
+    document.getElementById('note').textContent = notes[v];
+    compare.hidden = v !== 'all'; hero.hidden = v === 'all';
+    hero.className = 'hero shape-' + (v === 'all' ? 'a' : v);
+    replay();
+  }
+  function replay() {
+    const els = [hero, ...compare.querySelectorAll('figure')];
+    els.forEach(el => el.classList.remove('play'));
+    void document.body.offsetWidth;
+    els.forEach(el => el.classList.add('play'));
+  }
+  document.querySelectorAll('.variant-tab').forEach(t => t.onclick = () => show(t.dataset.v));
+  document.querySelectorAll('[data-w]').forEach(b => b.onclick = () => {
+    document.getElementById('frame').style.maxWidth = b.dataset.w === '0' ? '100%' : b.dataset.w + 'px';
+  });
+  document.getElementById('bg').onchange = e => document.documentElement.style.setProperty('--bg', e.target.value || null);
+  document.getElementById('bg').addEventListener('change', e => { if (!e.target.value) document.documentElement.style.removeProperty('--bg'); });
+  document.getElementById('replay').onclick = replay;
+  show('a');
+</script>
+</body>
+</html>

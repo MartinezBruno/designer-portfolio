@@ -20,6 +20,33 @@
         ],
         "createdAt": "2026-11-05T22:37:05.805Z",
         "reason": "Claude: throwaway decision-round sketch, never shipped; system font only in the skeleton"
+      },
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "files": [
+          ".planning/sketches/001-hero-portrait-shape/index.html"
+        ],
+        "createdAt": "2026-11-09T22:54:37.990Z",
+        "reason": "sketch mirrors shipped site; Inter body font is the project's documented choice (astro.config.ts fonts, global.css @theme)"
+      },
+      {
+        "rule": "marquee",
+        "value": "*",
+        "files": [
+          ".planning/sketches/001-hero-portrait-shape/index.html"
+        ],
+        "createdAt": "2026-11-09T22:54:38.009Z",
+        "reason": "sketch mirrors the shipped Phase 2 roles marquee band (RolesMarquee.astro), not a new design choice"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".planning/sketches/001-hero-portrait-shape/index.html"
+        ],
+        "createdAt": "2026-11-09T22:54:38.031Z",
+        "reason": "throwaway sketch: marquee text bleeding off the band edge is the shipped full-bleed design; sketch chrome only"
       }
     ]
   }
