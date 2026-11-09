@@ -412,7 +412,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 08-09-PLAN.md — Planning-docs hygiene and full gate on the combined result (D-19)
+- [x] 08-09-PLAN.md — Planning-docs hygiene and full gate on the combined result (D-19)
 
 **UI hint**: yes
 
@@ -430,4 +430,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
 | 7. Page Transitions & Smooth Scroll | 21/21 | Complete   | 2026-11-05 |
-| 8. Quality Verification | 8/9 | In Progress|  |
+| 8. Quality Verification | 9/9 | Gaps open (LCP, A11Y-01, @network flake) |  |
