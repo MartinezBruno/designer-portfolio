@@ -388,7 +388,7 @@ Plans:
   2. Every page passes axe checks in both EN and ES and can be fully used by keyboard alone, including the form, filters (if present), toggles, and navigation.
   3. Every piece of site copy has a Spanish draft marked for Martina's review, and a reviewer can find the full list of strings to review in one place.
 
-**Plans**: 9 plans
+**Plans**: 18 plans (9 executed, 9 gap closure)
 Plans:
 **Wave 1**
 
@@ -413,6 +413,32 @@ Plans:
 **Wave 5** *(blocked on Wave 4 completion)*
 
 - [x] 08-09-PLAN.md — Planning-docs hygiene and full gate on the combined result (D-19)
+
+**Gap closure (from 08-VERIFICATION.md, 2026-11-09)**
+
+**Gap Wave 1**
+
+- [ ] 08-10-PLAN.md — Marquee WR-01 (first activation always pauses; user decides vs D-10) and stable @network contact journey (WR-03)
+- [ ] 08-11-PLAN.md — A11Y-01: work-card cover opens on any intersection, regression tests at 390 and 1440
+- [ ] 08-12-PLAN.md — WR-02: pin the 404 pathname in BaseLayout, comments and reflection guard
+- [ ] 08-13-PLAN.md — Hero portrait as the sketch 001 arch on accent blue, defringed cutout, taste gate, user approval
+
+**Gap Wave 2** *(blocked on Gap Wave 1)*
+
+- [ ] 08-14-PLAN.md — LCP diagnosis: attribution and measured lever experiments for Home and detail
+
+**Gap Wave 3** *(blocked on Gap Wave 2)*
+
+- [ ] 08-15-PLAN.md — Home LCP: slide-only hero lead entrance (user-directed), taste gate
+- [ ] 08-16-PLAN.md — Shared payload LCP: defer GSAP until load and idle, plus levers chosen by 08-14
+
+**Gap Wave 4** *(blocked on Gap Wave 3)*
+
+- [ ] 08-17-PLAN.md — Lighthouse re-measure (pinned 13.6.0, median of 5) and user sign-off (D-06)
+
+**Gap Wave 5** *(blocked on Gap Wave 4)*
+
+- [ ] 08-18-PLAN.md — Full quality gate re-run and 08-VALIDATION.md update
 
 **UI hint**: yes
 
