@@ -398,9 +398,9 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 08-04-PLAN.md — Every-route EN/ES axe sweep in on/reduced/off with build-output guard; trimmed-spec re-check (D-07, D-08, D-16)
-- [ ] 08-05-PLAN.md — Generated Spanish review file with coverage/freshness test; TODO(martina) repointed (D-13, D-14)
-- [ ] 08-07-PLAN.md — Taste-skill gate on the redesign, report-only, user reviews findings (D-20)
+- [x] 08-04-PLAN.md — Every-route EN/ES axe sweep in on/reduced/off with build-output guard; trimmed-spec re-check (D-07, D-08, D-16)
+- [x] 08-05-PLAN.md — Generated Spanish review file with coverage/freshness test; TODO(martina) repointed (D-13, D-14)
+- [x] 08-07-PLAN.md — Taste-skill gate on the redesign, report-only, user reviews findings (D-20)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -430,4 +430,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
 | 7. Page Transitions & Smooth Scroll | 21/21 | Complete   | 2026-11-05 |
-| 8. Quality Verification | 3/9 | In Progress|  |
+| 8. Quality Verification | 6/9 | In Progress|  |
