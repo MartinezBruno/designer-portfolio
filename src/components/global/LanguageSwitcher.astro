@@ -16,7 +16,7 @@ const t = useTranslations(locale);
 const names = { en: t('lang.en'), es: t('lang.es') } as const satisfies Record<Locale, string>;
 
 // Build-time hrefs from the fixed locale tuple and this page's own path. Never reads browser language.
-// On a 404 the prerendered pathname is /404/, so each link targets the other locale's home instead.
+// On a 404 BaseLayout pins the pathname to /404/ or /es/404/, so each link targets the other locale's home.
 // The accessible name starts with the visible code (WCAG 2.5.3 Label in Name) and adds the language name.
 const links = locales.map((target) => ({
   target,

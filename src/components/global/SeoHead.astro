@@ -4,7 +4,8 @@ import { buildSeo, type SeoInput } from '../../lib/seo';
 
 type Props = SeoInput;
 
-// URLs come only from astro.config `site` and the build-time pathname (never request input).
+// URLs come only from astro.config `site` and a pathname that is either build-time or, for 404
+// pages, pinned by BaseLayout (never request input).
 const seo = buildSeo(Astro.props, absoluteFor);
 ---
 

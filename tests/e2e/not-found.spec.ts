@@ -68,4 +68,18 @@ test.describe('Spanish 404', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(es['notFound.heading']);
     await expectNoIndexWithoutCanonical(page);
   });
+
+  // Regression guard (WR-02): the ES 404 is rendered on demand, so BaseLayout pins its pathname.
+  test('an /es/* miss never reflects the requested path (WR-02)', async ({ request }) => {
+    const first = await request.get('/es/wr02-probe-aa/');
+    const second = await request.get('/es/wr02-probe-bb/');
+    expect(first.status()).toBe(404);
+    expect(second.status()).toBe(404);
+
+    const firstBody = await first.text();
+    const secondBody = await second.text();
+    expect(firstBody).not.toContain('wr02-probe');
+    expect(secondBody).not.toContain('wr02-probe');
+    expect(firstBody).toBe(secondBody);
+  });
 });

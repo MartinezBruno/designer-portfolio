@@ -24,7 +24,9 @@ interface Props {
 const { locale, title, description, kind = 'page', ogImage } = Astro.props;
 // Spread so pages without an ogImage pass no image prop at all (exactOptionalPropertyTypes).
 const ogImageProp = ogImage ? { image: ogImage } : {};
-const pathname = Astro.url.pathname;
+// The ES 404 is rendered on demand by the Worker, so the request path must never reach shared components.
+const pathname =
+  kind === 'notFound' ? (locale === 'en' ? '/404/' : '/es/404/') : Astro.url.pathname;
 ---
 
 <!doctype html>
