@@ -408,7 +408,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 08-08-PLAN.md — Mobile Lighthouse (pinned 13.6.0, median of 5) for Home and the heaviest detail page, user sign-off (D-01..D-06)
+- [x] 08-08-PLAN.md — Mobile Lighthouse (pinned 13.6.0, median of 5) for Home and the heaviest detail page, user sign-off (D-01..D-06)
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
@@ -430,4 +430,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
 | 7. Page Transitions & Smooth Scroll | 21/21 | Complete   | 2026-11-05 |
-| 8. Quality Verification | 7/9 | In Progress|  |
+| 8. Quality Verification | 8/9 | In Progress|  |
