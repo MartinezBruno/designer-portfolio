@@ -404,7 +404,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 08-06-PLAN.md — Keyboard-only journeys EN/ES (nav, toggles, marquee, detail, embed, contact) plus manual Tab pass (D-09)
+- [x] 08-06-PLAN.md — Keyboard-only journeys EN/ES (nav, toggles, marquee, detail, embed, contact) plus manual Tab pass (D-09)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -430,4 +430,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
 | 7. Page Transitions & Smooth Scroll | 21/21 | Complete   | 2026-11-05 |
-| 8. Quality Verification | 6/9 | In Progress|  |
+| 8. Quality Verification | 7/9 | In Progress|  |
