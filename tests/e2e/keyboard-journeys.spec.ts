@@ -270,7 +270,9 @@ for (const { locale, prefix, dict, other, otherPrefix } of cases) {
       let errors: string[] = [];
 
       test.beforeEach(({ page }) => {
-        errors = collectErrors(page);
+        // WR-03: Turnstile's own console noise (e.g. its Private Access Token 401) is not a site
+        // error. Page errors are still collected.
+        errors = collectErrors(page, /challenges\.cloudflare\.com/);
       });
 
       test.afterEach(() => {
@@ -284,6 +286,9 @@ for (const { locale, prefix, dict, other, otherPrefix } of cases) {
         if (service === undefined) throw new Error('no services');
         await open(page, prefix);
         await reachContactByKeyboard(page, prefix);
+        // WR-03: wait for the widget to mount and issue its token before typing, so the
+        // Turnstile render cannot race the keystrokes. Tokens are single-use with a 300 s TTL.
+        await waitForTurnstileToken(page);
 
         // The radio group is one stop (the checked "other" chip, last); ArrowRight wraps to the first.
         await tabUntil(page, 'input[name="service"]');
@@ -295,14 +300,18 @@ for (const { locale, prefix, dict, other, otherPrefix } of cases) {
         await page.keyboard.press('Tab');
         await expect(page.locator('#contact-name')).toBeFocused();
         await page.keyboard.type('Ana López');
+        await expect(page.locator('#contact-name')).toHaveValue('Ana López');
         await page.keyboard.press('Tab');
         await expect(page.locator('#contact-email')).toBeFocused();
         await page.keyboard.type('ana@example.com');
+        await expect(page.locator('#contact-email')).toHaveValue('ana@example.com');
         await page.keyboard.press('Tab');
         await expect(page.locator('#contact-message')).toBeFocused();
         await page.keyboard.type('Necesito una identidad visual para mi café.');
+        await expect(page.locator('#contact-message')).toHaveValue(
+          'Necesito una identidad visual para mi café.',
+        );
 
-        await waitForTurnstileToken(page);
         await tabUntil(page, '[data-contact-submit]');
         await page.keyboard.press('Enter');
 
