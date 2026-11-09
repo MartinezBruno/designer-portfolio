@@ -123,6 +123,20 @@ export function revealDelay(el: Element, batch: readonly Element[]): number {
 }
 
 /**
+ * The element the observers watch for `el` (08 A11Y-01). A shutter's own hidden clip-path
+ * (`inset(0 0 100% 0)`) leaves a zero-height visible box at its top edge, so an observer on the
+ * shutter never reports it while its card's top is above the viewport (an instant jump, a deep
+ * link then scrolling back up): the cover stayed blank while on screen. The shutter is watched
+ * through its card instead, which has no clip-path and starts at the same top edge as the cover,
+ * so the trigger line for downward scrolling is unchanged. A shutter outside a card uses its
+ * parent. Every other kind is watched directly.
+ */
+export function observeTargetFor(el: HTMLElement): Element {
+  if (el.dataset['reveal'] !== 'shutter') return el;
+  return el.closest('[data-card]') ?? el.parentElement ?? el;
+}
+
+/**
  * Scroll reveals (MOTN-01, UI-SPEC "Reveal Contract"). Markup carries `data-reveal`; CSS owns the
  * hidden, armed and revealed states and picks the transition per motion state. This effect only
  * writes attributes and `--reveal-delay`: `data-reveal-armed` (observer owns it, the CSS failsafe
@@ -137,6 +151,28 @@ export function createReveal(deps: RevealDeps): PageInit {
 
     const pending = new Set<HTMLElement>();
     let observer: ReturnType<RevealDeps['createObserver']> | undefined;
+    /** Observed element -> the pending reveal targets it stands for (see observeTargetFor). */
+    const targetsByProxy = new Map<Element, Set<HTMLElement>>();
+    /** Registers `el` under its proxy once and returns the proxy to observe. */
+    const track = (el: HTMLElement): Element => {
+      const proxy = observeTargetFor(el);
+      let targets = targetsByProxy.get(proxy);
+      if (targets === undefined) {
+        targets = new Set();
+        targetsByProxy.set(proxy, targets);
+      }
+      targets.add(el);
+      return proxy;
+    };
+    /** Drops `el` from its proxy; the proxy is unobserved once nothing pending maps to it. */
+    const untrack = (el: HTMLElement): void => {
+      const proxy = observeTargetFor(el);
+      const targets = targetsByProxy.get(proxy);
+      targets?.delete(el);
+      if (targets !== undefined && targets.size > 0) return;
+      targetsByProxy.delete(proxy);
+      observer?.unobserve(proxy);
+    };
 
     // Lines driver (Pattern 3 rules 3 and 6): under 'on' a `lines` heading stays unarmed (the CSS
     // failsafe owns it) until GSAP has loaded, so nothing is ever armed with no way to reveal it.
@@ -150,7 +186,7 @@ export function createReveal(deps: RevealDeps): PageInit {
 
     const finish = (el: HTMLElement, instant: boolean, delay = 0): void => {
       if (!pending.delete(el)) return;
-      observer?.unobserve(el);
+      untrack(el);
       if (!instant && isLines(el) && splitReady() && canSplit(el)) {
         const mods = gsapMods as GsapModules;
         let handle: SplitHandle | undefined;
@@ -189,11 +225,10 @@ export function createReveal(deps: RevealDeps): PageInit {
       el.setAttribute('data-reveal-instant', '');
     };
     // Restored position (07 D-15): back/forward lands mid-page, and an element that starts above
-    // the viewport at mount is shown at once, so no entrance replays above the visitor. That
-    // includes one straddling the top edge: a shutter's hidden clip leaves only its top line, which
-    // is off screen, so the observer would never see it intersect and it would stay blank. At
-    // scroll 0 (every fresh load) nothing can be above, so no layout is read and first-load is
-    // unchanged.
+    // the viewport at mount is shown at once, so no entrance replays above the visitor, including
+    // one straddling the top edge. Later jumps past a card top are covered by observing shutters
+    // through their card (observeTargetFor). At scroll 0 (every fresh load) nothing can be above,
+    // so no layout is read and first-load is unchanged.
     const scrolled = (win?.scrollY ?? 0) > 0;
     const aboveViewport = (el: HTMLElement): boolean =>
       scrolled && el.getBoundingClientRect().top < 0;
@@ -206,12 +241,14 @@ export function createReveal(deps: RevealDeps): PageInit {
     }
 
     type Observer = ReturnType<RevealDeps['createObserver']>;
-    /** Reveals the intersecting, still-pending targets of one callback as a staggered batch. */
+    /** Reveals the still-pending targets of one callback's intersecting proxies as one batch. */
     const revealEntries = (entries: IntersectionObserverEntry[]): void => {
       const batch: HTMLElement[] = [];
       for (const entry of entries) {
-        const target = entry.target as HTMLElement;
-        if (entry.isIntersecting && pending.has(target)) batch.push(target);
+        if (!entry.isIntersecting) continue;
+        for (const target of targetsByProxy.get(entry.target) ?? []) {
+          if (pending.has(target) && !batch.includes(target)) batch.push(target);
+        }
       }
       if (batch.length > 0) revealBatch(batch);
     };
@@ -249,12 +286,14 @@ export function createReveal(deps: RevealDeps): PageInit {
       for (const el of toArm) {
         el.setAttribute('data-reveal-armed', '');
         pending.add(el);
-        observer.observe(el);
-        mountPass.observe(el);
+        const proxy = track(el);
+        observer.observe(proxy);
+        mountPass.observe(proxy);
       }
     } catch (err) {
       for (const el of toArm) el.removeAttribute('data-reveal-armed');
       pending.clear();
+      targetsByProxy.clear();
       mountPass?.disconnect();
       observer?.disconnect();
       throw err;
@@ -306,8 +345,9 @@ export function createReveal(deps: RevealDeps): PageInit {
         }
         el.setAttribute('data-reveal-armed', '');
         pending.add(el);
-        observer?.observe(el);
-        (pass ??= createPass()).observe(el);
+        const proxy = track(el);
+        observer?.observe(proxy);
+        (pass ??= createPass()).observe(proxy);
       }
       waitingLines.clear();
     };
@@ -371,6 +411,7 @@ export function createReveal(deps: RevealDeps): PageInit {
       // Unrevealed elements drop the armed marker so the CSS failsafe owns them again.
       for (const el of pending) el.removeAttribute('data-reveal-armed');
       pending.clear();
+      targetsByProxy.clear();
       for (const el of doc.querySelectorAll<HTMLElement>(SELECTOR)) {
         el.style.removeProperty('--reveal-delay');
       }

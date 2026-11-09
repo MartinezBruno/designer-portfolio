@@ -41,6 +41,18 @@ function all(): HTMLElement[] {
   return [...document.querySelectorAll<HTMLElement>('[data-reveal]')];
 }
 
+/** The element the observers watch for `node`: a shutter's card, otherwise the node itself. */
+function proxyOf(node: HTMLElement): Element {
+  if (node.dataset['reveal'] !== 'shutter') return node;
+  const card = node.closest('[data-card]');
+  if (!card) throw new Error(`fixture #${node.id} has no card`);
+  return card;
+}
+
+function card(id: string): Element {
+  return proxyOf(el(id));
+}
+
 function makeDeps(): RevealDeps {
   return {
     createObserver: (cb, init) => new FakeIntersectionObserver(cb, init),
@@ -205,7 +217,7 @@ describe('createReveal', () => {
     expect(io.init.threshold).toBe(0);
     for (const node of all()) {
       expect(node.hasAttribute('data-reveal-armed')).toBe(true);
-      expect(io.observed.has(node)).toBe(true);
+      expect(io.observed.has(proxyOf(node))).toBe(true);
     }
     expect(io.observed.size).toBe(all().length);
     cleanup?.();
@@ -242,7 +254,9 @@ describe('createReveal', () => {
       expect(FakeIntersectionObserver.last().init.rootMargin).toBe('0px 0px -12% 0px');
       for (const node of all()) {
         if (node.dataset['reveal'] === 'lines') continue; // lines wait for GSAP under 'on'
-        expect(mount.observed.has(node)).toBe(true);
+        // Shutters are watched through their card (08 A11Y-01), everything else directly.
+        expect(mount.observed.has(proxyOf(node))).toBe(true);
+        if (node.dataset['reveal'] === 'shutter') expect(mount.observed.has(node)).toBe(false);
       }
       cleanup?.();
     });
@@ -251,14 +265,14 @@ describe('createReveal', () => {
       const cleanup = createReveal(makeDeps())(document);
       const mount = mountObserver();
       const main = FakeIntersectionObserver.last();
-      mount.trigger([el('cover2'), el('cover1'), el('text1'), el('text2')]);
+      mount.trigger([card('cover2'), card('cover1'), el('text1'), el('text2')]);
       expect(el('cover1').hasAttribute('data-revealed')).toBe(true);
       expect(el('cover1').hasAttribute('data-reveal-instant')).toBe(false);
       expect(el('cover1').style.getPropertyValue('--reveal-delay')).toBe('0ms');
       expect(el('text1').style.getPropertyValue('--reveal-delay')).toBe('70ms');
       expect(el('cover2').style.getPropertyValue('--reveal-delay')).toBe('90ms');
       expect(el('text2').style.getPropertyValue('--reveal-delay')).toBe('160ms');
-      expect(main.observed.has(el('cover1'))).toBe(false);
+      expect(main.observed.has(card('cover1'))).toBe(false);
       expect(mount.disconnected).toBe(true);
       cleanup?.();
     });
@@ -298,6 +312,65 @@ describe('createReveal', () => {
     });
   });
 
+  // 08 A11Y-01: a shutter's hidden clip leaves a zero-height box, so an observer on the shutter
+  // never fires while its card top is above the viewport. Shutters are watched through the card.
+  describe('shutters observed through their card (A11Y-01)', () => {
+    it('an intersecting card reveals its shutter with the staggered delay', () => {
+      const cleanup = createReveal(makeDeps())(document);
+      const main = FakeIntersectionObserver.last();
+      main.trigger([card('cover2'), card('cover1')]);
+      expect(el('cover1').hasAttribute('data-revealed')).toBe(true);
+      expect(el('cover1').hasAttribute('data-reveal-instant')).toBe(false);
+      expect(el('cover1').style.getPropertyValue('--reveal-delay')).toBe('0ms');
+      expect(el('cover2').hasAttribute('data-revealed')).toBe(true);
+      expect(el('cover2').style.getPropertyValue('--reveal-delay')).toBe('90ms');
+      // The settle text blocks are their own targets, not part of the card proxy.
+      expect(el('text1').hasAttribute('data-revealed')).toBe(false);
+      cleanup?.();
+    });
+
+    it('unobserves the card once its shutter is revealed, not before', () => {
+      const cleanup = createReveal(makeDeps())(document);
+      const main = FakeIntersectionObserver.last();
+      const article = card('cover1');
+      expect(main.observed.has(article)).toBe(true);
+      main.trigger([el('text1')]);
+      expect(main.observed.has(article)).toBe(true);
+      main.trigger([article]);
+      expect(main.observed.has(article)).toBe(false);
+      expect(main.unobserved).toContain(article);
+      expect(main.unobserved).not.toContain(el('cover1'));
+      cleanup?.();
+    });
+
+    it('still observes settle and lines elements directly', () => {
+      setMotion('reduced'); // lines arm at mount without a GSAP driver
+      const cleanup = createReveal(makeDeps())(document);
+      const main = FakeIntersectionObserver.last();
+      for (const id of ['h', 'a', 'b', 'c', 'text1', 'text2']) {
+        expect(main.observed.has(el(id))).toBe(true);
+      }
+      main.trigger([el('h'), el('text2')]);
+      expect(el('h').hasAttribute('data-revealed')).toBe(true);
+      expect(el('text2').hasAttribute('data-revealed')).toBe(true);
+      expect(el('cover2').hasAttribute('data-revealed')).toBe(false);
+      cleanup?.();
+    });
+
+    it('observes a shutter with no [data-card] ancestor through its parent element', () => {
+      document.body.innerHTML = `
+        <section id="frame"><div id="lone" data-reveal="shutter"><picture></picture></div></section>`;
+      const cleanup = createReveal(makeDeps())(document);
+      const main = FakeIntersectionObserver.last();
+      expect(main.observed.has(el('frame'))).toBe(true);
+      expect(main.observed.has(el('lone'))).toBe(false);
+      main.trigger([el('frame')]);
+      expect(el('lone').hasAttribute('data-revealed')).toBe(true);
+      expect(main.observed.has(el('frame'))).toBe(false);
+      cleanup?.();
+    });
+  });
+
   it('ignores non-intersecting entries', () => {
     const cleanup = createReveal(makeDeps())(document);
     const io = FakeIntersectionObserver.last();
@@ -328,7 +401,7 @@ describe('createReveal', () => {
     for (const id of ['cover1', 'text1', 'cover2', 'text2']) {
       expect(el(id).hasAttribute('data-revealed')).toBe(false);
       expect(el(id).hasAttribute('data-reveal-armed')).toBe(true);
-      expect(io.observed.has(el(id))).toBe(true);
+      expect(io.observed.has(proxyOf(el(id)))).toBe(true);
     }
     cleanup?.();
   });
@@ -357,7 +430,7 @@ describe('createReveal', () => {
     for (const id of ['cover1', 'text2']) {
       expect(el(id).hasAttribute('data-revealed')).toBe(false);
       expect(el(id).hasAttribute('data-reveal-armed')).toBe(true);
-      expect(io.observed.has(el(id))).toBe(true);
+      expect(io.observed.has(proxyOf(el(id)))).toBe(true);
     }
     cleanup?.();
   });
@@ -422,7 +495,7 @@ describe('createReveal', () => {
     expect(el('cover1').hasAttribute('data-reveal-instant')).toBe(true);
     expect(el('cover2').hasAttribute('data-revealed')).toBe(false);
     const io = FakeIntersectionObserver.last();
-    expect(io.observed.has(el('cover1'))).toBe(false);
+    expect(io.observed.has(card('cover1'))).toBe(false);
     cleanup?.();
   });
 

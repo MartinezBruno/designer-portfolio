@@ -233,13 +233,18 @@ test.describe('A11Y-01: a card cover opens on any intersection', () => {
         await waitForArmedShutters(page);
         const last = (await page.locator(WORK_CARDS).count()) - 1;
         expect(last).toBeGreaterThanOrEqual(0);
-        const rect = await page.locator(WORK_CARDS).nth(last).evaluate(async (card) => {
-          const top = card.getBoundingClientRect().top + window.scrollY;
-          window.scrollTo({ top: top + 40, behavior: 'instant' });
-          await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-          const box = card.getBoundingClientRect();
-          return { top: box.top, bottom: box.bottom };
-        });
+        const rect = await page
+          .locator(WORK_CARDS)
+          .nth(last)
+          .evaluate(async (card) => {
+            const top = card.getBoundingClientRect().top + window.scrollY;
+            window.scrollTo({ top: top + 40, behavior: 'instant' });
+            await new Promise((resolve) =>
+              requestAnimationFrame(() => requestAnimationFrame(resolve)),
+            );
+            const box = card.getBoundingClientRect();
+            return { top: box.top, bottom: box.bottom };
+          });
         // Precondition: the card straddles the viewport top edge.
         expect(rect.top).toBeLessThan(0);
         expect(rect.bottom).toBeGreaterThan(0);
