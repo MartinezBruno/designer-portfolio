@@ -8,6 +8,22 @@ const cases = [
   ['/es/', es],
 ] as const;
 
+interface ArchExpectation {
+  boxWidth: number;
+  ratio: number;
+  topRadius: '50% 40%' | '50% 37.5%';
+}
+
+/** Below sm the arch fills the grid column (viewport minus the 2rem padding) at 4:5 with a true semicircle top. */
+const PHONE_375: ArchExpectation = { boxWidth: 343, ratio: 4 / 5, topRadius: '50% 40%' };
+
+const archCases: readonly (readonly [number, ArchExpectation])[] = [
+  [375, PHONE_375],
+  [390, { boxWidth: 358, ratio: 4 / 5, topRadius: '50% 40%' }],
+  [640, { boxWidth: 176, ratio: 3 / 4, topRadius: '50% 37.5%' }],
+  [1280, { boxWidth: 256, ratio: 3 / 4, topRadius: '50% 37.5%' }],
+];
+
 test.describe('hero without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
 
@@ -55,16 +71,13 @@ test.describe('hero without JavaScript', () => {
       await expect(picture.locator('img')).toHaveAttribute('src', /\.webp(\?|$)/);
     });
 
-    for (const [width, maxSide] of [
-      [375, 128],
-      [1280, 256],
-    ] as const) {
-      test(`${path} hero portrait is a 3:4 arch on the accent ground at ${width}px`, async ({
+    for (const [width, expected] of archCases) {
+      test(`${path} hero portrait is an arch on the accent ground at ${width}px`, async ({
         page,
       }) => {
         await page.setViewportSize({ width, height: 900 });
         await page.goto(path);
-        await expectArch(page, width, maxSide);
+        await expectArch(page, width, expected);
       });
     }
   }
@@ -76,22 +89,51 @@ test.describe('hero portrait arch with reduced motion', () => {
   test('/ keeps the same static arch at 375px', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 900 });
     await page.goto('/');
-    await expectArch(page, 375, 128);
+    await expectArch(page, 375, PHONE_375);
     const picture = page.locator('#main section[aria-labelledby="hero-title"] picture');
     expect(await picture.evaluate((el) => getComputedStyle(el).clipPath)).toBe('none');
   });
 });
 
-/** Sketch 001 arch: 3:4, semicircle top, 1.25rem bottom corners, accent ground, real dimensions. */
-async function expectArch(page: Page, width: number, maxSide: number): Promise<void> {
+test.describe('hero portrait srcset on a phone', () => {
+  test.use({ viewport: { width: 412, height: 915 }, deviceScaleFactor: 1.75 });
+
+  test('/ loads a candidate of at least 665px at 412px and DPR 1.75', async ({ page }) => {
+    await page.goto('/');
+    const picture = page.locator('#main section[aria-labelledby="hero-title"] picture');
+    const img = picture.locator('img');
+    await expect
+      .poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0))
+      .toBe(true);
+    const currentSrc = await img.evaluate((el: HTMLImageElement) => el.currentSrc);
+    const avifSrcset =
+      (await picture.locator('source[type="image/avif"]').getAttribute('srcset')) ?? '';
+    for (const w of [256, 448, 640, 768, 1024]) {
+      expect(avifSrcset).toContain(` ${w}w`);
+    }
+    // naturalWidth is density-corrected to the sizes slot, so read the chosen
+    // candidate's w descriptor from the srcset it came from.
+    const candidates = new Map(
+      avifSrcset.split(',').map((entry) => {
+        const [url = '', descriptor = ''] = entry.trim().split(/\s+/);
+        return [new URL(url, page.url()).href, Number.parseInt(descriptor, 10)] as const;
+      }),
+    );
+    expect(currentSrc).toMatch(/portrait\.[^/]+\.avif$/);
+    expect(candidates.get(currentSrc) ?? 0).toBeGreaterThanOrEqual(665);
+  });
+});
+
+/** Sketch 001 arch: semicircle top, 1.25rem bottom corners, accent ground, real dimensions. */
+async function expectArch(page: Page, width: number, expected: ArchExpectation): Promise<void> {
   const picture = page.locator('#main section[aria-labelledby="hero-title"] picture');
   const img = picture.locator('img');
   await expect(img).toHaveAttribute('width', '600');
   await expect(img).toHaveAttribute('height', '800');
   const box = await img.boundingBox();
   expect(box).not.toBeNull();
-  expect(box?.width).toBe(maxSide);
-  expect(Math.abs((box?.height ?? 0) - (maxSide * 4) / 3)).toBeLessThanOrEqual(1);
+  expect(box?.width).toBe(expected.boxWidth);
+  expect(Math.abs((box?.height ?? 0) - expected.boxWidth / expected.ratio)).toBeLessThanOrEqual(1);
   const imgStyle = await img.evaluate((el) => {
     const style = getComputedStyle(el);
     return { bg: style.backgroundColor, fit: style.objectFit, position: style.objectPosition };
@@ -112,7 +154,7 @@ async function expectArch(page: Page, width: number, maxSide: number): Promise<v
   expect(frame.bg).toBe('rgb(15, 112, 183)');
   expect(frame.overflowX).toBe('hidden');
   expect(frame.bottomLeft).toBe('20px');
-  expect(frame.topLeft).toBe('50% 37.5%');
+  expect(frame.topLeft).toBe(expected.topRadius);
   const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(scrollWidth).toBeLessThanOrEqual(width);
 }
