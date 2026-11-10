@@ -145,7 +145,10 @@ test.describe('contact form with JavaScript', () => {
 
       const group = section.getByRole('group', { name: dict['contact.service.legend'] });
       const radios = group.getByRole('radio');
-      await expect(radios).toHaveCount(5);
+      // 5 services + Not sure yet; Photography sits right before it (Phase 9, D-08).
+      await expect(radios).toHaveCount(6);
+      await expect(radios.nth(4)).toHaveAttribute('value', 'photography');
+      await expect(radios.nth(5)).toHaveAttribute('value', 'other');
       const labels = serviceLabels(locale, dict);
       for (const [index, label] of labels.entries()) {
         await expect(radios.nth(index)).toHaveAccessibleName(label);

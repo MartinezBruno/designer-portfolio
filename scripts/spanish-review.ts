@@ -31,7 +31,7 @@ export const NON_COPY_TODOS: readonly { location: string; item: string }[] = [
   { location: 'src/data/site.ts:19', item: 'Real contact email address (mailto links).' },
   {
     location: 'src/components/sections/Hero.astro:10',
-    item: 'Original uncropped hero photo at 1000px or wider.',
+    item: 'Hero photo original at 1600px or wider (sharper 3x phone render).',
   },
   {
     location: 'src/lib/contact/mailer/resend.ts:12',
