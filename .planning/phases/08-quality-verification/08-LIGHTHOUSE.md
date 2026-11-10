@@ -313,6 +313,70 @@ All 10 non-LCP images on the detail page start at 51–57 ms, before observed LC
 
 Total 264,118 B for the 10 non-LCP images (9 lazy Low ones: 233,544 B). The cause of the oversizing: the 412 px viewport at DPR 1.75 needs 721 px, and `moduleWidths()` (src/lib/projects/detail-view.ts, `MODULE_WIDTHS = [640, 960, 1400]`) has no candidate between 640 and 960, so `sizes="… 100vw"` picks 960w. image-delivery-insight scores 0.5 and estimates 71,868 B of waste on these 4 images. **L4 (an intermediate width candidate) qualifies.** [Inference] The lazy images are fetched immediately because the unthrottled Lighthouse load runs on a fast connection, so Chrome's lazy-load distance threshold covers them. Making them smaller lowers the byte cost but does not stop them starting before LCP.
 
+### Lever experiments (Task 2)
+
+Each lever was a temporary working-tree patch. For each one: `pnpm build`, restart the preview on 4485, run 3 pinned Lighthouse runs per affected page, then `git checkout -- src astro.config.ts`. **No experiment was committed.** Baseline = the 3-run medians above (Home 3,473 ms, detail 3,690 ms). Raw JSON: `tmp/lighthouse/<lever>-<page>-<n>.json`.
+
+| Lever | Page | Patch summary | Runs (simulated LCP, ms) | Median simulated LCP | Delta vs baseline | Observed LCP (median) | CLS (max) |
+|---|---|---|---|---|---|---|---|
+| L1 | Home | global.css: `[data-hero-lead]` uses a new translate-only `hero-slide` keyframe (`translate: 0 16px` → `none`, no opacity), same `--t-settle`, `--ease-reveal`, 200 ms delay; the CTA keeps `hero-settle` | 1,209 / 1,209 / 1,208 | **1,209** | **−2,264** | 42 ms (LCP element still `p[data-hero-lead]`, render delay 59 ms) | 0 |
+| L1 | Detail | same patch (the detail page has no hero) | 3,625 / 2,584 / 3,699 | 3,625 | −65 (noise) | 59 ms | 0 |
+| L2 | Home | load-gsap.ts: `createGsapLoader(() => afterLoadIdle().then(importGsap))`, where `afterLoadIdle` = window `load` (or `readyState === 'complete'`), then `requestIdleCallback` (timeout 1000 ms, `setTimeout` fallback) | 3,410 / 3,403 / 3,407 | 3,407 | −66 | 1,021 ms | 0 |
+| L2 | Detail | same | 3,620 / 3,552 / 3,551 | 3,552 | −138 | 61 ms | 0 |
+| L2b | Home | L2 plus one painted frame after `load`: `load` → `requestAnimationFrame` → `setTimeout 0` → `requestIdleCallback` (timeout 1000 ms) → `importGsap` | 3,412 / 3,402 / 3,181 | 3,402 | −71 | 1,018 ms | 0 |
+| L2b | Detail | same | 2,642 / 2,558 / 2,560 | **2,560** | **−1,130** | 46 ms | 0 |
+| L3 | — | not run: lenis is never requested in Lighthouse mobile (answer (c)) | — | — | — | — | — |
+| L4 | Detail | detail-view.ts: `MODULE_WIDTHS = [640, 768, 960, 1400]` (adds a 768w candidate; 768/412 = 1.86 ≥ DPR 1.75) | 3,406 / 3,405 / 3,406 | 3,406 | −284 | 64 ms | 0 |
+| L5 | Home | astro.config.ts: `build: { inlineStylesheets: 'always' }` | 3,632 / 3,629 / 3,632 | 3,632 | **+159 (harm)** | 1,009 ms | 0 |
+| L5 | Detail | same | 3,918 / 3,917 / 3,996 | 3,918 | **+228 (harm)** | 61 ms | 0 |
+| C1 = L1+L2+L4 | Home | union of the levers that gained ≥ 100 ms, with L2 as written | 1,210 / 1,208 / 1,209 | 1,209 | −2,264 | 65 ms | 0 |
+| C1 = L1+L2+L4 | Detail | same | 2,635 / 3,400 / 2,634 | 2,635 | −1,055 | 53 ms | 0 |
+| **C2 = L1+L2b+L4** | Home | union with L2b instead of L2 | 1,210 / 1,209 / 1,208 | **1,209** | **−2,264** | 48 ms | 0 |
+| **C2 = L1+L2b+L4** | Detail | same | 2,635 / 2,559 / 2,559 | **2,559** | **−1,131** | 61 ms | 0 |
+| C3 = L1+L2b | Home | C2 without L4 | 1,212 / 1,208 / 1,208 | 1,208 | −2,265 | 66 ms | 0 |
+| C3 = L1+L2b | Detail | same | 2,637 / 2,558 / 2,647 | 2,637 | −1,053 | 64 ms | 0 |
+
+TBT was 0–4 ms in every run. `pnpm measure:bundle` printed "bundle check ok" with C1 (max eager 17,922 B on `/`), C2 and C3 (max eager 17,945 B on `/`) applied. The eager `load-gsap` chunk grows by about 280 B gzip, and GSAP stays out of eager chunks.
+
+What the numbers show:
+
+- **L1 removes the Home miss by itself.** With the lead at full opacity in its first frame, observed LCP drops from about 1,010 ms to 40–62 ms (the lead, at first paint). Simulated LCP then equals simulated FCP (1,208–1,209 ms), so nothing after first paint counts any more. L4 and L2b do not change Home.
+- **L2 as written is a race on the detail page.** Window `load` fires at 33–57 ms here (lazy images do not delay it), which is at or before the image LCP paint (45–72 ms). So "after load plus idle" still requests GSAP before observed LCP in some runs. C1 detail was bimodal: 2,634 / 2,635 when GSAP started after LCP, 3,400 when it started before. **L2b** (wait for one painted frame after `load`, then idle) moved the GSAP request to 59–63 ms, which in Lantern terms falls after LCP in every run. Alone it is worth −1,130 ms on the detail page. On Home it barely matters (−71), because there GSAP starts long before the 1 s lead LCP whatever we do.
+- **L4 helps only a little once L2b is in.** Alone it gains −284 ms (the 10 images go from 264,118 to 203,249 B, and `image-delivery-insight` passes). On top of L1+L2b it lowers the detail median from 2,637 to 2,559 (2 of 3 runs at 2,558–2,559 vs 2 of 3 at 2,637–2,647).
+- **L5 is harmful.** Inlining the stylesheet grows the HTML from 63 to 175 KB (Home) and from 35 to 147 KB (detail), uncompressed. Every page now carries the full CSS in its document, and simulated FCP rises by about 300 ms on both pages.
+
+Diagnostic bounds (not levers, no src change). Lighthouse `--blocked-url-patterns` on the C2 build, detail page, 3 runs each:
+
+| Blocked on top of C2 | Median simulated LCP |
+|---|---|
+| the 9 lazy below-fold AVIFs (`*1295185*`) | 2,632 |
+| both woff2 fonts | 2,484 (simulated FCP rises to 1,509) |
+| `gsap.*` + `SplitText*` | 2,558 |
+| all of the above together | **2,482** |
+
+So on the uncompressed local preview, **no combination of non-critical requests gets the detail page under 2,400 ms**. Even with every font, lazy image and GSAP request blocked, simulated LCP stays at about 2,480 ms. The rest is the critical path itself: uncompressed HTML (37 KB), render-blocking CSS (56 KB), the High-priority eager module scripts and the LCP image, under 150 ms RTT and 1.6 Mbps.
+
+Compression check (informational, the same method as the 08-08 Supplementary section): a throwaway Brotli q5 proxy (`tmp/lighthouse/br-proxy.mjs`, port 4486) in front of the C2 preview gave **Home 761 / 759 / 760 (median 760) and detail 2,259 / 2,258 / 2,259 (median 2,259)**, CLS 0. This approximates Cloudflare's edge compression. It is not a deployed measurement.
+
+Machine note: at 00:21:01 UTC an `astro dev` process started from the main checkout (not by this plan; 0.0% CPU, left running). It overlapped the X4, compression, L2b, L1-detail and C3 runs. Their benchmarkIndex (4,590–4,676) is in the same range as the earlier runs (4,606–4,705), and L2b/C3 reproduce C2's detail numbers. So [Inference] it had no measurable effect.
+
+### Chosen levers
+
+**No lever set reaches the 2,400 ms target on the detail page on the uncompressed local preview.** The best combination is **C2 = L1 + L2b + L4: Home 1,209 ms (median of 3), detail 2,559 ms (median of 3)**, CLS 0, bundle check ok. Home clears 2,400 ms by a wide margin. The detail page beats its 3,690 ms baseline by 1,131 ms, but it is still 59 ms over the 2,500 ms budget and 159 ms over the 2,400 ms target. Per D-06, the residual detail miss goes to the user at the **08-17 checkpoint**, with its measured cause: the critical path is uncompressed on local preview, and the floor is about 2,480 ms even with every non-critical request blocked. Under Brotli the same build measures 2,259 ms.
+
+| Lever | Fix plan | Files | Why chosen |
+|---|---|---|---|
+| **L1** | **08-15** | src/styles/global.css (the `[data-hero-lead]` rule plus a translate-only keyframe; the CTA keeps `hero-settle`) | User-directed. Home −2,264 ms, which alone clears the Home miss. The taste-skill gate applies to the new entrance |
+| **L2 (L2b form)** | **08-16** | src/lib/motion/load-gsap.ts (wrap `importGsap` inside `createGsapLoader`: `load` → one painted frame (`requestAnimationFrame` → `setTimeout 0`) → `requestIdleCallback` timeout 1000 ms, `setTimeout` fallback) | User-directed. The plain "load + idle" form is a race on the detail page (one run at 3,400). Adding the painted frame makes it hold in all 3 runs: detail −1,130 ms alone |
+| **L4** | **08-16** | src/lib/projects/detail-view.ts (`MODULE_WIDTHS = [640, 768, 960, 1400]`) and its unit tests | Best combination: −78 ms on top of L1+L2b (2,637 → 2,559), −284 ms alone. It also removes the 71.9 KB of waste that image-delivery-insight flags |
+
+Not chosen: **L3** (lenis is never requested in Lighthouse mobile) and **L5** (`inlineStylesheets: 'always'` is +159 ms on Home and +228 ms on detail; no unused-CSS block was found to remove).
+
+Notes for the fix plans:
+
+- 08-16 (L2b): the detail page's `ProjectIntro` title and Home's lines headings wait for GSAP before they rise. Deferring the import past the first painted frame makes them wait a little longer, and the existing 1.5 s failsafe still applies. Re-run the motion/reveal e2e specs to check that no lines heading stays hidden.
+- 08-15 (L1): the LCP element stays the lead. A slide that keeps full opacity from the first frame is what drops observed LCP from about 1,010 ms to about 50 ms. Any variant the taste gate prefers must not animate opacity on `[data-hero-lead]`.
+
 ## How to reproduce
 
 ```bash
