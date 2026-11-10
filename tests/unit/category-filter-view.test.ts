@@ -1,7 +1,7 @@
-// @vitest-environment happy-dom
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
+import { Window } from 'happy-dom';
 import { describe, expect, it } from 'vitest';
 import CategoryFilter from '../../src/components/ui/CategoryFilter.astro';
 import type { CategoryChip } from '../../src/lib/projects/filter';
@@ -26,9 +26,10 @@ async function render(locale: 'en' | 'es'): Promise<Document> {
   const html = await container.renderToString(CategoryFilter, {
     props: { locale, chips: chipsFor(locale) },
   });
-  const doc = document.implementation.createHTMLDocument('t');
-  doc.body.innerHTML = html;
-  return doc;
+  // Node environment: the happy-dom test environment breaks the .astro import, so parse here.
+  const window = new Window();
+  window.document.body.innerHTML = html;
+  return window.document as unknown as Document;
 }
 
 describe('CategoryFilter (EN)', () => {
