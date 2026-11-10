@@ -1,106 +1,97 @@
 ---
 phase: 08-quality-verification
-verified: 2026-11-09T00:00:00Z
-status: gaps_found
-score: 1/3 roadmap success criteria verified (QUAL-03 met; QUAL-01 and QUAL-02 unmet)
+verified: 2026-11-10T00:00:00Z
+status: passed
+score: 3/3 roadmap success criteria verified (QUAL-01 met with one user-accepted miss)
 overrides_applied: 0
-gaps:
-  - truth: "Mobile Lighthouse results for Home and a heavy detail page are recorded against the budget (LCP < 2.5 s, CLS < 0.1, homepage JS ~100 KB gz); regressions are fixed or documented (QUAL-01)"
-    status: failed
-    reason: "Measurement is recorded (08-LIGHTHOUSE.md) but LCP misses budget on both pages: Home median 3,189 ms, heaviest detail (/projects/website-reciclick/) 3,637 ms vs < 2,500 ms. The user chose 'fix' for both, so the regression is neither fixed nor accepted as documented. CLS 0, TBT 0 and JS 60,022 B gz pass."
-    artifacts:
-      - path: ".planning/phases/08-quality-verification/08-LIGHTHOUSE.md"
-        issue: "LCP miss on Home and detail; no fix plan executed; no re-measure"
-    missing:
-      - "Fix Home LCP: LCP element is hero lead <p data-hero-lead>, element render delay ~1,012 ms observed (text hidden or animated at load; check motion gate/SplitText reveal and render-blocking BaseLayout CSS 54.7 KB)"
-      - "Fix detail LCP: LCP element is first project image; observed LCP is only 74 ms, so the simulated 3.6 s is dominated by the shared render-blocking CSS, fonts and JS payload; all 7 detail pages measured 3.4-4.0 s"
-      - "Re-run mobile Lighthouse (pinned 13.6.0, median of 5, Home + heaviest detail) after the fix and update 08-LIGHTHOUSE.md; re-run pnpm measure:bundle"
-  - truth: "Every page passes axe in EN and ES and is fully usable by keyboard alone (QUAL-02)"
-    status: failed
-    reason: "Axe sweep and keyboard journeys exist and passed in the hermetic gate (791 passed, 0 failed), and the manual Tab pass was approved. But (a) A11Y-01, a user-confirmed accessibility defect (work-card cover mask stays clip-path inset(0 0 100%) so the image is invisible while on screen after an instant jump), is unfixed; (b) the @network keyboard-journeys.spec.ts:275 contact journey failed 1 of 60 and is recorded as a gap; (c) the review's WR-01 shows the marquee pause control's first activation resumes motion for hover/focus users, which weakens the WCAG 2.2.2 pause mechanism."
-    artifacts:
-      - path: "src/components/ui (work card / Latest work cover mask)"
-        issue: "A11Y-01: mask opens only when the card's top enters the viewport"
-      - path: "tests/e2e/keyboard-journeys.spec.ts"
-        issue: "Line ~275 test fills the form before the Turnstile widget finishes loading (WR-03); flaky under parallel load"
-      - path: "src/lib/motion/marquee.ts"
-        issue: "Lines 41-45: aria-pressed = explicit ?? (hovered || focused); WR-01 unfixed"
-    missing:
-      - "Open work-card cover mask on any intersection (not only top entering); add a regression test using scrollIntoViewIfNeeded / deep-link then scroll up at 390 and 1440"
-      - "Stabilise the @network contact journey: wait for the Turnstile widget before typing (WR-03); re-run @network 60/60"
-      - "Resolve WR-01: expose only the explicit user choice in aria-pressed and make the first activation always pause (or record an explicit decision to accept); update the tests that encode the current behaviour (home-story.spec.ts, keyboard-journeys.spec.ts:157-162)"
-      - "Re-run the full gate after the fixes (src will change)"
-  - truth: "Server-rendered ES 404 does not consume request-controlled path (hardening, not a must-have blocker)"
-    status: partial
-    reason: "WR-02 unfixed: BaseLayout.astro:27 uses Astro.url.pathname, and src/pages/es/404.astro is prerender=false, so the request path reaches SeoHead/SiteHeader/LanguageSwitcher. No exploitable path found by the review; documented invariant is false."
-    artifacts:
-      - path: "src/layouts/BaseLayout.astro"
-        issue: "pathname = Astro.url.pathname for kind notFound"
-    missing:
-      - "Pin the pathname for notFound pages (review fix), update SeoHead/NotFoundView comments"
-  - truth: "Hero portrait shape fits the current 3:4 cutout asset (user-requested addition to the Phase 8 gap scope, 2026-11-09)"
-    status: failed
-    reason: "Hero.astro renders the 2310x3080 (3:4) background-removed cutout as aspect-square rounded-full object-contain with stale width={321} height={324} and a stale '321px circle crop' comment. The circle letterboxes and clips the figure. The user chose a new shape in sketch 001 (.planning/sketches/001-hero-portrait-shape): C's arch with D's accent-blue background."
-    artifacts:
-      - path: "src/components/sections/Hero.astro"
-        issue: "Lines ~49-63: circle mask, object-contain, stale 321x324 dimensions and comment"
-      - path: "src/assets/hero/portrait.png"
-        issue: "Hair-edge halo shows on the blue ground; 1.67 MB source PNG"
-      - path: ".planning/sketches/001-hero-portrait-shape/README.md"
-        issue: "Winning variant spec (arch radius, ground colour, object-position)"
-    missing:
-      - "Clean the cutout's hair halo (refined edge or defringe pass) before it sits on #0f70b7"
-      - "Render the portrait as a 3:4 arch (semicircle top, 1.25rem bottom corners, overflow hidden) on bg-accent with object-cover at object-position 50% 6%; real width/height for zero CLS; drop the stale 321x324 and comment"
-      - "Keep the D-03 shutter/scale entrance working on the arch (first frame never blank), no parallax (Phase 7 D-09), and reduced-motion parity"
-      - "Re-measure Home LCP: a larger portrait may become the LCP element (fold into the Home LCP fix and the Lighthouse re-run)"
-      - "taste-skill gate (lint.mjs, inspect.mjs, screenshots at 390 and 1440, EN and ES) and update any unit/e2e tests that assert rounded-full or aspect-square on the portrait"
+re_verification:
+  previous_status: gaps_found
+  previous_score: 1/3
+  src_commit: e96db32
+  gaps_closed:
+    - "QUAL-01: Home LCP fixed (3,189 -> 1,207 ms); detail LCP 2,633 ms (+133 ms) accepted at the 08-17 D-06 checkpoint"
+    - "QUAL-02: A11Y-01 cover mask (08-11), @network contact journey WR-03 (08-10, 60/60), WR-01 marquee aria-pressed (08-10 option-a)"
+    - "WR-02: /es/404 pathname pinned (08-12)"
+    - "Hero portrait arch on accent ground (08-13, user approved)"
+  gaps_remaining: []
+  regressions: []
+accepted_misses:
+  - item: "Heaviest detail page /projects/website-reciclick/ mobile LCP 2,633 ms median vs 2,500 ms budget"
+    decision: "accept (Recommended)"
+    recorded_in: "08-LIGHTHOUSE.md, Re-measure sign-off (08-17)"
+    measured_cause: "~75 ms Chrome priority boost of lazy in-viewport second image, ~58 ms uncompressed local preview; Brotli approximation 2,260 ms"
+gaps: []
 deferred: []
 ---
 
 # Phase 8: Quality Verification Report
 
 **Phase Goal:** The finished v1 local build is shown, by measurement, to be fast, accessible in both languages, and ready for Martina to review the Spanish copy.
-**Verified:** 2026-11-09
-**Status:** gaps_found
-**Re-verification:** No, initial verification
+**Verified:** 2026-11-10
+**Status:** passed
+**Re-verification:** Yes, after gap closure plans 08-10..08-18
 
-I did not run Lighthouse, servers or the full e2e suite. Gate evidence comes from 08-09 (commit e257bb5); only docs changed afterward (`git log -- src` last commit is 3424e61, which predates the gate).
+## Method and staleness
+
+- `git log -1 --format=%h -- src` = **e96db32**. That matches the commit measured in 08-LIGHTHOUSE.md "Re-measure (08-17)" and the 08-18 gate. `git status --short src` is clean, and there are no src commits after e96db32. The recorded evidence is current.
+- I did not run Lighthouse, Playwright or e2e (port 4400 is shared with another session). Lighthouse and e2e results are taken from the 08-17 and 08-18 records.
+- I ran these myself on e96db32: `pnpm test` gave 72 files and 1323 tests passed. `pnpm lint` gave astro check 0 errors and 0 warnings (3 hints), ESLint clean, and Prettier clean.
+- I checked each gap fix in the source, statically (see below).
 
 ## Observable Truths (ROADMAP success criteria)
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | Mobile Lighthouse for Home and heavy detail recorded against budget; regressions fixed or documented | FAILED (BLOCKER) | 08-LIGHTHOUSE.md records pinned LH 13.6.0, median of 5. Home LCP 3,189 ms and detail 3,637 ms exceed 2,500 ms. User chose "fix", no fix landed. CLS 0, TBT 0, JS 60,022 B gz pass. No override exists. |
-| 2 | Every page passes axe in EN and ES and is keyboard usable (form, filters, toggles, nav) | FAILED (BLOCKER) | a11y-sweep and keyboard-journeys specs exist and passed in the hermetic gate. Open: A11Y-01 (confirmed defect), @network contact journey failed 1/60, WR-01 pause-control semantics. |
-| 3 | Every copy string has a Spanish draft marked for review, listed in one place | VERIFIED | 08-SPANISH-REVIEW.md is generated by scripts/spanish-review.ts, every row "draft, for Martina's review", with sections for UI dictionary and others, scope note on Behance content (I18N-09, v2). Freshness is covered by tests/unit/spanish-review.test.ts; gate step 7 showed no diff (reported in 08-09). |
+| 1 | Mobile Lighthouse for Home and the heavy detail page is recorded against the budget, and regressions are fixed or documented (QUAL-01) | VERIFIED (one accepted miss) | 08-LIGHTHOUSE.md "Re-measure (08-17)" on e96db32 (pinned LH 13.6.0, median of 5): Home LCP 1,207 ms (pass, was 3,189). Detail `/projects/website-reciclick/` LCP 2,633 ms, +133 ms over budget. The sign-off is recorded under "Re-measure sign-off (08-17)" (line ~426) with the user's verbatim "accept (Recommended)" and the measured cause. The Brotli approximation is 2,260 ms. CLS 0, TBT 0, homepage JS 58.9 KiB gz. 08-18 `pnpm measure:bundle` gave max eager 17,958 B against a 22,000 B ceiling. The SC allows "fixed or documented", so this criterion is met. |
+| 2 | Every page passes axe in EN and ES and is usable by keyboard alone (QUAL-02) | VERIFIED | 08-18 gate step 3 (hermetic): 802 passed, 117 conditional skips, 0 failed, 0 flaky. That run includes a11y-sweep, keyboard-journeys and the A11Y-01 cases. Step 4 `@network`: 60/60, 0 flaky, with the contact journey passing in EN and ES. The 08-06 manual Tab pass was approved. Fixes checked in the source: marquee.ts:44 sets `aria-pressed` from `explicit === true` only, and the click handler makes the first activation pause (WR-01 option-a). reveal.ts:136 observes the `[data-card]` ancestor (A11Y-01). motion-reveal.spec.ts:221-254 has instant-jump and deep-link cases. |
+| 3 | Every copy string has a Spanish draft marked for review, listed in one place (QUAL-03) | VERIFIED | 08-SPANISH-REVIEW.md has 158 rows marked "draft, for Martina's review". It is generated by scripts/spanish-review.ts, and the freshness test is part of the 1323 unit tests. 08-18 step 7 regenerated it with no diff. |
 
-**Score:** 1/3
+**Score:** 3/3
+
+## Previous gaps: re-check
+
+| Previous gap | Closed by | Static evidence (src e96db32) |
+|---|---|---|
+| QUAL-01 Home and detail LCP | 08-14 diagnosis, 08-15 (L1), 08-16 (L2b, L4), 08-17 re-measure and sign-off | 08-LIGHTHOUSE.md re-measure and sign-off sections |
+| A11Y-01 cover mask | 08-11 | src/lib/motion/reveal.ts:136 and :303-311 (`[data-card]` target). tests/e2e/motion-reveal.spec.ts:194-254 |
+| @network contact flake (WR-03) | 08-10 T3 | 08-18 gate step 4: 60 passed, 0 failed |
+| WR-01 marquee pause semantics | 08-10 T1/T2 (user picked option-a) | src/lib/motion/marquee.ts:44-45, 49-56 |
+| WR-02 /es/404 path reflection | 08-12 | src/layouts/BaseLayout.astro:28-29 pins `/404/` and `/es/404/`. tests/e2e/not-found.spec.ts:73 |
+| Hero portrait arch | 08-13 (user approved) | src/components/sections/Hero.astro:54-63: 600x800, 3:4 arch radius, `bg-accent`, `object-cover object-[50%_6%]` |
 
 ## Requirements Coverage
 
 | Requirement | Source Plans | Status | Evidence |
 |-------------|--------------|--------|----------|
-| QUAL-01 | 08-07, 08-08, 08-09 | BLOCKED | LCP budget missed on both measured pages; fix plan pending; REQUIREMENTS.md still unchecked (correct) |
-| QUAL-02 | 08-01, 02, 03, 04, 06, 07, 09 | BLOCKED | A11Y-01, @network flake, WR-01 open; REQUIREMENTS.md unchecked (correct) |
-| QUAL-03 | 08-05, 08-09 | SATISFIED | Spanish review file and coverage/freshness test. REQUIREMENTS.md still shows QUAL-03 `[ ]`/Pending and should be ticked by the orchestrator |
+| QUAL-01 | 08-07, 08-08, 08-09, 08-14..08-18 | SATISFIED (one accepted, documented miss) | 08-LIGHTHOUSE.md "Re-measure (08-17)" and "Re-measure sign-off (08-17)". 08-VALIDATION.md gate step 6 |
+| QUAL-02 | 08-01..08-04, 08-06, 08-07, 08-09..08-13, 08-18 | SATISFIED | 08-VALIDATION.md "Gate re-run (08-18)" steps 3-4. Source checks above |
+| QUAL-03 | 08-05, 08-09, 08-18 | SATISFIED | 08-SPANISH-REVIEW.md. Gate step 7. Unit freshness test |
 
-All three IDs are claimed by plans; no orphaned Phase 8 requirements.
+REQUIREMENTS.md currently shows QUAL-01 `[x]`, and QUAL-02 and QUAL-03 `[ ]`/Pending. The orchestrator should tick QUAL-02 and QUAL-03. There are no orphaned Phase 8 requirements.
 
-## Review warnings vs must-haves
+## Anti-Patterns
 
-- WR-01 (marquee aria-pressed): code at src/lib/motion/marquee.ts:41-45 still ties aria-pressed to hover/focus. Affects QUAL-02 (usable by keyboard, pause mechanism). Counted as a gap.
-- WR-02 (/es/404 pathname): confirmed unfixed at src/layouts/BaseLayout.astro:27. Hardening only; no must-have fails. Listed as partial.
-- WR-03 (flake cause): matches the open @network failure. Counted under QUAL-02.
+- No TBD, FIXME or XXX markers in the src files changed since the phase base cf15eaf.
+
+## Non-blocking items still tracked (outside the must-haves)
+
+- Keyboard journey 9 ("empty submit focuses the first invalid field") failed intermittently during 08-10 (3/20 in a repeat run). It passed in the 08-18 gate and in the two full runs before it, and it has not been fixed. The suspected cause is that Enter arrives before the lazy contact-form controller mounts. **WARNING:** this is a test-stability risk, not a failing must-have.
+- The taste inspector's Home `empty-screens` FAIL predates the gap closure and is not attributed to any Phase 8 gap. Track it separately.
+- Taste findings T-01, T-02 and T-04 are deferred (08-07).
+- `/security-review` still needs to run once, scoped to cf15eaf..HEAD, before the phase is marked complete. The orchestrator handles this.
 
 ## Human checks done
 
-08-06 manual Tab pass approved by user 2026-11-09; 08-07 taste decisions recorded (T-01, T-02, T-04 deferred as taste follow-ups, out of Phase 8 scope).
+- 08-06 manual Tab pass: approved.
+- 08-10 T1 WR-01 decision: option-a.
+- 08-13 T3 portrait: approved.
+- 08-17 T2 D-06: detail LCP miss accepted.
+
+No new human verification items.
 
 ## Gaps Summary
 
-Two roadmap criteria are unmet. QUAL-01 needs a performance fix and re-measure (Home LCP element is the hero lead text with ~1 s render delay; detail pages are held back by the shared render-blocking CSS, fonts and JS), then a Lighthouse re-run. QUAL-02 needs the A11Y-01 mask fix, a stable @network contact journey (WR-03), and a decision or fix on WR-01. After those changes, re-run the full gate and Lighthouse because src will change. QUAL-03 is complete.
+None. All three roadmap criteria hold on src e96db32. The only budget miss (detail LCP +133 ms on an uncompressed local preview) is documented with its measured cause and was explicitly accepted by the user. That satisfies "regressions fixed or documented".
 
-Added at the user's request (2026-11-09): change the hero portrait from the circle to the arch on an accent-blue ground chosen in sketch 001. This needs a cleaned cutout, the taste-skill gate, and it is folded into the Home LCP re-measure.
-
-_Verified: 2026-11-09_
+_Verified: 2026-11-10_
 _Verifier: Claude (gsd-verifier)_
