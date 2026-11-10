@@ -54,6 +54,7 @@ describe('toCardView', () => {
       title: 'Cabrera´s motos, Posts',
       titleLang: 'es',
       category: null,
+      categoryId: null,
       tools: ['Figma', 'Adobe Photoshop'],
       summary: null,
       cover: portrait,
@@ -97,6 +98,22 @@ describe('toCardView', () => {
   it('labels the category with the localized service title', () => {
     const view = toCardView(project({ category: 'web-design' }), 'en', categoryTitles);
     expect(view.category).toBe('Web design');
+  });
+
+  it('carries the stable category id next to the label (D-10)', () => {
+    const enView = toCardView(project({ category: 'web-design' }), 'en', categoryTitles);
+    expect(enView.categoryId).toBe('web-design');
+    expect(enView.category).toBe('Web design');
+    const esTitles = { ...categoryTitles, 'web-design': 'Diseño web' };
+    const esView = toCardView(project({ category: 'web-design' }), 'es', esTitles);
+    expect(esView.categoryId).toBe('web-design');
+    expect(esView.category).toBe('Diseño web');
+  });
+
+  it('gives a null categoryId for an uncurated project', () => {
+    const view = toCardView(project({ category: null }), 'en', categoryTitles);
+    expect(view.categoryId).toBeNull();
+    expect(view.category).toBeNull();
   });
 
   it('carries no project date (removed by the user 2026-10-17)', () => {
