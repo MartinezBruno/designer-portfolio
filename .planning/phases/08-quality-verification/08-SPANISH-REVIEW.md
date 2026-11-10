@@ -240,6 +240,11 @@ Source: `src/data/services.json`. Spanish is her source copy; English is our tra
 | `services.json#social-media.items[0]` | Social media management | Gestión de redes sociales | draft, for Martina's review |
 | `services.json#social-media.items[1]` | Story and post design | Diseño de historias y publicaciones | draft, for Martina's review |
 | `services.json#social-media.items[2]` | Feed design | Diseño del feed | draft, for Martina's review |
+| `services.json#photography.title` | Photography | Fotografía | draft, for Martina's review |
+| `services.json#photography.items[0]` | Product photography | Fotografía de producto | draft, for Martina's review |
+| `services.json#photography.items[1]` | Portraits | Retratos | draft, for Martina's review |
+| `services.json#photography.items[2]` | Photos for social media | Fotos para redes sociales | draft, for Martina's review |
+| `services.json#photography.items[3]` | Editing and retouching | Edición y retoque | draft, for Martina's review |
 
 ## Project overrides
 

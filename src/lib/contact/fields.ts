@@ -8,7 +8,13 @@
 export const LIMITS = { name: 100, email: 254, messageMin: 10, messageMax: 5000 } as const;
 
 /** Service ids in src/data/services.json `order` order. A unit test guards against drift. */
-export const SERVICE_IDS = ['graphic-design', 'web-design', 'branding', 'social-media'] as const;
+export const SERVICE_IDS = [
+  'graphic-design',
+  'web-design',
+  'branding',
+  'social-media',
+  'photography',
+] as const;
 
 export type ServiceId = (typeof SERVICE_IDS)[number];
 

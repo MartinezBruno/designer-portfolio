@@ -129,7 +129,12 @@ const services: ServiceView[] = [
   {
     id: 'photography',
     title: 'Photography',
-    items: ['Product photography', 'Portraits', 'Photos for social media', 'Editing and retouching'],
+    items: [
+      'Product photography',
+      'Portraits',
+      'Photos for social media',
+      'Editing and retouching',
+    ],
   },
 ];
 

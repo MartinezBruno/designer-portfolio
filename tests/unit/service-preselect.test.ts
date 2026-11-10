@@ -5,7 +5,14 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createLifecycle } from '../../src/lib/motion/lifecycle';
 import { applyServicePreselect, initServicePreselect } from '../../src/lib/ui/service-preselect';
 
-const CHOICES = ['graphic-design', 'web-design', 'branding', 'social-media', 'photography', 'other'];
+const CHOICES = [
+  'graphic-design',
+  'web-design',
+  'branding',
+  'social-media',
+  'photography',
+  'other',
+];
 
 function fixture(): string {
   const radios = CHOICES.map(

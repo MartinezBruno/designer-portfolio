@@ -5,6 +5,7 @@
  * HomeView is the only caller, through getHomeContent in queries.ts.
  */
 import type { Locale } from '../../i18n/config';
+import { categoryIds } from '../projects/model';
 import type { ToolIconKey } from './icons';
 
 export type Localized<T> = Record<Locale, T>;
@@ -89,9 +90,9 @@ export function buildRoles(entries: readonly RoleEntry[], locale: Locale): strin
   return sortByOrder(assertNonEmpty(entries, 'roles')).map((entry) => entry.data.label[locale]);
 }
 
-/** HOME-04: the services grid holds exactly 4 cards. */
+/** HOME-04 (Phase 9): one card per service in services.json, one per category id (5). */
 export function buildServices(entries: readonly ServiceEntry[], locale: Locale): ServiceView[] {
-  return sortByOrder(assertCount(entries, 4, 'services')).map((entry) => ({
+  return sortByOrder(assertCount(entries, categoryIds.length, 'services')).map((entry) => ({
     id: entry.id,
     title: entry.data.title[locale],
     items: [...entry.data.items[locale]],

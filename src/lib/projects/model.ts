@@ -6,7 +6,13 @@ import type { ToolIconKey } from '../content/icons.ts';
 import type { EmbedProviderId } from './embeds.ts';
 
 /** Curated categories. Same ids, same order as src/data/services.json. */
-export const categoryIds = ['graphic-design', 'web-design', 'branding', 'social-media'] as const;
+export const categoryIds = [
+  'graphic-design',
+  'web-design',
+  'branding',
+  'social-media',
+  'photography',
+] as const;
 
 export type CategoryId = (typeof categoryIds)[number];
 
