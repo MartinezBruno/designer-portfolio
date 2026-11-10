@@ -44,6 +44,16 @@ findings:
   info: 7
   total: 10
 status: issues_found
+gap_closure_review:
+  reviewed: 2026-11-10T00:00:00Z
+  range: cf15eaf..e96db32 (plans 08-10..08-18, src only)
+  files_reviewed: 27
+  findings:
+    critical: 0
+    warning: 0
+    info: 5
+    total: 5
+  status: advisory_info_only
 ---
 
 # Phase 8: Code Review Report
@@ -176,3 +186,74 @@ and in the `@network` `beforeEach`: `errors = collectErrors(page, /challenges\.c
 _Reviewed: 2026-11-09_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
+
+---
+
+## Gap-Closure Review (plans 08-10..08-18)
+
+**Reviewed:** 2026-11-10
+**Range:** `cf15eaf..e96db32`, `src/` only (27 files). `src/` at HEAD is identical to `e96db32` (checked with `git diff --quiet e96db32 HEAD -- src`).
+**Depth:** standard
+**Mode:** advisory only. No fixes applied, because Phase 8 Lighthouse evidence is pinned to `src` at `e96db32`.
+**Status:** 0 critical, 0 warning, 5 info
+
+### Verified
+
+- `pnpm exec vitest run`: 72 files and 1323 tests pass (run 2026-11-10). I did not run the e2e suite (port 4400 is shared with another session) or `pnpm lint`.
+
+### Status of the earlier findings, from reading the code
+
+| Finding | Status | Evidence |
+|---|---|---|
+| WR-01 marquee `aria-pressed` | Resolved | `marquee.ts:578-581`: `aria-pressed` comes only from `explicit === true`. The first activation sets `explicit = true`. Hover and focus now only set `data-paused`. The CSS `group-hover`, `focus-visible` and `data-playing` selectors are gone (`RolesMarquee.astro` `copyClasses`), so `data-paused` is the only pause source. |
+| WR-02 ES 404 request path | Resolved | `BaseLayout.astro:27-29` pins the pathname to `/404/` or `/es/404/` when `kind === 'notFound'`. `BaseLayout` is now the only `Astro.url` reader in `src/`. The comments in `SeoHead` and `LanguageSwitcher` were updated. |
+| WR-03 keyboard-journey race | Not re-reviewed | Test file, outside this `src` scope |
+| IN-02 stale comments | Partly resolved | `NotFoundView` and `LanguageSwitcher` were fixed. `astro.config.ts:10` still says only `/_actions/*` is on demand. |
+| IN-07 blur to `<body>` | Open | Still at `marquee.ts:101` |
+
+### New code checked with no issue found
+
+- **`reveal.ts` proxy observation (`observeTargetFor`, `track`, `untrack`, the `targetsByProxy` fan-out).** I checked both shutter sites, `ProjectCard.astro:59-62` and `NextProjectTeaser.astro:54-61`. In both, the shutter is the first child of `[data-card]`, so the card's top edge is the shutter's top edge and the downward trigger line does not change. `finish()` returns before `untrack` for anything that isn't pending. Cleanup and the arm-failure path clear the map.
+- **`idle.ts` with `load-gsap.ts`.** Load, then a frame, then idle, with a `setTimeout` fallback when `requestIdleCallback` is missing. A rejected load is still forgotten, so it can be retried. Lines headings keep the 1.5 s CSS failsafe, and `armWaiting()` leaves headings the failsafe already showed alone.
+- **Hero arch.** The `rounded-[50%_50%_1.25rem_1.25rem/37.5%_37.5%_…]` radii on a 3:4 box give a true semicircle (37.5% of 4/3·W is 0.5·W). The `hero-shutter` animation's `clip-path: inset(0)` end state is rectangular, so the rounded `overflow-hidden` mask still controls the shape.
+- **`hero-lead-slide`.** It is translate-only and is defined only under `[data-motion='on']`.
+- **`EMAIL_COPY_ES`.** The output is the same as before.
+- **`MODULE_WIDTHS` adds 768.** `moduleWidths` still never upscales.
+- **`SkipLink`.** `focus:px-4` restores the padding that `not-sr-only` resets.
+
+### Info
+
+#### IN-08: Hero srcset tops out at 600w, below what a 2x display needs at ≥87.5rem
+
+**File:** `src/components/sections/Hero.astro:71-74`
+**Issue:** At `min-width: 87.5rem` the portrait is `19rem`, which is 304 CSS px. A DPR 2 screen needs about 608 px, but the largest candidate is 600w. [Inference] The difference is very slight. The source is 1200×1600, so a larger candidate is available at no cost to the source.
+**Fix:** In a later phase, after re-measuring Lighthouse, use `widths={[256, 448, 640, 912]}`. This is advisory: changing it would make the pinned LCP evidence stale.
+
+#### IN-09: Stale portrait TODO
+
+**File:** `src/components/sections/Hero.astro:10`
+**Issue:** `TODO(martina): supply the original uncropped photo at >=1000px…`, but `src/assets/hero/portrait.png` is now 1200×1600 (checked with `file`). The TODO also appears in any `TODO(martina)` sweeps.
+**Fix:** Remove it, or reword it to whatever is still open with the portrait (for example, final art sign-off).
+
+#### IN-10: Cursor follower and magnetic buttons now also wait for load + frame + idle
+
+**File:** `src/lib/motion/load-gsap.ts:41` (callers `cursor.ts:82`, `magnetic.ts:159`)
+**Issue:** `loadGsap` is shared, so the 08-14 L2b deferral applies to the custom cursor and magnetic effects too, not only to the lines reveal. On pages where `load` is late (many eager images), those effects start late. I read the code and found that the native cursor stays usable meanwhile, so this is a deliberate trade-off (memory: "defer deferrable JS"). The comment in `load-gsap.ts` only mentions headings.
+**Fix:** Extend the `load-gsap.ts` comment to say the cursor and magnetic effects are deferred too. No behaviour change needed.
+
+#### IN-11: `untrack` recomputes the proxy from the live DOM
+
+**File:** `src/lib/motion/reveal.ts:166-174`
+**Issue:** `untrack` calls `observeTargetFor(el)` again rather than reusing the proxy recorded by `track`. If a shutter's ancestry changes while it is pending (for example, a future client-side re-render moves it), `untrack` would miss the map entry and leave the old proxy observed. [Inference] Nothing does this today.
+**Fix:** Keep a `Map<HTMLElement, Element>` from target to proxy in `track` and read it in `untrack`.
+
+#### IN-12: `astro.config.ts` comment still says only `/_actions/*` is on demand
+
+**File:** `astro.config.ts:10` (outside `src/`, carried over from IN-02)
+**Issue:** `src/pages/es/404.astro` is also on demand (`prerender = false`).
+**Fix:** Change the comment to "…on-demand Worker for /_actions/* and the ES 404". This is not a `src` file, so it does not affect the Lighthouse pin.
+
+---
+
+_Gap-closure review: 2026-11-10_
+_Reviewer: Claude (gsd-code-review, standard depth)_
