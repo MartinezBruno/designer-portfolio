@@ -47,9 +47,13 @@ const copyA = (page: Page) => page.locator('[data-marquee] ul:not([aria-hidden])
 const copyB = (page: Page) => page.locator('[data-marquee] ul[aria-hidden="true"]');
 const marqueeToggle = (page: Page) => page.locator('[data-marquee-toggle]');
 
-/** WR-01 / D-10: the visible play state and aria-pressed are always asserted together. */
-async function expectBand(page: Page, paused: boolean): Promise<void> {
-  await expect(marqueeToggle(page)).toHaveAttribute('aria-pressed', paused ? 'true' : 'false');
+/**
+ * 08 WR-01 (option-a): aria-pressed exposes only the explicit choice; the visible play state
+ * also includes the transient hover/focus pause. Both are always asserted. `paused` defaults to
+ * `pressed` (an explicit choice, or no choice and no transient pause).
+ */
+async function expectBand(page: Page, pressed: boolean, paused = pressed): Promise<void> {
+  await expect(marqueeToggle(page)).toHaveAttribute('aria-pressed', pressed ? 'true' : 'false');
   await expect
     .poll(() => style(copyA(page), 'animationPlayState'))
     .toBe(paused ? 'paused' : 'running');
@@ -98,29 +102,28 @@ for (const [path, dict, locale] of cases) {
       expect(buttonBox?.height).toBe(bandBox?.height);
       expect(buttonBox?.height ?? 0).toBeGreaterThanOrEqual(44);
       await expect(button).toHaveAttribute('aria-pressed', 'false');
-      // WR-01 / D-10: every play state is paired with aria-pressed. Clicking moves the pointer
-      // onto the band, which pauses it (aria-pressed "true"); the click then flips what is
-      // visible, so it resumes, and the next click is an explicit pause.
-      await button.click();
-      await expectBand(page, false);
+      // 08 WR-01: the first click always pauses (even though clicking moves the pointer onto
+      // the band), the next resumes, the next pauses again.
       await button.click();
       await expectBand(page, true);
       await button.click();
       await expectBand(page, false);
+      await button.click();
+      await expectBand(page, true);
 
       // Re-enter with the keyboard so the button has real :focus-visible focus. The explicit
-      // "playing" choice still wins over the focus pause.
+      // pause still holds; Space and Enter flip the explicit choice.
       await page.mouse.move(0, 0);
       await page.keyboard.press('Shift+Tab');
       await page.keyboard.press('Tab');
       expect(await button.evaluate((el) => el.matches(':focus-visible'))).toBe(true);
-      await expectBand(page, false);
+      await expectBand(page, true);
       await page.keyboard.press('Space');
-      await expectBand(page, true);
-      await page.keyboard.press('Enter');
       await expectBand(page, false);
       await page.keyboard.press('Enter');
       await expectBand(page, true);
+      await page.keyboard.press('Enter');
+      await expectBand(page, false);
       await expect(button).toHaveAttribute('aria-label', dict['roles.pause']);
 
       // D-16: white role text on the accent band.
@@ -133,38 +136,36 @@ for (const [path, dict, locale] of cases) {
       );
     });
 
-    test('marquee: hovering pauses the band and aria-pressed follows', async ({ page }) => {
+    test('marquee: hovering pauses the band visually, aria-pressed stays false', async ({
+      page,
+    }) => {
       await page.mouse.move(0, 0);
       await expectBand(page, false);
       await marquee(page).hover();
-      await expect(marqueeToggle(page)).toHaveAttribute('aria-pressed', 'true');
-      await expectBand(page, true);
+      await expectBand(page, false, true);
       await page.mouse.move(0, 0);
       await expectBand(page, false);
     });
 
-    test('marquee: a click while hovered resumes, a later click is an explicit pause', async ({
-      page,
-    }) => {
+    test('marquee: the first click pauses, the next click resumes', async ({ page }) => {
       const button = marqueeToggle(page);
       await page.mouse.move(0, 0);
       await marquee(page).hover();
-      await expectBand(page, true);
+      await expectBand(page, false, true);
+      // WR-01: the first click while hovered is an explicit pause that survives leaving.
       await button.click();
-      await expectBand(page, false);
+      await expectBand(page, true);
       await page.mouse.move(0, 0);
-      await expectBand(page, false);
+      await expectBand(page, true);
 
+      // The next click is an explicit resume that survives leaving.
       await button.click();
-      await expect(button).toHaveAttribute('aria-pressed', 'true');
-      await expectBand(page, true);
+      await expectBand(page, false);
       await page.mouse.move(0, 0);
-      await expectBand(page, true);
+      await expectBand(page, false);
     });
 
-    test('marquee: keyboard focus pauses with aria-pressed true and a white outline', async ({
-      page,
-    }) => {
+    test('marquee: keyboard focus pauses visually with a white outline', async ({ page }) => {
       await page.mouse.move(0, 0);
       await expectBand(page, false);
       await tabUntil(page, '[data-marquee-toggle]');
@@ -181,23 +182,23 @@ for (const [path, dict, locale] of cases) {
       expect(outline.color).toBe('rgb(255, 255, 255)');
       // Inset so the outline sits inside the band and is never clipped (D-12).
       expect(outline.offset).toBe('-4px');
-      await expect(button).toHaveAttribute('aria-pressed', 'true');
-      await expectBand(page, true);
+      // Focus alone is a transient pause: visible, but not announced as pressed (08 WR-01).
+      await expectBand(page, false, true);
 
-      // Space while focused is an explicit resume, kept after focus moves on.
+      // The first Space is an explicit pause, kept after focus moves on.
       await page.keyboard.press('Space');
       await expect(button).toBeFocused();
-      await expectBand(page, false);
+      await expectBand(page, true);
       await page.keyboard.press('Tab');
-      await expectBand(page, false);
+      await expectBand(page, true);
 
-      // Back on the toggle, Space is an explicit pause, kept after focus moves on.
+      // Back on the toggle, Space is an explicit resume, kept after focus moves on.
       await page.keyboard.press('Shift+Tab');
       await expect(button).toBeFocused();
       await page.keyboard.press('Space');
-      await expectBand(page, true);
+      await expectBand(page, false);
       await page.keyboard.press('Tab');
-      await expectBand(page, true);
+      await expectBand(page, false);
     });
 
     test('services: four cards in order with their bullets', async ({ page }) => {

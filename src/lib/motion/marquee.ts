@@ -10,12 +10,15 @@ const matchesFocusVisible: FocusVisibleCheck = (el) => el.matches(':focus-visibl
  * WCAG 2.2.2 (Pause, Stop, Hide) mechanism: a transparent toggle laid over the whole band
  * (tap/click or Space/Enter) with a fixed label whose state lives in `aria-pressed`.
  *
- * This controller is the single source of pause truth (Phase 2 WR-01, WCAG 4.1.2). The band is
- * paused when the user's explicit choice says so, or, with no explicit choice yet, while a mouse
- * hovers it or the toggle has keyboard focus. Every change goes through `apply()`, which writes
- * `aria-pressed` and `data-paused` together; CSS pauses only through `data-paused`, so the
- * visible play state and the announced state can't disagree. A click flips whatever is visible
- * (a click while hovered resumes). Touch pointers don't count as hover, so a tap pauses.
+ * This controller is the single source of pause truth (Phase 2 WR-01, Phase 8 WR-01). The band
+ * is paused when the user's explicit choice says so, or, with no explicit choice yet, while a
+ * mouse hovers it or the toggle has keyboard focus. `aria-pressed` exposes only the explicit
+ * choice: the transient hover/focus pause is a visual courtesy, not a user choice, so it is not
+ * announced as pressed (decision 08-10 option-a, amends D-10). Every change goes through
+ * `apply()`, which writes `aria-pressed` from the explicit choice and `data-paused` from the
+ * effective state; CSS pauses only through `data-paused`. The first activation (click, tap,
+ * Space or Enter) always pauses, matching the "Pause" label, and the next one resumes. Touch
+ * pointers don't count as hover.
  *
  * When motion leaves `on` (WR-03) the state resets to running with no explicit choice, and the
  * toggle, which becomes `display: none`, is blurred if focused. The pause state is not persisted.
@@ -38,17 +41,16 @@ export function initMarqueeToggles(
     let hovered = false;
     let focused = false;
 
-    const isPaused = (): boolean => explicit ?? (hovered || focused);
     const apply = (): void => {
-      const paused = isPaused();
-      button.setAttribute('aria-pressed', String(paused));
-      root?.toggleAttribute('data-paused', paused);
+      button.setAttribute('aria-pressed', String(explicit === true));
+      root?.toggleAttribute('data-paused', explicit ?? (hovered || focused));
     };
 
     button.addEventListener(
       'click',
       () => {
-        explicit = !isPaused();
+        // null (no choice) or false (explicit resume) becomes an explicit pause.
+        explicit = explicit !== true;
         apply();
       },
       { signal },

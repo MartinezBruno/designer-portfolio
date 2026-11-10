@@ -146,18 +146,23 @@ for (const { locale, prefix, dict, other, otherPrefix } of cases) {
         const band = page.locator('[data-marquee] ul:not([aria-hidden])').first();
         const playState = (): Promise<string> =>
           band.evaluate((el) => getComputedStyle(el).animationPlayState);
-        const expectBand = async (paused: boolean): Promise<void> => {
-          await expect(toggle).toHaveAttribute('aria-pressed', paused ? 'true' : 'false');
+        // 08 WR-01 (option-a): aria-pressed is the explicit choice only; `paused` is visible.
+        const expectBand = async (pressed: boolean, paused = pressed): Promise<void> => {
+          await expect(toggle).toHaveAttribute('aria-pressed', pressed ? 'true' : 'false');
           await expect.poll(playState).toBe(paused ? 'paused' : 'running');
         };
 
         await expectBand(false);
         await tabUntil(page, '[data-marquee-toggle]');
-        // 08-01 / WCAG 2.2.2: keyboard focus alone holds the band (no explicit choice yet).
+        // 08-01 / WCAG 2.2.2: keyboard focus alone holds the band visually, but it is not a user
+        // choice, so aria-pressed stays "false".
+        await expectBand(false, true);
+        // The first Space is an explicit pause, the second an explicit resume.
+        await page.keyboard.press('Space');
         await expectBand(true);
-        // Space flips what is visible: an explicit resume, then an explicit pause.
         await page.keyboard.press('Space');
         await expectBand(false);
+        // Space once more: an explicit pause again.
         await page.keyboard.press('Space');
         await expectBand(true);
         await expect(toggle).toBeFocused();
@@ -265,7 +270,9 @@ for (const { locale, prefix, dict, other, otherPrefix } of cases) {
       let errors: string[] = [];
 
       test.beforeEach(({ page }) => {
-        errors = collectErrors(page);
+        // WR-03: Turnstile's own console noise (e.g. its Private Access Token 401) is not a site
+        // error. Page errors are still collected.
+        errors = collectErrors(page, /challenges\.cloudflare\.com/);
       });
 
       test.afterEach(() => {
@@ -279,6 +286,9 @@ for (const { locale, prefix, dict, other, otherPrefix } of cases) {
         if (service === undefined) throw new Error('no services');
         await open(page, prefix);
         await reachContactByKeyboard(page, prefix);
+        // WR-03: wait for the widget to mount and issue its token before typing, so the
+        // Turnstile render cannot race the keystrokes. Tokens are single-use with a 300 s TTL.
+        await waitForTurnstileToken(page);
 
         // The radio group is one stop (the checked "other" chip, last); ArrowRight wraps to the first.
         await tabUntil(page, 'input[name="service"]');
@@ -290,14 +300,18 @@ for (const { locale, prefix, dict, other, otherPrefix } of cases) {
         await page.keyboard.press('Tab');
         await expect(page.locator('#contact-name')).toBeFocused();
         await page.keyboard.type('Ana López');
+        await expect(page.locator('#contact-name')).toHaveValue('Ana López');
         await page.keyboard.press('Tab');
         await expect(page.locator('#contact-email')).toBeFocused();
         await page.keyboard.type('ana@example.com');
+        await expect(page.locator('#contact-email')).toHaveValue('ana@example.com');
         await page.keyboard.press('Tab');
         await expect(page.locator('#contact-message')).toBeFocused();
         await page.keyboard.type('Necesito una identidad visual para mi café.');
+        await expect(page.locator('#contact-message')).toHaveValue(
+          'Necesito una identidad visual para mi café.',
+        );
 
-        await waitForTurnstileToken(page);
         await tabUntil(page, '[data-contact-submit]');
         await page.keyboard.press('Enter');
 

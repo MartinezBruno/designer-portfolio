@@ -166,9 +166,7 @@ test.describe('motion gate follows a reduced-motion change after load', () => {
       await expect(copyB).toBeVisible();
       await expect(toggle).toBeVisible();
       // D-11 (WR-03): an explicit pause must not survive leaving the "on" state. The first click
-      // resumes the hover pause the pointer caused; the second is the explicit pause.
-      await toggle.click();
-      await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+      // is the explicit pause (08 WR-01), even though the pointer is now over the band.
       await toggle.click();
       await page.mouse.move(0, 0);
       await expect(toggle).toHaveAttribute('aria-pressed', 'true');
