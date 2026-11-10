@@ -2,7 +2,7 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vitest';
 import portrait from '../../src/assets/hero/portrait.png';
 import ProjectCard from '../../src/components/ui/ProjectCard.astro';
-import type { TileSize } from '../../src/lib/projects/layout';
+import { sizesFor, tileSizes, type TileSize } from '../../src/lib/projects/layout';
 import type { ProjectCardView } from '../../src/lib/projects/model';
 
 const baseProject: ProjectCardView = {
@@ -113,40 +113,57 @@ describe('project card loading', () => {
   });
 });
 
-describe('project card size', () => {
-  it('large spans 7 columns with a 5/4 cover', async () => {
-    const html = await render({ size: 'large' });
-    expect(classTokens(rootTag(html))).toContain('md:col-span-7');
-    expect(classTokens(rootTag(html))).not.toContain('md:col-start-6');
-    expect(classTokens(mediaTag(html))).toContain('aspect-[5/4]');
-    expect(classTokens(mediaTag(html))).not.toContain('md:aspect-[7/8]');
-  });
+const tileVariants = [
+  'group/tile',
+  'md:data-[tile=large]:col-span-7',
+  'md:data-[tile=small]:col-span-5',
+  'md:data-[tile=large-end]:col-span-8',
+  'md:data-[tile=large-end]:col-start-3',
+  'md:data-[tile=third]:col-span-4',
+];
+const frameAspect = [
+  'aspect-[5/4]',
+  'md:group-data-[tile=small]/tile:aspect-[7/8]',
+  'group-data-[tile=third]/tile:aspect-[4/5]',
+];
 
-  it('small spans 5 columns with a 7/8 cover from md', async () => {
-    const html = await render({ size: 'small' });
-    expect(classTokens(rootTag(html))).toContain('md:col-span-5');
-    expect(classTokens(mediaTag(html))).toEqual(
-      expect.arrayContaining(['aspect-[5/4]', 'md:aspect-[7/8]']),
+describe('project card size (data-tile, 09-05 PROJ-04)', () => {
+  it.each(tileSizes)('%s sets data-tile and the same literal variant classes', async (size) => {
+    const html = await render({ size });
+    const root = rootTag(html);
+    expect(root).toContain(`data-tile="${size}"`);
+    expect(classTokens(root)).toEqual(expect.arrayContaining(tileVariants));
+    expect(classTokens(root)).not.toEqual(
+      expect.arrayContaining([expect.stringMatching(/^md:col-(?:span|start)-/)]),
     );
+    expect(classTokens(mediaTag(html))).toEqual(expect.arrayContaining(frameAspect));
   });
 
-  it('large-end spans 8 centred columns starting at column 3', async () => {
-    const html = await render({ size: 'large-end' });
-    expect(classTokens(rootTag(html))).toEqual(
-      expect.arrayContaining(['md:col-span-8', 'md:col-start-3']),
-    );
-    expect(classTokens(mediaTag(html))).toContain('aspect-[5/4]');
+  it('exposes the category id for the filter', async () => {
+    const html = await render({ size: 'small', project: { categoryId: 'web-design' } });
+    const root = rootTag(html);
+    expect(root).toContain('data-tile="small"');
+    expect(root).toContain('data-category="web-design"');
   });
 
-  it('third spans 4 columns with a portrait 4/5 cover', async () => {
-    const html = await render({ size: 'third' });
-    expect(classTokens(rootTag(html))).toContain('md:col-span-4');
-    expect(classTokens(rootTag(html))).not.toContain('md:col-start-6');
-    expect(classTokens(mediaTag(html))).toContain('aspect-[4/5]');
-    expect(classTokens(mediaTag(html))).not.toContain('md:aspect-[7/8]');
+  it('renders an empty data-category when the project has no category', async () => {
+    const html = await render({ project: { categoryId: null } });
+    // Astro serialises an empty attribute bare (`data-category`), which HTML parses as "".
+    const root = rootTag(html);
+    expect(root).toMatch(/\sdata-category(?:="")?(?=[\s>])/);
+    expect(root).not.toMatch(/data-category="[^"]/);
   });
 
-  it('sets responsive sizes per tile size', async () => {
+  it.each(tileSizes)('%s sets responsive sizes from layout.ts sizesFor', async (size) => {
+    const html = await render({ size });
+    const img = /<img[^>]*>/.exec(html)?.[0] ?? '';
+    expect(img).toContain(`sizes="${sizesFor[size]}"`);
+    for (const source of html.match(/<source[^>]*>/g) ?? []) {
+      expect(source).toContain(`sizes="${sizesFor[size]}"`);
+    }
+  });
+
+  it('keeps the historical sizes strings', async () => {
     expect(await render({ size: 'large' })).toContain(
       'sizes="(min-width: 1408px) 790px, (min-width: 768px) 57vw, 100vw"',
     );

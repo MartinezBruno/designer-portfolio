@@ -70,13 +70,14 @@ describe('LatestWork', () => {
 
   it('lays the cards out as an even row of 4-column tiles', async () => {
     const html = await render(three);
-    const tiles = html.match(/<li[^>]*class="[^"]*"/g) ?? [];
+    const tiles = html.match(/<li[^>]*>/g) ?? [];
     expect(tiles).toHaveLength(3);
     for (const tile of tiles) {
-      expect(tile).toContain('md:col-span-4');
-      expect(tile).not.toMatch(/md:col-span-[57]|md:col-start-6/);
+      expect(tile).toContain('data-tile="third"');
+      expect(tile).toContain('md:data-[tile=third]:col-span-4');
     }
-    expect(html).not.toContain('md:aspect-[7/8]');
+    expect(html).not.toMatch(/data-tile="(?:large|small|large-end)"/);
+    expect(html).toMatch(/<ul[^>]*\bdata-project-grid\b/);
   });
 
   it('renders compact cards without summary or tools', async () => {
