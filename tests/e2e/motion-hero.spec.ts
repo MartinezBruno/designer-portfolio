@@ -122,8 +122,10 @@ test.describe('hero load sequence with full motion', () => {
         return i ? (Math.min(m.bottom, i.bottom) - Math.max(m.top, i.top)) / i.height : 0;
       });
       const picture = document.querySelector('picture[data-hero-portrait]');
+      const lead = document.querySelector('[data-hero-lead]');
       return {
         lines,
+        leadOpacity: lead ? getComputedStyle(lead).opacity : '',
         clip: picture ? getComputedStyle(picture).clipPath : '',
         height: picture ? picture.getBoundingClientRect().height : 0,
         bg: picture ? getComputedStyle(picture).backgroundColor : '',
@@ -135,6 +137,26 @@ test.describe('hero load sequence with full motion', () => {
     // The arch keeps its box and accent ground on frame 0, so the unmask never shows a gap.
     expect(frame0.height).toBeGreaterThan(0);
     expect(frame0.bg).toBe('rgb(15, 112, 183)');
+    // The lead is the Home LCP text: full opacity on frame 0, it only slides (08-15, lever L1).
+    expect(frame0.leadOpacity).toBe('1');
+  });
+
+  test('/ hero lead is fully opaque at 50 ms', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+    await waitUntil(page, 50);
+    const lead = await page.evaluate(() => {
+      const el = document.querySelector('[data-hero-lead]');
+      const cs = el ? getComputedStyle(el) : null;
+      return {
+        opacity: cs?.opacity ?? '',
+        translate: cs?.translate ?? '',
+        played: document.querySelector('[data-hero]')?.hasAttribute('data-hero-played') ?? false,
+      };
+    });
+    expect(lead.opacity).toBe('1');
+    // Still sliding in, or (on a very slow first paint) the sequence already ended.
+    expect(lead.played || lead.translate !== 'none').toBe(true);
   });
 
   test('the sequence completes with every module script aborted (CSS only)', async ({ page }) => {

@@ -623,7 +623,7 @@ a[data-nav-pressed] {
   animation: hero-scale 840ms var(--ease-soft) 120ms both;
 }
 [data-motion='on'] [data-hero]:not([data-hero-played]) [data-hero-lead] {
-  animation: hero-settle var(--t-settle) var(--ease-reveal) 200ms both;
+  animation: hero-lead-slide var(--t-settle) var(--ease-reveal) 200ms both;
 }
 [data-motion='on'] [data-hero]:not([data-hero-played]) [data-hero-cta] {
   animation: hero-settle var(--t-settle) var(--ease-reveal) 280ms both;
@@ -650,7 +650,9 @@ html[data-vt]
 /*
  * UI-SPEC LCP fallback start values, chosen by the user on 2026-10-29 so the first frame is never
  * blank (D-03): the headline starts 60% down its mask (its top already shows) and the portrait
- * starts 35% open.
+ * starts 35% open. The lead is the Home LCP text, so it never starts transparent: it only slides
+ * (hero-lead-slide, 08-LIGHTHOUSE.md Miss 1 sign-off, 2026-11-09, lever L1). An opacity animation
+ * keeps Chrome from counting it as an LCP candidate until the animation is removed.
  */
 @keyframes hero-rise {
   from {
@@ -675,6 +677,14 @@ html[data-vt]
   }
   to {
     scale: none;
+  }
+}
+@keyframes hero-lead-slide {
+  from {
+    translate: 0 16px;
+  }
+  to {
+    translate: none;
   }
 }
 @keyframes hero-settle {
