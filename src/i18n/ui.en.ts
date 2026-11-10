@@ -47,6 +47,11 @@ export const en = {
   'projects.empty.heading': 'New work is on the way',
   'projects.empty.body': "I'm updating this list. Write to me and I'll send you recent work.",
   'projects.empty.cta': 'Write to me',
+  'projects.filter.legend': 'Filter projects by category',
+  'projects.filter.all': 'All',
+  'projects.filter.status.all': 'Showing all {count} projects',
+  'projects.filter.status.one': 'Showing 1 project in {category}',
+  'projects.filter.status.many': 'Showing {count} projects in {category}',
   'meta.projects.title': 'Projects — Martina Fernandez',
   'meta.projects.description':
     'Web design, branding and social media projects by Martina Fernandez, newest first.',

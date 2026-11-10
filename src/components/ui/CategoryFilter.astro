@@ -1,0 +1,72 @@
+---
+/**
+ * Category filter for the Projects page (PROJ-04, PROJ-07; D-12 to D-15, 09-UI-SPEC Feature 3).
+ * A native radio group, like ServiceChips: one Tab stop, arrow keys move and check, and checking a
+ * chip filters at once. "All" is checked in the HTML; the client module applies `?category=`.
+ * The fieldset is hidden until the motion gate has run (the motion-js display variant). BaseLayout's
+ * blocking inline gate sets `html[data-motion]` before first paint, so JS visitors get no layout
+ * shift and no-JS visitors see every project and no dead control (D-14). No form element: the
+ * ClientRouter would intercept a submit. The status region is empty in the HTML and is written only after a change;
+ * its localized templates travel as data-* attributes so the client never bundles dictionaries.
+ */
+import { useTranslations, type Locale } from '../../i18n/t';
+import type { CategoryChip } from '../../lib/projects/filter';
+
+interface Props {
+  locale: Locale;
+  chips: readonly CategoryChip[];
+}
+
+const { locale, chips } = Astro.props;
+const t = useTranslations(locale);
+
+const choices = [
+  { id: 'all', value: '', label: t('projects.filter.all') },
+  ...chips.map((chip) => ({ id: chip.id, value: chip.id, label: chip.label })),
+];
+
+// ServiceChips' chip without the check icon (it would reflow the row on every arrow key) and with
+// motion-on: (not the OS-only media variant), so the header motion toggle applies. Drift-guarded in
+// tests/unit/category-filter-view.test.ts.
+const chip =
+  'inline-flex min-h-11 items-center rounded-full border-2 border-ink-muted px-4 py-2 text-sm font-semibold text-ink cursor-pointer hover:border-ink peer-checked:border-ink peer-checked:bg-ink peer-checked:text-surface peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent motion-on:transition-colors motion-on:duration-150'; // taste-skill-ignore: 2px radio-chip boundary (WCAG 1.4.11), not a 1px box
+---
+
+<fieldset data-project-filter class="motion-js:block m-0 hidden min-w-0 border-0 p-0">
+  <legend class="sr-only">{t('projects.filter.legend')}</legend>
+  <div class="flex flex-wrap gap-2">
+    {choices.map((choice) => (
+      <div>
+        <input
+          type="radio"
+          name="category"
+          id={`projects-filter-${choice.id}`}
+          value={choice.value}
+          checked={choice.value === ''}
+          class="peer sr-only"
+        />
+        <label for={`projects-filter-${choice.id}`} class={chip}>
+          {choice.label}
+        </label>
+      </div>
+    ))}
+  </div>
+</fieldset>
+<p
+  role="status"
+  class="sr-only"
+  data-project-filter-status
+  data-status-all={t('projects.filter.status.all')}
+  data-status-one={t('projects.filter.status.one')}
+  data-status-many={t('projects.filter.status.many')}
+></p>
+
+<script>
+  // App scope: filters the arriving document before each swap (bound once). Page scope: the
+  // change listener and URL state, torn down on every swap.
+  import { lifecycle } from '../../lib/motion';
+  import { bootCategoryFilter, initCategoryFilter } from '../../lib/ui/category-filter';
+
+  bootCategoryFilter(document);
+  lifecycle.register(initCategoryFilter);
+</script>

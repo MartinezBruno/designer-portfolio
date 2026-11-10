@@ -51,6 +51,12 @@ export const es = {
   'projects.empty.heading': 'Hay trabajo nuevo en camino',
   'projects.empty.body': 'Estoy actualizando esta lista. Escríbeme y te envío trabajos recientes.',
   'projects.empty.cta': 'Escríbeme',
+  // TODO(martina): Phase 9 copy (projects filter), draft; review in .planning/phases/08-quality-verification/08-SPANISH-REVIEW.md.
+  'projects.filter.legend': 'Filtrar proyectos por categoría',
+  'projects.filter.all': 'Todos',
+  'projects.filter.status.all': 'Mostrando los {count} proyectos',
+  'projects.filter.status.one': 'Mostrando 1 proyecto de {category}',
+  'projects.filter.status.many': 'Mostrando {count} proyectos de {category}',
   'meta.projects.title': 'Proyectos — Martina Fernandez',
   'meta.projects.description':
     'Proyectos de diseño web, branding y redes sociales de Martina Fernandez, del más reciente al más antiguo.',

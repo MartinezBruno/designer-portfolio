@@ -1,7 +1,9 @@
 ---
 import { getRelativeLocaleUrl } from 'astro:i18n';
+import CategoryFilter from '../ui/CategoryFilter.astro';
 import ProjectGrid from '../ui/ProjectGrid.astro';
 import { getAllProjects } from '../../lib/content/queries';
+import { buildCategoryChips } from '../../lib/projects/filter';
 import { useTranslations, type Locale } from '../../i18n/t';
 
 interface Props {
@@ -13,6 +15,8 @@ const { locale } = Astro.props;
 const t = useTranslations(locale);
 const contactHref = `${getRelativeLocaleUrl(locale, '/')}#contact`;
 const all = await getAllProjects(locale);
+// All plus each non-empty category in services.json order; [] (no chip row) below two categories.
+const chips = buildCategoryChips(all);
 ---
 
 <section
@@ -37,7 +41,10 @@ const all = await getAllProjects(locale);
     </p>
   </div>
   {all.length > 0 ? (
-    <ProjectGrid projects={all} variant="full" headingLevel={2} locale={locale} eagerFirst />
+    <div class="flex flex-col gap-8">
+      {chips.length > 0 && <CategoryFilter locale={locale} chips={chips} />}
+      <ProjectGrid projects={all} variant="full" headingLevel={2} locale={locale} eagerFirst />
+    </div>
   ) : (
     <div data-reveal="settle" class="flex flex-col gap-4">
       <h2 class="font-display text-2xl font-semibold tracking-tight">
