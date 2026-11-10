@@ -148,7 +148,10 @@ describe('project card size (data-tile, 09-05 PROJ-04)', () => {
 
   it('renders an empty data-category when the project has no category', async () => {
     const html = await render({ project: { categoryId: null } });
-    expect(rootTag(html)).toMatch(/data-category=""/);
+    // Astro serialises an empty attribute bare (`data-category`), which HTML parses as "".
+    const root = rootTag(html);
+    expect(root).toMatch(/\sdata-category(?:="")?(?=[\s>])/);
+    expect(root).not.toMatch(/data-category="[^"]/);
   });
 
   it.each(tileSizes)('%s sets responsive sizes from layout.ts sizesFor', async (size) => {
