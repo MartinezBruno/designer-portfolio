@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { tileSize, tileSizes, type TileSize } from '../../src/lib/projects/layout';
+import { sizesFor, tileSize, tileSizes, type TileSize } from '../../src/lib/projects/layout';
 
 const sequences: ReadonlyArray<readonly [number, readonly TileSize[]]> = [
   [1, ['large']],
@@ -29,5 +29,17 @@ describe('tileSize', () => {
     expect(() => tileSize(index, count)).toThrow(
       `projects: tileSize index ${String(index)} out of range for ${String(count)} tiles`,
     );
+  });
+});
+
+describe('sizesFor', () => {
+  it('has one sizes string per tile size, shared by ProjectCard and the client filter', () => {
+    expect(Object.keys(sizesFor).sort()).toEqual([...tileSizes].sort());
+    expect(sizesFor).toEqual({
+      large: '(min-width: 1408px) 790px, (min-width: 768px) 57vw, 100vw',
+      small: '(min-width: 1408px) 560px, (min-width: 768px) 40vw, 100vw',
+      'large-end': '(min-width: 1408px) 888px, (min-width: 768px) 66vw, 100vw',
+      third: '(min-width: 1408px) 440px, (min-width: 768px) 31vw, 100vw',
+    });
   });
 });
