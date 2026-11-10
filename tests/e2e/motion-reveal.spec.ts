@@ -191,6 +191,122 @@ test.describe('keyboard focus reveals a card instantly', () => {
   });
 });
 
+// A11Y-01 (08-TASTE-REPORT): a cover whose card top is already above the viewport (an instant jump,
+// a deep link then scrolling back up) must still open while any part of the card is on screen.
+const WORK_CARDS = 'section[aria-labelledby="work-title"] [data-card]';
+
+/** Waits until the reveal effect has armed the Latest-work shutters. */
+async function waitForArmedShutters(page: Page): Promise<void> {
+  await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+  await expect
+    .poll(() => page.locator(`${WORK_CARDS} [data-reveal="shutter"][data-reveal-armed]`).count())
+    .toBeGreaterThan(0);
+}
+
+/** Polls until the shutter of the Latest-work card at `index` is revealed and fully open. */
+async function expectCoverOpen(page: Page, index: number): Promise<void> {
+  const shutter = page.locator(WORK_CARDS).nth(index).locator('[data-reveal="shutter"]');
+  await expect
+    .poll(
+      () =>
+        shutter.evaluate((el) => ({
+          revealed: el.hasAttribute('data-revealed'),
+          clip: getComputedStyle(el).clipPath,
+        })),
+      { timeout: 3000 },
+    )
+    .toEqual({ revealed: true, clip: 'inset(0px)' });
+}
+
+test.describe('A11Y-01: a card cover opens on any intersection', () => {
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 1440, height: 900 },
+  ]) {
+    for (const path of ['/', '/es/']) {
+      const at = `${path} at ${String(viewport.width)}`;
+
+      test(`A11Y-01 instant jump past a card top opens its cover on ${at}`, async ({ page }) => {
+        await page.setViewportSize(viewport);
+        await page.goto(path);
+        await page.waitForLoadState('load');
+        await waitForArmedShutters(page);
+        const last = (await page.locator(WORK_CARDS).count()) - 1;
+        expect(last).toBeGreaterThanOrEqual(0);
+        const rect = await page
+          .locator(WORK_CARDS)
+          .nth(last)
+          .evaluate(async (card) => {
+            const top = card.getBoundingClientRect().top + window.scrollY;
+            window.scrollTo({ top: top + 40, behavior: 'instant' });
+            await new Promise((resolve) =>
+              requestAnimationFrame(() => requestAnimationFrame(resolve)),
+            );
+            const box = card.getBoundingClientRect();
+            return { top: box.top, bottom: box.bottom };
+          });
+        // Precondition: the card straddles the viewport top edge.
+        expect(rect.top).toBeLessThan(0);
+        expect(rect.bottom).toBeGreaterThan(0);
+        await expectCoverOpen(page, last);
+      });
+
+      test(`A11Y-01 deep link to #contact then scrolling up opens a cover on ${at}`, async ({
+        page,
+      }) => {
+        await page.setViewportSize(viewport);
+        await page.goto(`${path}#contact`);
+        await page.waitForLoadState('load');
+        // Covers above the landing point show at mount, so armed shutters are not guaranteed here.
+        await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+        // The hash scroll has settled once scrollY holds still across two animation frames.
+        await expect
+          .poll(() =>
+            page.evaluate(async () => {
+              const before = window.scrollY;
+              await new Promise((resolve) =>
+                requestAnimationFrame(() => requestAnimationFrame(resolve)),
+              );
+              return before > 0 && window.scrollY === before;
+            }),
+          )
+          .toBe(true);
+        await page.mouse.move(viewport.width / 2, viewport.height / 2);
+
+        let target = -1;
+        for (let i = 0; i < 40 && target < 0; i += 1) {
+          const state = await page.locator(WORK_CARDS).evaluateAll((cards) => {
+            const open = cards
+              .map((card, index) => ({ card, index }))
+              .filter(
+                ({ card }) =>
+                  card.querySelector('[data-reveal="shutter"]:not([data-revealed])') !== null,
+              );
+            const first = open[0];
+            if (first === undefined) return { done: true, index: -1 };
+            const box = first.card.getBoundingClientRect();
+            return { done: false, index: box.bottom > 150 && box.top < 0 ? first.index : -1 };
+          });
+          if (state.done) break;
+          target = state.index;
+          if (target < 0) {
+            await page.mouse.wheel(0, -150);
+            await page.waitForTimeout(100);
+          }
+        }
+
+        if (target >= 0) {
+          await expectCoverOpen(page, target);
+        } else {
+          // Every cover was already open (the deep link revealed them at mount): still a guard.
+          const count = await page.locator(WORK_CARDS).count();
+          for (let i = 0; i < count; i += 1) await expectCoverOpen(page, i);
+        }
+      });
+    }
+  }
+});
+
 test.describe('stretched card link mid-reveal', () => {
   // A translating ancestor becomes the containing block of the title link's `after:inset-0`
   // overlay, shrinking it to the text block; the cover must stay clickable while the card reveals.
