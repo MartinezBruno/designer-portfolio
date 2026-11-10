@@ -41,6 +41,7 @@ Out of scope: text search, tool or year filters, multi-category projects, re-ass
 - **D-12:** **Single-select chips with "All"** (EN "All", ES "Todos"), one active at a time, like tabs. Order follows services.json `order`.
 - **D-13:** **Hide categories with no projects.** Photography shows no chip until a project is assigned to it. Today's chips: All (7), Graphic design (2), Web design (3), Branding (1), Social media (1).
 - **D-14:** The selected category is stored in the URL as `?category=<id>` (shareable, works with back/forward), and the result count is announced in a polite live region (e.g. "3 projects" / "3 proyectos"). An unknown or empty `?category` value falls back to All. Without JS, all projects show.
+- **D-14a (user, 2026-11-10):** "works with back/forward" means **`history.replaceState`**. A chip change rewrites `?category=` in place and adds no history entry. Going back from a project returns to the filtered list. Back does not step through earlier chip choices. Research shows `pushState` makes Astro's ClientRouter re-render /projects/ on top of itself.
 - **D-15:** It must work in both EN and ES, with full keyboard use, reduced motion and axe coverage (the requirement from the handoff). Filtering must not leak ScrollTriggers or reveal state across `<ClientRouter />` navigations (Phase 6/7 lifecycle rules).
 
 ### Categories data
@@ -51,6 +52,8 @@ Out of scope: text search, tool or year filters, multi-category projects, re-ass
 - Where the chips sit on /projects/ and how they look (they must pass the taste-skill house rules; reusing the ServiceChips pill style is a candidate).
 - Whether chips are `<button aria-pressed>` or a radio group, and how the live region is worded, as long as it meets WCAG and the keyboard e2e.
 - Motion when the filter changes, which must degrade to an instant change under reduced motion.
+- Research open questions, settled here: Photography is **not** added to the roles marquee (`roles.json`, outside D-08). No `suggestCategory` and Behance-sync mapping for Photography (sync is out of scope). The EN/ES switcher may drop `?category=` (deferred). Whether the result count is also visible text follows the UI-SPEC.
+- Hero `widths`: the UI-SPEC proposes `[256,448,720,960,1200]` and RESEARCH proposes `[256,448,640,768,1024]` (measured with sharp). The planner picks one and checks it with the D-04 LCP re-measure.
 - Unit and e2e test split; the e2e must take turns on the shared port 4400 (see HANDOFF).
 
 </decisions>
