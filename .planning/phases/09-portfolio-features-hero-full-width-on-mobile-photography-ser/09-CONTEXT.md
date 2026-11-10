@@ -48,6 +48,10 @@ Out of scope: text search, tool or year filters, multi-category projects, re-ass
 - **D-16:** **One category per project**, as today. No data-model change to `category`.
 - **D-17:** Keep the current assignments: Cabrera's → social-media; PuroV, Mart → graphic-design; Reciclick, Portfolio, InstaBlogs → web-design; Visual system → branding.
 
+### Gap closure (user, 2026-11-10, after 09-08)
+- **D-18:** Home mobile LCP measured 2,933 ms against the 2,500 ms budget (09-LIGHTHOUSE.md). The user chose **gap closure** over accepting the miss or shrinking the hero. Keep D-01 (4:5 full width) and D-02 (above the headline). Fix the critical window instead: on phones, the Latest-work images must not compete with the hero portrait (start their fetch after the hero paints or LCP), and GSAP/SplitText must start after LCP. Re-measure with the 08-17 protocol and then re-run the 09-08 taste gate on the final src.
+- **D-19:** Home eager JS of 18,024 B (66 B over the Phase 8 measurement of 17,958 B) is **accepted**. The budget is the 22,000 B ceiling.
+
 ### Claude's Discretion
 - Where the chips sit on /projects/ and how they look (they must pass the taste-skill house rules; reusing the ServiceChips pill style is a candidate).
 - Whether chips are `<button aria-pressed>` or a radio group, and how the live region is worded, as long as it meets WCAG and the keyboard e2e.
