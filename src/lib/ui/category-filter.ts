@@ -155,12 +155,13 @@ export function initCategoryFilter(doc: Document): Cleanup | undefined {
   };
 
   const enter = (id: string, gen: number, leaving: readonly Animation[]): void => {
-    const before = new Set(gridItems(doc).filter((li) => li.hidden));
     applyCategory(doc, id);
     // The leaving cards are hidden now, so dropping their fill shows no flash.
     for (const animation of leaving) animation.cancel();
     const visible = gridItems(doc).filter((li) => !li.hidden);
-    for (const li of visible) if (before.has(li)) showInstantly(li);
+    // Every visible card, not only the newly shown ones: a card that waited below the fold for its
+    // scroll reveal can move into view here, and its reveal must not play on top of the entrance.
+    for (const li of visible) showInstantly(li);
     const duration = tokenMs(view, '--t-settle', 560);
     const easing = tokenEase(view, '--ease-reveal', 'cubic-bezier(0.22, 1, 0.36, 1)');
     running = visible.map((li, index) =>
@@ -195,9 +196,10 @@ export function initCategoryFilter(doc: Document): Cleanup | undefined {
     const animatable =
       currentMotionState(doc) === 'on' && items.every((li) => typeof li.animate === 'function');
     if (!animatable) {
-      const before = new Set(items.filter((li) => li.hidden));
+      // Instant means instant (UI-SPEC Filter motion, reduced): no visible card is left waiting
+      // for a late scroll-reveal fade.
       applyCategory(doc, id);
-      for (const li of items) if (!li.hidden && before.has(li)) showInstantly(li);
+      for (const li of items) if (!li.hidden) showInstantly(li);
       return;
     }
     const leaving = items.filter((li) => !li.hidden && !matches(li, id));
