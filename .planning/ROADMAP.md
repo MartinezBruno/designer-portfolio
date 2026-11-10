@@ -23,7 +23,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Scroll & Interaction Motion** - Reveals, text splits, cursor/magnetic buttons, card hover effects, reduced-motion support, and a motion toggle (completed 2026-11-02)
 - [x] **Phase 7: Page Transitions & Smooth Scroll** - Animated navigation with focus management, inertial scroll and parallax, no lifecycle leaks (completed 2026-11-05)
 - [x] **Phase 8: Quality Verification** - Measured performance budget, full axe/keyboard pass in both languages, and Spanish copy ready for review (completed 2026-11-10)
-- [x] **Phase 9: Portfolio Features** - Hero full width on mobile, photography service, and filtering projects by service category (completed 2026-11-10)
+- [ ] **Phase 9: Portfolio Features** - Hero full width on mobile, photography service, and filtering projects by service category (review fixes in progress)
 
 ## Phase Details
 
