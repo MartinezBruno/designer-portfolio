@@ -79,6 +79,8 @@ export interface ProjectCardView {
   title: string;
   titleLang: Locale | null;
   category: string | null;
+  /** Stable category id for the /projects/ filter (Phase 9, D-10); null when uncurated. */
+  categoryId: CategoryId | null;
   tools: readonly string[];
   summary: string | null;
   cover: ImageMetadata;
