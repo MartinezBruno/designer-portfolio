@@ -144,3 +144,57 @@ Top three problems (most visible first), each with the screenshot it shows in an
 - FOUND: commits `2160082`, `ac1c86b`, `4d7ca77`
 - FOUND: lock released (`tmp/build-e2e.lock` absent); ports 4400/4418/4485 free
 - FOUND: `git status --porcelain -- src` empty
+
+## Post-review re-gate (cc64ecd)
+
+**Result: FAIL (stopped for a user decision). No src was changed and no budget was loosened.** The code-review fixes WR-01 (`da00585`) and WR-02 (`cc64ecd`) changed src after this plan passed on `bda5a84`. Under the Re-measure rule and W-5, the full gate was re-run on 2026-11-10 (23:20–23:50 UTC) on src **`cc64ecd`** (HEAD `8e6e650`, `git status --porcelain -- src` empty before and after). Two criteria failed under the strict "any other failure / any new finding = fail" rule. Every other gate passed. 09-VALIDATION.md's Approval line was **not** moved to `cc64ecd`.
+
+| Gate | Result | Evidence |
+|---|---|---|
+| `E2E_OFFLINE=1 pnpm verify` | **pass** (exit 0) | lint (astro check, eslint, prettier) ok. 77 test files / **1,426 unit** passed. **841 e2e passed**, 117 skipped (`@network`, via `E2E_OFFLINE`). keyboard-journeys 9 did not flake. `check:secrets` ok (1,318 dist files). `tmp/09-regate-verify.log` |
+| `playwright test --grep @network` | **FAIL on the first run** | run 1 (23:22): 5 failed, 55 passed. run 2 (23:27): 6 failed, 54 passed. run 3 (23:35): 1 failed, 59 passed. run 4 (23:41): **60 passed**. Logs: `tmp/09-regate-network{,-2,-3,-4}.log`. Detail below |
+| `measure:bundle` | **pass** | "bundle check ok". `/` and `/es/` 18,015 B, `/projects/` and `/es/projects/` 17,965 B, max 18,015 B on `/` (ceiling 22,000 B). D-19 delta −9 B vs 18,024 B. `tmp/09-regate-bundle.txt` |
+| Spanish review | **pass** | `pnpm review:spanish` regenerated it. `git diff --exit-code` on 08-SPANISH-REVIEW.md is clean |
+| LCP, 08-17 protocol | **pass** | Home median **2,933 ms** (≤ 3,033), CLS 0.000. Heaviest detail `/projects/website-reciclick/` **2,633 ms** (≤ 2,733). See 09-LIGHTHOUSE.md "Re-measure (post-review fixes, cc64ecd)". The D-20 validity line now names `cc64ecd` |
+| `/projects/?category=branding` | **pass** | CLS 0.000 / 0.000 / 0.000. LCP 3,252 / 2,868 / 2,865 ms (informational) |
+| taste lint.mjs | **pass** | 4 files changed since `bda5a84`: 0 FAIL, 0 WARN. All 17 phase files since `06adfbd`: 0 FAIL, 1 WARN (the pre-existing 14 em-dashes in `ui.*.ts`) |
+| taste inspect.mjs | **FAIL (1 new WARN)** | `/projects/` and `/es/projects/` are identical to 09-11 (1 FAIL `empty-screens`, 2 WARN `first-action`, `no-footage`). `/projects/?category=web-design` has 2 FAIL, **3 WARN**: the known `few-pictures`, `empty-screens`, `first-action` and `no-footage`, plus a **new `still-page` WARN @1440** |
+
+### @network detail
+
+- Every failure across runs 1–3 was in a Turnstile-dependent contact test: contact, contact-states, a11y `/es/#contact`, and keyboard-journeys 10.
+  - Most failed on `input[name="cf-turnstile-response"]` still empty after 15 s, meaning Cloudflare issued no token.
+  - One failed on `[data-contact-success]` and one on the "Mensaje enviado" focus, both after submit, meaning the siteverify round trip did not complete.
+- At the time, `curl` of `challenges.cloudflare.com/turnstile/v0/api.js` took 0.48–7.96 s per request.
+- Control runs in a scratch worktree with the same tests at HEAD (`8e6e650`), built with `pnpm install --frozen-lockfile`:
+  - src `bda5a84`: 60/60 at 23:32 and 60/60 at 23:37.
+  - src `cc64ecd`: 60/60 at 23:39.
+- The main tree then passed 60/60 at 23:41.
+- The `/` and `/es/` HTML of `cc64ecd` is byte-identical to `bda5a84` after normalising chunk hashes. The only runtime JS difference is the WR-01 guard in `motion.*.js` (`c.search!==''&&` removed). That guard runs only on pages with `[data-project-filter]`, which Home does not have.
+- [Inference] The failures are external Turnstile latency, not a src regression: the same src passed 60/60 in a clean tree and later in the main tree. I cannot verify the Cloudflare-side cause. Under the orchestrator rule (only keyboard-journeys 9 may be re-run), the first run is still recorded as a gate failure.
+
+### Taste: new `still-page` WARN on `/projects/?category=web-design`
+
+- The inspector counts the distinct elements that move during load and one scroll, and it warns when the count is below `MOTION_GOOD = 16`.
+- At 1440 the count fell from **17 on `bda5a84` to 14 on `cc64ecd`**. Two `cc64ecd` inspect runs both gave 14/14/14 across the three widths.
+- A same-day control inspect of a `bda5a84` build gave 17/16/14 and no `still-page`.
+- [Verified by the control] WR-02 causes it. The visible cards are pre-filtered before first paint, so the 3 cards that used to transition in on hard load (the layout shift WR-02 removed: CLS 0.25–0.42 → 0) no longer count as motion.
+- The 390/768 counts are unchanged (14 and 16 → 14; the inspector only applies the rule at ≥ 1100 px).
+- Screenshots (`tmp/taste-09-regate/{projects,es-projects,web-design}/`): the filtered page paints already filtered, with "Web design" filled and Reciclick and Portfolio first. Chips and title share the left edge, and the chips wrap to two even rows at 390. `/projects/` and `/es/projects/` look the same as in 09-11. There is no visual regression.
+- The control is at `tmp/taste-09-regate/ctrl-bda5a84-web-design/`.
+
+### Options for the user (not decided here)
+
+1. **@network:** accept the first-run Turnstile failures as an external flake, given that the cc64ecd clean-tree and main-tree runs both reached 60/60. Or re-run `@network` later and require a first-run 60/60.
+2. **still-page WARN:** accept it as the intended trade-off of WR-02 (a stable first paint over three load-time card transitions). It is a WARN, not a FAIL, and it appears only on hard-loaded filtered URLs at desktop width. Or add a first-paint entrance for the visible cards, which is a src/motion change and needs a new plan plus a re-gate.
+
+### Lock usage
+
+- `tmp/build-e2e.lock` was free. It was acquired at 23:20:57 UTC (owner `09-regate-cc64ecd`) for the following, all sequential:
+  - verify and the four @network runs;
+  - the control worktree builds and @network runs;
+  - `measure:bundle`;
+  - `pnpm build` and the 4485 preview for Lighthouse;
+  - the 4418 previews (main, then control) for inspect.
+- The previews were killed by pid. `lsof -i :4400 -i :4418 -i :4485` was empty, no playwright, astro or lighthouse process was running, and the scratch worktree was removed (`git worktree remove`, `prune`).
+- The lock was released at 23:50:17 UTC.

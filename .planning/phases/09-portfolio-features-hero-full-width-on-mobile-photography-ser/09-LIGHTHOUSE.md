@@ -224,7 +224,7 @@ Options for the user, all [Proposed] and unmeasured in this plan:
 - **Detail page:** 2,633 ms, the same as the miss accepted in 08-17.
 - **Precedent:** this matches the 08-17 detail-page acceptance.
 - **Follow-up:** measure production with compression after deploy.
-- **Re-measure rule:** this evidence is valid only while `git log -1 --format=%h -- src` = `bda5a84`. Any later src change needs a re-measure with the same protocol.
+- **Re-measure rule:** this evidence is valid only while `git log -1 --format=%h -- src` = `cc64ecd` (re-measured after the review fixes; see "Re-measure (post-review fixes, cc64ecd)". It was `bda5a84` until then). Any later src change needs a re-measure with the same protocol.
 
 ## Re-measure (09-11)
 
@@ -239,3 +239,98 @@ Options for the user, all [Proposed] and unmeasured in this plan:
 | Raw JSON | `tmp/lighthouse/p9-home-1..5.json`, `p9-detail-1..5.json`, `p9-select-*.json` (gitignored, from 09-08) |
 
 **Result: D-04 is not met on Home (2,933 ms against 2,500 ms). This is an accepted miss (D-20), not a pass.** The budget is unchanged. The detail page holds at the accepted 2,633 ms. Production with compression is still to be measured after deploy (D-20 follow-up).
+
+## Re-measure (post-review fixes, cc64ecd)
+
+The full 08-17 protocol was re-run after the code-review fixes WR-01 (`da00585`, nav-focus hash links) and WR-02 (`cc64ecd`, inline category pre-filter in ProjectsView). Nothing in src/ was changed for the measurement. Raw JSON is in the gitignored `tmp/lighthouse/` (`p9c-select-*.json`, `p9c-home-1..5.json`, `p9c-detail-1..5.json`, `p9c-cat-1..3.json`). The helpers `p9c-*.sh` and `p9c-*.mjs` are copies of the 09-08 helpers and are not committed.
+
+**Result: pass under the D-20 re-gate criteria.**
+
+- Home median **2,933 ms** (limit 3,033 ms = the accepted 2,933 ms + 100 ms noise), CLS 0.000. The D-20 accepted miss stands, and the 2,500 ms budget is unchanged.
+- Heaviest detail median **2,633 ms** (limit 2,733 ms).
+- Filtered `/projects/?category=branding`: CLS 0.000 in all 3 runs.
+
+### Context
+
+| Item | Value |
+|---|---|
+| Date | 2026-11-10 (selection 23:44–23:45 UTC, protocol runs 23:45–23:47 UTC, category runs 23:47 UTC) |
+| Commit measured | `cc64ecd` (`git log -1 --format=%h -- src`: "fix(09): pre-filter shared category links"). HEAD was `8e6e650` (docs only after `cc64ecd`). `git status --porcelain -- src` was empty |
+| Lighthouse | 13.6.0 (`pnpm dlx lighthouse@13.6.0`, lhr `lighthouseVersion` 13.6.0) |
+| Chrome | Google Chrome 157, `--headless=new`. lhr userAgent `HeadlessChrome/157.0.0.0` |
+| Node | v24.15.0 |
+| benchmarkIndex | selection 4,586.5–4,656; Home 4,635.5–4,667; detail 4,599–4,656.5; category 4,437.5–4,673. That is back at the 08-17 level (09-08 was 3,357–3,408.5). Home FCP and the detail LCP match 09-08, so the simulated results do not depend on it |
+| Settings | formFactor `mobile`, throttlingMethod `simulate` (rtt 150 ms, 1,638.4 kbps, CPU slowdown 4x). Fresh temporary profile per run |
+| Preview | `pnpm build && node scripts/e2e-preview-env.ts && pnpm astro preview --port 4485 --ignore-lock`, under `tmp/build-e2e.lock` for the whole span |
+| Quiet machine | `pgrep -fl "playwright\|astro (dev\|preview)\|lighthouse"` showed only this preview on 4485 before the selection runs and again before the protocol runs. The verify and `@network` Playwright runs had finished. All runs were strictly sequential |
+| Compression | `curl -sI -H 'Accept-Encoding: br, gzip' http://localhost:4485/` has no `content-encoding` (uncompressed, as before) |
+
+### Heaviest-page selection (7 runs)
+
+| Rank | EN detail page | total-byte-weight (KB) | Image (KB) | Requests | LCP (ms, single run) | Score |
+|---|---|---|---|---|---|---|
+| 1 | **/projects/website-reciclick/** | **501.0** | 198.5 | 26 | 2,634 | 97 |
+| 2 | /projects/cabreras-motos-posts/ | 495.9 | 203.0 | 23 | 3,160 | 93 |
+| 3 | /projects/purov/ | 495.6 | 187.1 | 28 | 2,709 | 96 |
+| 4 | /projects/website-instablogs/ | 479.4 | 113.0 | 25 | 3,010 | 94 |
+| 5 | /projects/sistema-visual/ | 440.9 | 151.9 | 18 | 3,235 | 93 |
+| 6 | /projects/portfolio-web/ | 432.6 | 133.2 | 24 | 2,709 | 96 |
+| 7 | /projects/mart/ | 429.6 | 129.9 | 29 | 2,634 | 97 |
+
+Selected page: `/projects/website-reciclick/`, the same as 08-08, 08-17 and 09-08. Every page is about 0.2 KB heavier than in 09-08, which matches the shared CSS growing from 57.3 to 57.5 KB.
+
+### Per run
+
+| Run | LCP (ms) | LCP resource | FCP (ms) | TBT (ms) | CLS | LCP resource transfer | total-byte-weight (KB) | benchmarkIndex | Score |
+|---|---|---|---|---|---|---|---|---|---|
+| home-1 | 2,933 | `portrait.BrseJGMn_2dXNKl.avif` (hero portrait, 768w) | 1,208 | 199 | 0.000 | 32.2 KB | 474.1 | 4,638 | 92 |
+| home-2 | 2,933 | hero portrait, 768w AVIF | 1,208 | 0 | 0.000 | 32.2 KB | 474.1 | 4,641.5 | 95 |
+| home-3 | 2,934 | hero portrait, 768w AVIF | 1,209 | 0 | 0.000 | 32.2 KB | 474.1 | 4,667 | 95 |
+| home-4 | 3,180 | hero portrait, 768w AVIF | 1,210 | 0 | 0.000 | 32.2 KB | 368.2 | 4,653.5 | 93 |
+| home-5 | 2,860 | hero portrait, 768w AVIF | 1,210 | 0 | 0.000 | 32.2 KB | 474.1 | 4,635.5 | 95 |
+| detail-1 | 2,633 | `1325566467-e3adcb99f55f.lYtbH9Dw_kVYXy.avif` (detail image 1 of 17) | 1,058 | 0 | 0.000 | 10.1 KB | 501.0 | 4,599 | 97 |
+| detail-2 | 2,709 | detail image 1 of 17 | 1,059 | 0 | 0.000 | 10.1 KB | 501.0 | 4,650.5 | 96 |
+| detail-3 | 2,633 | detail image 1 of 17 | 1,058 | 0 | 0.000 | 10.1 KB | 501.0 | 4,651.5 | 97 |
+| detail-4 | 2,634 | detail image 1 of 17 | 1,059 | 0 | 0.000 | 10.1 KB | 501.0 | 4,656.5 | 97 |
+| detail-5 | 2,632 | detail image 1 of 17 | 1,057 | 0 | 0.000 | 10.1 KB | 501.0 | 4,606.5 | 97 |
+
+The Home LCP element in every run is the same hero `img.block` (`div.grid > div.order-first > picture.block > img.block`) as in 09-08. home-4 is the outlier (3,180 ms, with 21 requests at 368.2 KB). The other four runs are 2,860–2,934 ms.
+
+### Medians
+
+| Page | Metric | Median | Min | Max | Re-gate limit | Result |
+|---|---|---|---|---|---|---|
+| Home `/` | LCP (ms) | **2,933** | 2,860 | 3,180 | ≤ 3,033 (accepted 2,933 + 100) | pass (+0 ms vs accepted). Budget 2,500: accepted miss D-20 |
+| Home `/` | CLS | 0.000 | 0.000 | 0.000 | 0 | pass |
+| Home `/` | TBT (ms) | 0 | 0 | 199 | < 200 | pass |
+| Home `/` | FCP (ms) | 1,209 | 1,208 | 1,210 | — | (info) |
+| Home `/` | Score | 95 | 92 | 95 | — | (info) |
+| Detail `/projects/website-reciclick/` | LCP (ms) | **2,633** | 2,632 | 2,709 | ≤ 2,733 (accepted 2,633 + 100) | pass (+0 ms) |
+| Detail | CLS | 0.000 | 0.000 | 0.000 | < 0.1 | pass |
+| Detail | TBT (ms) | 0 | 0 | 0 | < 200 | pass |
+| Detail | FCP (ms) | 1,058 | 1,057 | 1,059 | — | (info) |
+| Detail | Score | 97 | 96 | 97 | — | (info) |
+
+### Comparison (medians)
+
+| Page | Metric | 08-17 (`e96db32`) | 09-08 (`bda5a84`) | Post-review (`cc64ecd`) | Delta vs 09-08 |
+|---|---|---|---|---|---|
+| Home | LCP (ms) | 1,207 (lead text) | 2,933 | 2,933 | 0 |
+| Home | FCP (ms) | 1,207 | 1,208 | 1,209 | +1 |
+| Home | CLS | 0.000 | 0.000 | 0.000 | 0 |
+| Home | total-byte-weight (KB, median run) | 443.2 | 473.9 | 474.1 | +0.2 |
+| Detail | LCP (ms) | 2,633 | 2,633 | 2,633 | 0 |
+
+In the median Home run (home-2), the observed LCP is 61 ms. By then all **474.1 KB** had been requested: Document 65.0, CSS 57.5, fonts 88.2, scripts 124.4, images 138.0, other 1.0. The three Latest-work AVIFs start at 28 ms, `load-gsap` at 29 ms, and `gsap` + `SplitText` at 60 ms. That is the same critical-window composition diagnosed in 09-08 and 09-09, and the review fixes did not change it. The fixes touch only the Projects page and the hash-link handler. Home HTML is byte-identical to `bda5a84` after normalising the chunk hashes.
+
+### Filtered Projects page (informational, WR-02)
+
+| Run | URL | LCP (ms) | CLS | FCP (ms) | TBT (ms) | Score |
+|---|---|---|---|---|---|---|
+| cat-1 | `/projects/?category=branding` | 3,252 | **0.000** | 1,058 | 0 | 93 |
+| cat-2 | same | 2,868 | **0.000** | 1,062 | 0 | 95 |
+| cat-3 | same | 2,865 | **0.000** | 1,060 | 0 | 95 |
+
+CLS is 0 in 3 of 3 runs, so the WR-02 pre-filter paints the filtered grid without a layout shift. The LCP element is the first visible branding card's cover (`article.group/card … img.size-full`). The LCP median of 2,868 ms is informational only, with no budget gate (see 09-REVIEW.md IN-01 for the card-0 `fetchpriority` note). total-byte-weight is 396.4 KB.
+
+**Result: pass.** Home 2,933 ms (≤ 3,033, CLS 0), detail 2,633 ms (≤ 2,733), and the filtered page has CLS 0. D-04 is still not met on Home against 2,500 ms: that is the accepted miss (D-20), not a pass, and the budget is unchanged.
