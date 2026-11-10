@@ -282,6 +282,23 @@ describe('initCategoryFilter', () => {
     cleanup?.();
   });
 
+  it('also shows cards that stayed visible but were never revealed (09-07 e2e)', () => {
+    // A card below the fold under All is still waiting for its scroll reveal; the filter can move
+    // it into view, where a late reveal fade would follow the instant change (UI-SPEC: no card
+    // left at opacity < 1, no reveal on top of the filter).
+    document.body.innerHTML = fixture();
+    setMotion('reduced');
+    setSearch('');
+    const cleanup = initCategoryFilter(document);
+    choose('web-design');
+    for (const li of visible()) {
+      const target = li.querySelector('[data-reveal]');
+      expect(target?.hasAttribute('data-revealed')).toBe(true);
+      expect(target?.hasAttribute('data-reveal-instant')).toBe(true);
+    }
+    cleanup?.();
+  });
+
   it('applies in the same task with no animation under reduced motion', () => {
     document.body.innerHTML = fixture();
     setMotion('reduced');
