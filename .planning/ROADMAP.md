@@ -461,9 +461,16 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 
 ### Phase 9: Portfolio Features: hero full-width on mobile, photography service, filter projects by service category
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal**: Phones get a full-width hero portrait, Martina's Photography service appears wherever services do, and visitors can filter /projects/ by category in EN and ES. Accessibility, motion and performance budgets all hold.
 **Depends on:** Phase 8
+**Requirements**: HOME-09, HOME-10, PROJ-04, PROJ-07
+**UI hint**: yes
+**Success Criteria** (what must be TRUE):
+
+  1. At 390px the hero portrait is a full-width 4:5 arch above the headline. From 640px up the layout is unchanged, and the Home LCP re-measured with the 08-17 protocol is ≤2,500 ms.
+  2. Photography (EN "Photography" / ES "Fotografía", 4 approved items) appears in Home services, in the contact service chips, and through `?service=photography`, and the contact action accepts it.
+  3. /projects/ and /es/projects/ show single-select category chips with All (empty categories hidden). `?category=` deep-links and updates in place, and the count is announced politely. Keyboard, reduced motion and axe all pass in both languages.
+  4. The taste-skill lint and inspect runs and screenshots are reviewed for every visual change. Lint, unit tests and e2e are green, and the eager JS budget (22,000 B) holds.
 **Plans:** 0 plans
 
 Plans:

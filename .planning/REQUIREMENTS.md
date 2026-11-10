@@ -29,11 +29,13 @@ v1 "done" = working local build (deploy is post-v1).
 - [x] **HOME-01**: Visitor sees a hero with greeting, professional title, description and her image, visible immediately without waiting on JavaScript
 - [x] **HOME-02**: Visitor sees a marquee of all the roles/jobs she does (web design, social media manager, etc.)
 - [x] **HOME-03**: Visitor can pause the marquee (pause on hover/focus or control); it is static under reduced motion and screen readers hear each role once
-- [x] **HOME-04**: Visitor sees her 4 most featured services
+- [x] **HOME-04**: Visitor sees her featured services (4 in Phase 2; 5 with Photography from Phase 9)
 - [x] **HOME-05**: Visitor sees the apps/tools she uses
 - [x] **HOME-06**: Visitor sees her 3 latest Behance projects (sorted by publish date) linking to their detail pages
 - [x] **HOME-07**: Visitor sees an "available for projects" badge whose state she controls via content
 - [x] **HOME-08**: Visitor can click a service and land on the contact form with that service pre-selected
+- [ ] **HOME-09**: On phones (<640px) the hero portrait is shown full width as a 4:5 arch above the headline, and Home LCP stays within the 2,500 ms budget (Phase 9, D-01..D-05)
+- [ ] **HOME-10**: Visitor sees a Photography service (EN/ES) on Home, can pick it in the contact form, and can preselect it with ?service=photography (Phase 9, D-06..D-09)
 
 ### Behance Data (DATA)
 
@@ -49,10 +51,10 @@ v1 "done" = working local build (deploy is post-v1).
 - [x] **PROJ-01**: Visitor can browse all her Behance projects on a Projects page, newest first, in both languages
 - [x] **PROJ-02**: Visitor can open a project detail page that mirrors its Behance content (images, text, grids, embeds) in original language, with a safe fallback for unknown content types
 - [x] **PROJ-03**: Visitor sees project metadata (tools, category; no project date, user decision 2026-10-17), a "View on Behance" link, next/previous project links, and a contact CTA on each detail page
-- [ ] **PROJ-04**: *(conditional: only if she has ≥8 projects)* Visitor can filter projects by curated category chips — **N/A (Phase 4, D-16):** 7 projects in the committed snapshot (origin behance-sync), confirmed live 2026-10-16 (Phase 3 D-05); threshold is 8. Revisit when pnpm sync:behance prints the ≥8 notice.
+- [ ] **PROJ-04**: Visitor can filter projects by curated category chips (single-select with All; empty categories hidden). **Now in scope in Phase 9 (D-10..D-13)** by user decision on 2026-11-10, which overrides the Phase 4 D-16 rule of ≥8 projects.
 - [ ] **PROJ-05**: *(conditional: ≥8 projects)* Visitor can text-search projects (accent-insensitive) — **N/A (Phase 4, D-16):** 7 projects in the committed snapshot (origin behance-sync), confirmed live 2026-10-16 (Phase 3 D-05); threshold is 8. Revisit when pnpm sync:behance prints the ≥8 notice.
 - [ ] **PROJ-06**: *(conditional: ≥8 projects)* Visitor can filter projects by tool (year filter dropped: it would expose the project dates the user chose to hide, D-17, 2026-10-17) — **N/A (Phase 4, D-16):** 7 projects in the committed snapshot (origin behance-sync), confirmed live 2026-10-16 (Phase 3 D-05); threshold is 8. Revisit when pnpm sync:behance prints the ≥8 notice.
-- [ ] **PROJ-07**: *(conditional: ≥8 projects)* Filter/search state is reflected in the URL, the result count is announced to screen readers, and an empty state offers "clear filters" — **N/A (Phase 4, D-16):** 7 projects in the committed snapshot (origin behance-sync), confirmed live 2026-10-16 (Phase 3 D-05); threshold is 8. Revisit when pnpm sync:behance prints the ≥8 notice.
+- [ ] **PROJ-07**: Filter state is reflected in the URL (`?category=`, replaceState), the result count is announced to screen readers, and an unknown category falls back to All. **Phase 9 (D-14, D-14a)**, filter part only; the search part stays N/A with PROJ-05.
 
 ### Contact (CONT)
 
@@ -134,6 +136,8 @@ Updated during roadmap creation.
 | HOME-06 | Phase 3 | Complete |
 | HOME-07 | Phase 2 | Complete |
 | HOME-08 | Phase 5 | Complete |
+| HOME-09 | Phase 9 | Pending |
+| HOME-10 | Phase 9 | Pending |
 | DATA-01 | Phase 3 | Complete |
 | DATA-02 | Phase 3 | Complete |
 | DATA-03 | Phase 3 | Complete |
@@ -143,10 +147,10 @@ Updated during roadmap creation.
 | PROJ-01 | Phase 3 | Complete |
 | PROJ-02 | Phase 4 | Complete |
 | PROJ-03 | Phase 4 | Complete |
-| PROJ-04 | Phase 4 | N/A (7 projects < 8) |
+| PROJ-04 | Phase 9 | Pending |
 | PROJ-05 | Phase 4 | N/A (7 projects < 8) |
 | PROJ-06 | Phase 4 | N/A (7 projects < 8) |
-| PROJ-07 | Phase 4 | N/A (7 projects < 8) |
+| PROJ-07 | Phase 9 | Pending |
 | CONT-01 | Phase 5 | Complete |
 | CONT-02 | Phase 5 | Complete |
 | CONT-03 | Phase 5 | Complete |
@@ -166,8 +170,8 @@ Updated during roadmap creation.
 | QUAL-03 | Phase 8 | Complete |
 
 **Coverage:**
-- v1 requirements: 49 total
-- Mapped to phases: 49
+- v1 requirements: 51 total (HOME-09, HOME-10 added in Phase 9)
+- Mapped to phases: 51
 - Unmapped: 0 ✓
 
 Note: PROJ-04..07 are conditional on ≥8 projects; Phase 3 confirmed the count (7) and Phase 4 recorded them as N/A on 2026-10-17 (D-16). PROJ-06 dropped the year filter (D-17).
