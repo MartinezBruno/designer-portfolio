@@ -9,8 +9,9 @@ import { expectedDetails, expectedProjects } from './helpers/projects';
 
 // 08-06 (QUAL-02, D-09): every interactive journey on the site, driven by the keyboard alone, in EN
 // and ES. Only page.keyboard moves focus or activates controls here: no clicks and no .focus().
-// Filters (PROJ-04..07) are N/A: with 7 projects (fewer than 8) the Projects page renders no filter
-// controls, so there is nothing to test (recorded in 08-06-SUMMARY.md).
+// The Projects category filter (PROJ-04/07) is in scope since Phase 9 (D-11); its keyboard journey
+// (one stop on the checked chip, arrows filter, Tab reaches the first card) is covered in
+// projects-filter.spec.ts. Search and tool filters (PROJ-05/06) stay N/A.
 //
 // Turnstile: the hermetic journeys abort challenges.cloudflare.com (no token is needed for them).
 // Only the success / "Send another" journey needs a real test-key token, hence @network.

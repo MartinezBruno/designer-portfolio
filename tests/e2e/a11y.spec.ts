@@ -138,6 +138,9 @@ function expectedProjectsOrderFor(dict: Dictionary, homeHref: string): Step[] {
   const locale = homeHref === '/' ? 'en' : 'es';
   return [
     ...headerSteps(dict, homeHref, '/projects/', '/es/projects/'),
+    // Phase 9 (D-11, PROJ-04): the category filter is one radio group, so one stop on the checked
+    // chip (#projects-filter-all on a plain visit); its ring is drawn on the sr-only radio's label.
+    { name: dict['projects.filter.all'], tag: 'INPUT', ringOnLabel: true },
     ...projectSteps(expectedProjects(locale)),
     ...footerSteps(dict),
   ];

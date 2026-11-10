@@ -143,13 +143,16 @@ for (const { path, lang, dict, canonical, otherHref } of cases) {
       expect(violations).toEqual([]);
     });
 
-    test('has no filter or search UI (PROJ-04..07 N/A, D-16)', async ({ page }) => {
-      // 7 projects < 8: discovery stays off until sync:behance prints the >=8 notice.
+    test('has the category filter and no search UI (PROJ-04/07 in scope per Phase 9 D-11; PROJ-05/06 N/A)', async ({
+      page,
+    }) => {
       await page.goto(path);
+      const main = page.locator('main');
+      await expect(main.locator('fieldset[data-project-filter]')).toHaveCount(1);
+      await expect(main.locator('input[type="radio"][name="category"]')).toHaveCount(5);
+      await expect(main.locator('[role="status"]')).toHaveCount(1);
       await expect(
-        page
-          .locator('main')
-          .locator('[role="search"], input, select, form, [aria-live], [aria-pressed]'),
+        main.locator('[role="search"], select, form, [aria-pressed], input:not([type="radio"])'),
       ).toHaveCount(0);
     });
 
