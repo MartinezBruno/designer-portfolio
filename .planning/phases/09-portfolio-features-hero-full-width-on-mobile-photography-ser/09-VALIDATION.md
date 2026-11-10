@@ -1,9 +1,9 @@
 ---
 phase: 9
 slug: portfolio-features-hero-full-width-on-mobile-photography-ser
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: approved
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-11-10
 ---
 
@@ -40,23 +40,23 @@ Filled in by the planner/executor per task. The requirement → test map:
 
 | Requirement | Behavior | Test Type | Automated Command | File Exists | Status |
 |-------------|----------|-----------|-------------------|-------------|--------|
-| PROJ-04 | Chips = All + categories with ≥1 project, services order; photography hidden | unit | `pnpm vitest run tests/unit/projects-filter.test.ts` | ❌ W0 | ⬜ pending |
-| PROJ-04 | Select chip → others hidden, tile rhythm recomputed, no holes, EN/ES | e2e | `pnpm exec playwright test tests/e2e/projects-filter.spec.ts` | ❌ W0 | ⬜ pending |
-| PROJ-07 | `?category=` allow-list; unknown/empty/repeated → All | unit | `pnpm vitest run tests/unit/category-param.test.ts` | ❌ W0 | ⬜ pending |
-| PROJ-07 | replaceState (history length unchanged), deep link, Back from detail restores filter, count announced, All resets | e2e | `projects-filter.spec.ts` | ❌ W0 | ⬜ pending |
-| PROJ-07 | before-swap applies filter to newDocument; cleanup aborts listener | unit | `pnpm vitest run tests/unit/category-filter.test.ts` | ❌ W0 | ⬜ pending |
-| PROJ-04/07 | Skip link on filtered page is a fragment jump, not a swap | unit + e2e | `tests/unit/nav-focus.test.ts`, `projects-filter.spec.ts` | ✅ extend | ⬜ pending |
-| PROJ-04 | Keyboard: chips one Tab stop, arrows select | e2e | `a11y.spec.ts`, `keyboard-journeys.spec.ts` | ✅ extend | ⬜ pending |
-| PROJ-04 | axe clean EN/ES, filtered and unfiltered | e2e | `a11y.spec.ts`, `a11y-sweep.spec.ts`, `projects.spec.ts` (invert :146) | ✅ update | ⬜ pending |
-| PROJ-04 | Reduced motion: instant change, nothing left un-revealed | e2e | `projects-filter.spec.ts` (`reducedMotion: 'reduce'`) | ❌ W0 | ⬜ pending |
-| PROJ-04 | No listener leak over 10 navigations | e2e | `navigation-leaks.spec.ts` | ✅ | ⬜ pending |
-| HOME-10 | services.json ids === categoryIds === SERVICE_IDS | unit | `contact-fields.test.ts`, `content-home.test.ts` | ✅ update | ⬜ pending |
-| HOME-10 | Action accepts photography; ES email label "Fotografía" | unit | `contact-schema.test.ts`, `contact-email.test.ts`, `contact-submit.test.ts` | ✅ extend | ⬜ pending |
-| HOME-10 | `?service=photography` preselects | unit + e2e | `service-preselect.test.ts`, `contact-preselect.spec.ts` | ✅ extend | ⬜ pending |
-| HOME-10 | 5 service cards, 6 radios, Spanish review fresh | unit + e2e | `featured-services.test.ts`, `contact-section.test.ts`, `spanish-review.test.ts`, `home-story.spec.ts` | ✅ update | ⬜ pending |
-| HOME-09 | <640px full-width 4:5 arch (radius 40%); ≥640px unchanged 3:4 | e2e | `home.spec.ts` (`expectArch`) | ✅ update | ⬜ pending |
-| HOME-09 | Phone gets a correctly sized srcset candidate | e2e | `home.spec.ts` (`currentSrc`) | ❌ add | ⬜ pending |
-| Budget | Eager JS ≤ 22,000 B on `/` and `/projects/` | script | `pnpm build && pnpm measure:bundle` | ✅ | ⬜ pending |
+| PROJ-04 | Chips = All + categories with ≥1 project, services order; photography hidden | unit | `pnpm vitest run tests/unit/projects-filter.test.ts` | ✅ | ✅ green |
+| PROJ-04 | Select chip → others hidden, tile rhythm recomputed, no holes, EN/ES | e2e | `pnpm exec playwright test tests/e2e/projects-filter.spec.ts` | ✅ | ✅ green |
+| PROJ-07 | `?category=` allow-list; unknown/empty/repeated → All | unit | `pnpm vitest run tests/unit/category-param.test.ts` | ✅ | ✅ green |
+| PROJ-07 | replaceState (history length unchanged), deep link, Back from detail restores filter, count announced, All resets | e2e | `projects-filter.spec.ts` | ✅ | ✅ green |
+| PROJ-07 | before-swap applies filter to newDocument; cleanup aborts listener | unit | `pnpm vitest run tests/unit/category-filter.test.ts` | ✅ | ✅ green |
+| PROJ-04/07 | Skip link on filtered page is a fragment jump, not a swap | unit + e2e | `tests/unit/nav-focus.test.ts`, `projects-filter.spec.ts` | ✅ | ✅ green |
+| PROJ-04 | Keyboard: chips one Tab stop, arrows select | e2e | `a11y.spec.ts`, `keyboard-journeys.spec.ts` | ✅ | ✅ green |
+| PROJ-04 | axe clean EN/ES, filtered and unfiltered | e2e | `a11y.spec.ts`, `a11y-sweep.spec.ts`, `projects.spec.ts` (invert :146) | ✅ | ✅ green |
+| PROJ-04 | Reduced motion: instant change, nothing left un-revealed | e2e | `projects-filter.spec.ts` (`reducedMotion: 'reduce'`) | ✅ | ✅ green |
+| PROJ-04 | No listener leak over 10 navigations | e2e | `navigation-leaks.spec.ts` | ✅ | ✅ green |
+| HOME-10 | services.json ids === categoryIds === SERVICE_IDS | unit | `contact-fields.test.ts`, `content-home.test.ts` | ✅ | ✅ green |
+| HOME-10 | Action accepts photography; ES email label "Fotografía" | unit | `contact-schema.test.ts`, `contact-email.test.ts`, `contact-submit.test.ts` | ✅ | ✅ green |
+| HOME-10 | `?service=photography` preselects | unit + e2e | `service-preselect.test.ts`, `contact-preselect.spec.ts` | ✅ | ✅ green |
+| HOME-10 | 5 service cards, 6 radios, Spanish review fresh | unit + e2e | `featured-services.test.ts`, `contact-section.test.ts`, `spanish-review.test.ts`, `home-story.spec.ts` | ✅ | ✅ green |
+| HOME-09 | <640px full-width 4:5 arch (radius 40%); ≥640px unchanged 3:4 | e2e | `home.spec.ts` (`expectArch`) | ✅ | ✅ green |
+| HOME-09 | Phone gets a correctly sized srcset candidate | e2e | `home.spec.ts` (`currentSrc`) | ✅ | ✅ green |
+| Budget | Eager JS ≤ 22,000 B on `/` and `/projects/` | script | `pnpm build && pnpm measure:bundle` | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -64,11 +64,11 @@ Filled in by the planner/executor per task. The requirement → test map:
 
 ## Wave 0 Requirements
 
-- [ ] `tests/unit/category-param.test.ts`: parse and URL write
-- [ ] `tests/unit/projects-filter.test.ts`: chip building, hiding empty categories, visible-subset rhythm
-- [ ] `tests/unit/category-filter.test.ts`: applyCategory on a Document, before-swap, cleanup, live-region text
-- [ ] `tests/e2e/projects-filter.spec.ts`: EN/ES, deep link, Back restore, keyboard, reduced motion, axe, skip link
-- [ ] Invert `tests/e2e/projects.spec.ts:146` ("has no filter or search UI")
+- [x] `tests/unit/category-param.test.ts`: parse and URL write
+- [x] `tests/unit/projects-filter.test.ts`: chip building, hiding empty categories, visible-subset rhythm
+- [x] `tests/unit/category-filter.test.ts`: applyCategory on a Document, before-swap, cleanup, live-region text
+- [x] `tests/e2e/projects-filter.spec.ts`: EN/ES, deep link, Back restore, keyboard, reduced motion, axe, skip link
+- [x] Invert `tests/e2e/projects.spec.ts:146` ("has no filter or search UI")
 
 ---
 
@@ -84,11 +84,11 @@ Filled in by the planner/executor per task. The requirement → test map:
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 10s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 10s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-11-10 (09-08 phase gate: `E2E_OFFLINE=1 pnpm verify` 1,407 unit + 833 e2e passed, `@network` 60 passed, `measure:bundle` ok (max eager 18,024 B on `/`, ceiling 22,000 B), Spanish review fresh)
