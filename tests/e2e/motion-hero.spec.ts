@@ -122,11 +122,19 @@ test.describe('hero load sequence with full motion', () => {
         return i ? (Math.min(m.bottom, i.bottom) - Math.max(m.top, i.top)) / i.height : 0;
       });
       const picture = document.querySelector('picture[data-hero-portrait]');
-      return { lines, clip: picture ? getComputedStyle(picture).clipPath : '' };
+      return {
+        lines,
+        clip: picture ? getComputedStyle(picture).clipPath : '',
+        height: picture ? picture.getBoundingClientRect().height : 0,
+        bg: picture ? getComputedStyle(picture).backgroundColor : '',
+      };
     });
     // Line 1 starts at 60% down (about 40% showing); line 2 waits 90ms in its fill-backwards pose.
     for (const visible of frame0.lines) expect(visible).toBeGreaterThan(0.3);
     expect(frame0.clip).toBe('inset(35% 0px 0px)');
+    // The arch keeps its box and accent ground on frame 0, so the unmask never shows a gap.
+    expect(frame0.height).toBeGreaterThan(0);
+    expect(frame0.bg).toBe('rgb(15, 112, 183)');
   });
 
   test('the sequence completes with every module script aborted (CSS only)', async ({ page }) => {
