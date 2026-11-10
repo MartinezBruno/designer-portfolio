@@ -3,10 +3,10 @@
  * Category filter for the Projects page (PROJ-04, PROJ-07; D-12 to D-15, 09-UI-SPEC Feature 3).
  * A native radio group, like ServiceChips: one Tab stop, arrow keys move and check, and checking a
  * chip filters at once. "All" is checked in the HTML; the client module applies `?category=`.
- * The fieldset is hidden until the motion gate has run (`motion-js:block`). BaseLayout's blocking
- * inline gate sets `html[data-motion]` before first paint, so JS visitors get no layout shift and
- * no-JS visitors see every project and no dead control (D-14). No `<form>`: the ClientRouter would
- * intercept a submit. The status region is empty in the HTML and is written only after a change;
+ * The fieldset is hidden until the motion gate has run (the motion-js display variant). BaseLayout's
+ * blocking inline gate sets `html[data-motion]` before first paint, so JS visitors get no layout
+ * shift and no-JS visitors see every project and no dead control (D-14). No form element: the
+ * ClientRouter would intercept a submit. The status region is empty in the HTML and is written only after a change;
  * its localized templates travel as data-* attributes so the client never bundles dictionaries.
  */
 import { useTranslations, type Locale } from '../../i18n/t';
@@ -26,7 +26,7 @@ const choices = [
 ];
 
 // ServiceChips' chip without the check icon (it would reflow the row on every arrow key) and with
-// motion-on: instead of motion-safe:, so the header motion toggle applies. Drift-guarded in
+// motion-on: (not the OS-only media variant), so the header motion toggle applies. Drift-guarded in
 // tests/unit/category-filter-view.test.ts.
 const chip =
   'inline-flex min-h-11 items-center rounded-full border-2 border-ink-muted px-4 py-2 text-sm font-semibold text-ink cursor-pointer hover:border-ink peer-checked:border-ink peer-checked:bg-ink peer-checked:text-surface peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent motion-on:transition-colors motion-on:duration-150'; // taste-skill-ignore: 2px radio-chip boundary (WCAG 1.4.11), not a 1px box
