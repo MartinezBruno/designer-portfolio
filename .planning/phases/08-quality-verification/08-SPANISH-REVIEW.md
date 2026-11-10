@@ -126,6 +126,11 @@ Source: `src/i18n/ui.en.ts` (EN) and `src/i18n/ui.es.ts` (ES). Tokens in braces 
 | `ui:projects.empty.heading` | New work is on the way | Hay trabajo nuevo en camino | draft, for Martina's review |
 | `ui:projects.empty.body` | I'm updating this list. Write to me and I'll send you recent work. | Estoy actualizando esta lista. Escríbeme y te envío trabajos recientes. | draft, for Martina's review |
 | `ui:projects.empty.cta` | Write to me | Escríbeme | draft, for Martina's review |
+| `ui:projects.filter.legend` | Filter projects by category | Filtrar proyectos por categoría | draft, for Martina's review |
+| `ui:projects.filter.all` | All | Todos | draft, for Martina's review |
+| `ui:projects.filter.status.all` | Showing all {count} projects | Mostrando los {count} proyectos | draft, for Martina's review |
+| `ui:projects.filter.status.one` | Showing 1 project in {category} | Mostrando 1 proyecto de {category} | draft, for Martina's review |
+| `ui:projects.filter.status.many` | Showing {count} projects in {category} | Mostrando {count} proyectos de {category} | draft, for Martina's review |
 
 ### detail.*
 
