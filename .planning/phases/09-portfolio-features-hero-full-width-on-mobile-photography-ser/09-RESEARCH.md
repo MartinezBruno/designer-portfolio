@@ -384,19 +384,24 @@ Not a rename or migration phase. Checked anyway, because adding an enum value to
 | A5 | `replaceState` meets the user's meaning of "works with back/forward" (D-14) | Pitfall 1 | Medium: if the user expects per-chip history steps, a router-compatible approach needs deeper work (intercepting `astro:before-preparation` for same-path search changes) |
 | A6 | `scripting: none` browser support as stated | State of the Art | Low: worst case, no-JS visitors on old browsers see inert chips with all projects shown |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Add "Photography / Fotografía" to the roles marquee (`roles.json`)?**
    - Known: D-08 lists the consumers and the marquee isn't among them. HOME-02 says "all the roles/jobs she does".
    - Recommendation: don't add it unless the user confirms. Ask at plan check.
+   - RESOLVED: not added (09-CONTEXT.md, Claude's Discretion).
 2. **Map the Behance field "Photography" in `suggestCategory`?**
    - Known: it's a sync checklist hint only ("never applied automatically"). The phase boundary excludes "new Behance sync behaviour".
    - Recommendation: add the one map row plus one test row to keep categories one-to-one (D-09), or skip it explicitly. Low risk either way.
+   - RESOLVED: skipped. Sync is out of scope (09-CONTEXT.md, Claude's Discretion).
 3. **Back/forward semantics (D-14):** should each chip change create a history step?
    - Recommendation: `replaceState` (Pitfall 1). Confirm with the user, because pushState conflicts with ClientRouter.
+   - RESOLVED: the user confirmed `replaceState` (09-CONTEXT.md D-14a).
 4. **Language switcher on a filtered page:** EN↔ES hrefs are built at build time and drop `?category=`.
    - Recommendation: out of scope (you land on All). Optional small enhancement: the filter rewrites the switcher hrefs' search. Raise it as an idea only.
+   - RESOLVED: out of scope, deferred (09-CONTEXT.md, Claude's Discretion).
 5. **The count region: visible text or screen-reader only?** That's a UI-SPEC call (the parallel 09-UI-SPEC.md). The research only requires that it exists in the DOM at load and is empty until the first change.
+   - RESOLVED: follows 09-UI-SPEC.md (sr-only status text).
 
 ## Environment Availability
 

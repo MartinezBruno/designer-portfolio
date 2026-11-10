@@ -471,7 +471,25 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
   2. Photography (EN "Photography" / ES "Fotografía", 4 approved items) appears in Home services, in the contact service chips, and through `?service=photography`, and the contact action accepts it.
   3. /projects/ and /es/projects/ show single-select category chips with All (empty categories hidden). `?category=` deep-links and updates in place, and the count is announced politely. Keyboard, reduced motion and axe all pass in both languages.
   4. The taste-skill lint and inspect runs and screenshots are reviewed for every visual change. Lint, unit tests and e2e are green, and the eager JS budget (22,000 B) holds.
-**Plans:** 0 plans
+**Plans:** 8 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 9 to break down)
+**Wave 1**
+
+- [ ] 09-01-PLAN.md — Hero: full-width 4:5 phone arch, phone-sized srcset, hair-rim check, taste gate (HOME-09)
+- [ ] 09-02-PLAN.md — Photography service everywhere services appear, categoryIds + categoryId on cards, Spanish review (HOME-10)
+- [ ] 09-03-PLAN.md — Filter core (TDD): ?category= parser, chip builder, client filter with replaceState, before-swap and lifecycle (PROJ-04, PROJ-07)
+- [ ] 09-04-PLAN.md — Skip link and hash links jump locally on a filtered /projects/ page (PROJ-07)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 09-05-PLAN.md — Re-flowable grid: data-tile / data-category markup, layout unchanged (PROJ-04)
+- [ ] 09-06-PLAN.md — CategoryFilter chips + status region on /projects/ and /es/projects/, EN/ES copy, bundle check (PROJ-04, PROJ-07)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 09-07-PLAN.md — Filter e2e (EN/ES, URL, Back, keyboard, reduced motion, no-JS, axe, leaks), spec updates, Projects taste gate
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 09-08-PLAN.md — Phase gate: pnpm verify, bundle budget, Spanish review fresh, Home LCP re-measure (08-17 protocol), final taste gate
