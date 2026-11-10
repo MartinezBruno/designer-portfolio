@@ -214,3 +214,14 @@ Options for the user, all [Proposed] and unmeasured in this plan:
 1. Accept the Home miss as D-04 was accepted for the detail page in 08-17. The remaining cost is the uncompressed local critical path. Under the 09-08 Brotli proxy, Home measured 2,109–2,259 ms.
 2. Allow a direction outside D-18 and measure it as a bound first: for example the two preloaded fonts (88.2 KB, High, in the critical set), or a Hero change that keeps the portrait out of the LCP race on phones (which conflicts with D-01/D-02).
 3. Re-define the D-04 measurement (for example measure with compression, as Cloudflare serves it).
+
+## Accepted miss sign-off (D-20)
+
+**Decision (user, 2026-11-10):** "Accept the miss (Recommended)". The Home mobile LCP median of **2,933 ms** on src `bda5a84` (uncompressed local preview, 08-17 protocol) is accepted against the 2,500 ms budget.
+
+- **Why the gap-closure levers were dropped:** 09-09 showed that blocking both D-18 levers (Latest-work covers plus gsap/SplitText) leaves the median at 2,933 ms.
+- **Measured with compression:** 2,109 / 2,259 / 2,259 ms through the Brotli proxy (09-08, informational).
+- **Detail page:** 2,633 ms, the same as the miss accepted in 08-17.
+- **Precedent:** this matches the 08-17 detail-page acceptance.
+- **Follow-up:** measure production with compression after deploy.
+- **Re-measure rule:** this evidence is valid only while `git log -1 --format=%h -- src` = `bda5a84`. Any later src change needs a re-measure with the same protocol.
