@@ -44,7 +44,9 @@ export function collectionRows(count: number): number[] {
   return [...Array.from({ length: threes - 1 }, () => 3), 2, 2];
 }
 
-const MODULE_WIDTHS = [640, 960, 1400] as const;
+// 768w covers a 412 px phone at DPR 1.75 (721 px) without jumping to 960w (08-14 lever L4:
+// −284 ms simulated LCP on the detail page, 71.9 KB less image waste).
+const MODULE_WIDTHS = [640, 768, 960, 1400] as const;
 
 /** Responsive widths up to the stored width, never upscaling (D-06). */
 export function moduleWidths(width: number): number[] {

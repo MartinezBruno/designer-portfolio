@@ -270,14 +270,14 @@ describe('toDetailView modules', () => {
     const [first, last] = byKind(en, 'image') as ImageView[];
     expect(first).toMatchObject({
       image: wide,
-      widths: [640, 960, 1400],
+      widths: [640, 768, 960, 1400],
       fullBleed: true,
       caption: null,
       captionLang: null,
     });
     expect(last).toMatchObject({
       image: tall,
-      widths: [640],
+      widths: [640, 768],
       fullBleed: false,
       caption: 'Pie',
       captionLang: 'es',
@@ -292,7 +292,7 @@ describe('toDetailView modules', () => {
     expect(collection?.rows.map((row) => row.length)).toEqual([3]);
     const row = collection?.rows[0] ?? [];
     expect(row.map((item) => item.ratio)).toEqual([2, 0.75, 1]);
-    expect(row.map((item) => item.widths)).toEqual([[640, 960, 1400], [640], [500]]);
+    expect(row.map((item) => item.widths)).toEqual([[640, 768, 960, 1400], [640, 768], [500]]);
     // share = ratio / 3.75
     expect(row[0]?.sizes).toBe('(min-width: 1400px) 747px, (min-width: 640px) 53vw, 100vw');
     expect(row[1]?.sizes).toBe('(min-width: 1400px) 280px, (min-width: 640px) 20vw, 100vw');
