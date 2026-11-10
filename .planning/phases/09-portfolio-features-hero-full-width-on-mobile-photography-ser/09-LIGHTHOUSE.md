@@ -225,3 +225,17 @@ Options for the user, all [Proposed] and unmeasured in this plan:
 - **Precedent:** this matches the 08-17 detail-page acceptance.
 - **Follow-up:** measure production with compression after deploy.
 - **Re-measure rule:** this evidence is valid only while `git log -1 --format=%h -- src` = `bda5a84`. Any later src change needs a re-measure with the same protocol.
+
+## Re-measure (09-11)
+
+**Not re-run: the 09-08 measurement is the final-commit measurement.** On 2026-11-10 (09-11), `git log -1 --format=%h -- src` = `bda5a84` and `git status --porcelain -- src` was empty. That is the same src commit measured above with the full 08-17 protocol (`pnpm dlx lighthouse@13.6.0`, 7 selection runs, then 5 runs on `/` and 5 on `/projects/website-reciclick/`). Under the orchestrator amendment after D-20 and the re-measure rule in "Accepted miss sign-off (D-20)", that evidence stays valid, and no Lighthouse run was made in 09-11. 09-10 was dropped and 09-11 Task 3 made no src fix, so W-5 did not trigger a re-run.
+
+| Item | Value (pointer) |
+|---|---|
+| src commit | `bda5a84` (unchanged since 09-08) |
+| Home mobile LCP median | 2,933 ms (2,858–3,621), CLS 0.000. See "Results (5 runs per page)" above |
+| Heaviest EN detail median | `/projects/website-reciclick/` 2,633 ms, CLS 0.000. That is +0 ms against the accepted 2,633 ms (limit +100 ms): pass |
+| Comparison | 09-08 2,933 ms (`bda5a84`), the same measurement. 08-17 Home 1,207 ms (lead text LCP, before the 09-01 full-width portrait) |
+| Raw JSON | `tmp/lighthouse/p9-home-1..5.json`, `p9-detail-1..5.json`, `p9-select-*.json` (gitignored, from 09-08) |
+
+**Result: D-04 is not met on Home (2,933 ms against 2,500 ms). This is an accepted miss (D-20), not a pass.** The budget is unchanged. The detail page holds at the accepted 2,633 ms. Production with compression is still to be measured after deploy (D-20 follow-up).

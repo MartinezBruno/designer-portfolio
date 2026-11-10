@@ -74,11 +74,11 @@ Filled in by the planner/executor per task. The requirement → test map:
 
 ## Manual-Only Verifications
 
-| Behavior | Requirement | Why Manual | Test Instructions |
-|----------|-------------|------------|-------------------|
-| Home mobile LCP ≤ 2,500 ms | HOME-09 | Lighthouse needs a quiet machine and the network; not CI | 08-LIGHTHOUSE.md "Re-measure rule": `pnpm dlx lighthouse@13.6.0`, mobile simulated, 7 selection runs, then 5 runs each on Home and the heaviest EN detail page; record the src commit |
-| Taste gate on hero and chips | HOME-09, PROJ-04 | Visual judgement | taste-skill `lint.mjs` + `inspect.mjs` at 1440/768/390 on `/`, `/es/`, `/projects/`, `/es/projects/`, `/projects/?category=web-design`; review the screenshots |
-| Photography copy approval | HOME-10 | Martina reviews the Spanish copy | `pnpm review:spanish`; rows marked for review |
+| Behavior | Requirement | Why Manual | Test Instructions | Status |
+|----------|-------------|------------|-------------------|--------|
+| Home mobile LCP ≤ 2,500 ms | HOME-09 | Lighthouse needs a quiet machine and the network; not CI | 08-LIGHTHOUSE.md "Re-measure rule": `pnpm dlx lighthouse@13.6.0`, mobile simulated, 7 selection runs, then 5 runs each on Home and the heaviest EN detail page; record the src commit | ✅ done: accepted miss (D-20). Median 2,933 ms on src `bda5a84` (09-08 measurement, still valid in 09-11); detail 2,633 ms |
+| Taste gate on hero and chips | HOME-09, PROJ-04 | Visual judgement | taste-skill `lint.mjs` + `inspect.mjs` at 1440/768/390 on `/`, `/es/`, `/projects/`, `/es/projects/`, `/projects/?category=web-design`; review the screenshots | ⬜ pending (09-11 Task 3) |
+| Photography copy approval | HOME-10 | Martina reviews the Spanish copy | `pnpm review:spanish`; rows marked for review | ⬜ pending Martina's review (not a gate) |
 
 ---
 
