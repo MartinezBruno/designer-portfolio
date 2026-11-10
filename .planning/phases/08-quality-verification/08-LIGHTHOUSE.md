@@ -217,6 +217,102 @@ The user reviewed the Results and Misses at the 08-08 Task 3 checkpoint (D-06):
 
 **Re-measure rule:** both fixes change src/, so this report becomes stale once they land. Re-run it with the same D-01..D-06 protocol on the fix commit: mobile simulated, `pnpm dlx lighthouse@13.6.0`, 7 selection runs, then 5 runs each on Home and the heaviest EN detail page. Its Context must record the new commit, matching `git log -1 --format=%h -- src`. Then re-run the 08-09 full gate, all before Phase 8 is marked complete. Until then, QUAL-01 is measured but **not yet met**.
 
+## Gap-closure diagnosis (08-14)
+
+This section adds to the 08-08 report. It does not replace it. Everything here was measured on the build that includes wave 1 (08-10..08-13), with the same protocol: mobile, simulated throttling (defaults), `pnpm dlx lighthouse@13.6.0`, a fresh profile per run, `astro preview --port 4485`, and strictly sequential runs. Raw JSON is in the gitignored `tmp/lighthouse/diag-*.json`. The throwaway helpers there (`run.sh`, `summarize.mjs`, `early.mjs`, `css-split.mjs`, `probe.mjs`) are not committed.
+
+| Item | Value |
+|---|---|
+| Date | 2026-11-10 00:08 UTC |
+| Commit measured | `f38b9c9` (`git log -1 --format=%h -- src`). HEAD was `620a673` (docs only after f38b9c9) |
+| Lighthouse / Chrome | 13.6.0. Chrome is now **157** (lhr `HeadlessChrome/157.0.0.0`). 08-08 ran on 156 |
+| benchmarkIndex | 4606.5–4672 |
+| Quiet machine | `pgrep -fl "playwright\|astro (dev\|preview)\|lighthouse"` showed only this plan's preview on 4485 |
+
+### Baseline (3 runs per page)
+
+| Page | Runs (simulated LCP, ms) | Median simulated LCP | Observed FCP (median) | Observed LCP (median) | LCP element |
+|---|---|---|---|---|---|
+| Home `/` | 3,207 / 3,473 / 3,473 | **3,473** | 47 ms | 1,012 ms | `p[data-hero-lead]` (hero lead text), all 3 runs |
+| Detail `/projects/website-reciclick/` | 3,690 / 3,694 / 3,555 | **3,690** | 67 ms | 67 ms | first project image `1325566467-…avif` (eager, `fetchpriority="high"`, 13.2 KB), all 3 runs |
+
+CLS 0.000 and TBT 0 in all 6 runs. Home is bimodal, as it was in 08-08 (3,186–3,189 vs 3,473–3,476). The difference is whether the three Latest-work AVIFs start before observed LCP: they did in diag-home-2 and -3 (4 images, 115.8 KB) but not in diag-home-1 (portrait only, 7.4 KB).
+
+**Every request on both pages starts before observed LCP** (`tmp/lighthouse/early.mjs`):
+
+| Page (run) | Requests before observed LCP | Bytes before observed LCP | By type (count, transfer B) |
+|---|---|---|---|
+| Home (diag-home-2) | 24 / 24 | 453,451 | Document 1 / 63,151; Script 15 / 126,774; Font 2 / 90,268; Stylesheet 1 / 56,412; Image 4 / 115,815; Other 1 / 1,031 |
+| Detail (diag-detail-1) | 26 / 26 | 582,044 | Document 1 / 35,453; Script 11 / 121,584; Font 2 / 90,268; Stylesheet 1 / 56,412; Image 10 / 277,296; Other 1 / 1,031 |
+
+On Home the last request starts at 44 ms, but the LCP is at about 1,010 ms. On the detail page the last request starts at 57 ms and the LCP is at 67 ms. [Inference, from Lantern's LCP model in Lighthouse 13] The simulated LCP averages an optimistic graph (render-blocking requests, High-priority scripts and the LCP image) and a pessimistic graph (every request that starts before observed LCP). So the lazy GSAP chunks count in both graphs, and the fonts and below-fold images count in the pessimistic graph.
+
+### (a) Which element is the Home LCP now?
+
+It is still the **hero lead `p[data-hero-lead]`** in all 3 Lighthouse runs (lcp-breakdown: TTFB 3 ms, **element render delay 1,009 ms**, run diag-home-2). The 08-13 arch portrait (`portrait.BrseJGMn_D6CNL.avif`, 7.4 KB, High priority, loaded 13–24 ms) becomes an LCP candidate early but is smaller. In the CDP probe (Playwright Chromium, Pixel 7 emulation, unthrottled) the portrait's LCP entry is 21,844 px² at 28–64 ms, and the lead's is 36,822 px². So **if the lead paints in the first frame, the lead (not the portrait) is the LCP, and it is reported at first paint.**
+
+### (b) When does the hero lead first paint at non-zero opacity?
+
+From the probe (rAF sampling of the lead's computed opacity and a `largest-contentful-paint` PerformanceObserver; two runs):
+
+| Event | Run 1 | Run 2 |
+|---|---|---|
+| `hero-settle` animation start | 22 ms | 22 ms |
+| First frame with opacity > 0 | 223 ms (0.00026) | 241 ms (0.13) |
+| Opacity reaches 1 | 791 ms | 791 ms |
+| `data-hero-played` set (portrait shutter ends: 120 + 840 ms) | 992 ms | 989 ms |
+| LCP entry for `p[data-hero-lead]` | **1,012 ms** | **1,008 ms** |
+
+The lead is not reported when it first becomes visible (about 220 ms) or when its fade ends (791 ms). It is reported on the first paint after `createHeroPlayed` (src/lib/motion/hero.ts) sets `data-hero-played`, which removes the `hero-settle` animation. [Inference] While the opacity animation runs, Chrome does not count the text as an LCP candidate, so the entry only lands after the animation is removed. **So the whole ~1,009 ms element render delay comes from the hero entrance:** 200 ms of delay at opacity 0, 560 ms of fade (`--t-settle`), then about 200 ms more waiting for the portrait shutter to finish before `data-hero-played` removes the animation. None of it comes from the network (all requests end by 47 ms). A first-frame, full-opacity lead (L1) removes the opacity animation from the LCP element entirely.
+
+### (c) Which code path requests the lazy chunks?
+
+CDP probe: `Network.requestWillBeSent` initiator stacks with `Debugger.setAsyncCallStackDepth(32)`, Pixel 7 emulation with touch (`(pointer: fine)` is false, as in Lighthouse mobile). The chunk names were mapped back to source through the built code:
+
+| Chunk | Home | Detail | Initiator (built frame → source) |
+|---|---|---|---|
+| `gsap.DLHyXJrb.js` | requested (Lighthouse: 38–69 ms) | requested (34–45 ms) | `importGsap` (load-gsap chunk `n`) ← `createGsapLoader` closure (`t`) ← **`ensureGsap` in `createReveal`** (src/lib/motion/reveal.ts line 355, built `V`), called at mount by `if (waitingLines.size > 0) ensureGsap()` (reveal.ts line 382) ← `lifecycle.register(createReveal({ …, loadGsap }))` in src/lib/motion/effects.ts line 10 |
+| `SplitText.CNCJHyhB.js` | requested (same time) | requested (same time) | same stack (second `import()` inside `importGsap`'s `Promise.all`) |
+| `lenis.*.js` | **not requested** | **not requested** | `createSmoothScroll` only loads it for a fine pointer. It is absent from every Lighthouse run and from the touch probe |
+
+`waitingLines` is non-empty on both pages because each has a `data-reveal="lines"` heading: LatestWork.astro line 26 (and ToolsRow, FeaturedServices, ContactSection) on Home, and ProjectIntro.astro line 23 (and NextProjectTeaser, ProjectContactBand) on the detail page. Cursor and magnetic (cursor.ts, magnetic.ts) never call `loadGsap` here, because the pointer is coarse. **L3 (lenis deferral) does not qualify:** lenis is never requested before observed LCP in Lighthouse mobile.
+
+### (d) What is in the render-blocking BaseLayout CSS?
+
+`BaseLayout.CgC1t_iK.css`: **56,117 B raw, 10,747 B gzip -9** (56,412 B transferred uncompressed). Split by top-level block (`tmp/lighthouse/css-split.mjs`; gzip sizes are each part compressed alone):
+
+| Part | Raw B | gzip -9 B (alone) |
+|---|---|---|
+| Tailwind `@layer utilities` | 35,736 | 6,471 |
+| global.css custom rules, unlayered (motion, hero, view transitions, reveal, stack, contact reserve…) | 8,600 | ~1,640 |
+| Tailwind `@layer base` (preflight + global.css `@layer base`) | 4,169 | 1,413 |
+| `@property` registrations | 2,892 | 399 |
+| `@layer theme` (tokens) | 1,942 | 791 |
+| `@layer properties` fallback (header) | 1,344 | 487 |
+| `@keyframes` (15, all from global.css) | 1,071 | 387 |
+| lenis rules (smooth-scroll.css) | 344 | 180 |
+| `@font-face` | **0** | 0 |
+
+The `@font-face` rules are not in this file: `<Font>` inlines them in the HTML head (2 `<style>` blocks, 534 + 599 B), and the two woff2 files are preloaded. Lighthouse reports `render-blocking-insight` savings of 280–304 ms for this stylesheet. `unused-css-rules` reports about 12 KiB unused per page, but that is spread across utilities used by other pages, not a removable block, so **no unused-CSS block was found to remove.** The stylesheet is the largest render-blocking request and sits in both Lantern graphs, so **L5 (`inlineStylesheets: 'always'`) qualifies** for measurement.
+
+### (e) Which below-fold detail images start before observed LCP?
+
+All 10 non-LCP images on the detail page start at 51–57 ms, before observed LCP (45–72 ms), in all 3 runs:
+
+| Image | Priority | Transfer B | image-delivery-insight |
+|---|---|---|---|
+| `1321800269-…BcHrslAv_ZPYkzL.avif` (2nd image) | High (in viewport) | 30,574 | **960×470 delivered for 721×353 displayed**, waste 13,206 B |
+| `1295185927-…avif` | Low (lazy) | 14,657 | — |
+| `1295185905-…avif` | Low | 20,651 | — |
+| `1295185933-…avif` | Low | 27,968 | — |
+| `1295185907-…avif` | Low | 17,057 | — |
+| `1295185909-…avif` | Low | 17,803 | — |
+| `1295185931-…avif` | Low | 32,045 | **960×1129 for 721×848**, waste 13,847 B |
+| `1295185903-…avif` | Low | 58,491 | **960×1985 for 721×1491**, waste 25,376 B |
+| `1295185929-…avif` | Low | 44,872 | **960×1084 for 721×814**, waste 19,439 B |
+
+Total 264,118 B for the 10 non-LCP images (9 lazy Low ones: 233,544 B). The cause of the oversizing: the 412 px viewport at DPR 1.75 needs 721 px, and `moduleWidths()` (src/lib/projects/detail-view.ts, `MODULE_WIDTHS = [640, 960, 1400]`) has no candidate between 640 and 960, so `sizes="… 100vw"` picks 960w. image-delivery-insight scores 0.5 and estimates 71,868 B of waste on these 4 images. **L4 (an intermediate width candidate) qualifies.** [Inference] The lazy images are fetched immediately because the unthrottled Lighthouse load runs on a fast connection, so Chrome's lazy-load distance threshold covers them. Making them smaller lowers the byte cost but does not stop them starting before LCP.
+
 ## How to reproduce
 
 ```bash
