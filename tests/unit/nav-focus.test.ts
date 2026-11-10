@@ -677,13 +677,37 @@ describe('anchor hook (bindNavFocus)', () => {
       expect(focusedIds()).toEqual(['main']);
     });
 
-    it('with the filter marker but an empty search the native fragment path stays', () => {
+    // 09-REVIEW WR-01: picking All (or canonicalizing ?category=bogus) empties the live search
+    // while the router's originalLocation still holds the load-time one, so the click must stay
+    // local even with an empty search.
+    it('WR-01: with the filter marker and an emptied search the skip link still jumps locally', async () => {
       addFilter();
+      window.history.replaceState(window.history.state, '', '/');
+      replaceState.mockClear();
+      const state: unknown = window.history.state;
+      const length = window.history.length;
+      click('skip');
+      expect(prevented).toEqual([true]);
+      expect(replaceState).toHaveBeenCalledTimes(1);
+      expect(replaceState.mock.calls[0]?.[0]).toBe(state);
+      expect(window.location.search).toBe('');
+      expect(window.location.hash).toBe('#main');
+      expect(window.history.length).toBe(length);
+      expect(pushState).not.toHaveBeenCalled();
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'instant', block: 'start' });
+      await wait(100);
+      expect(focusedIds()).toEqual(['main']);
+    });
+
+    it('WR-01: without the filter marker an empty search keeps the native fragment path', async () => {
       window.history.replaceState(window.history.state, '', '/');
       replaceState.mockClear();
       click('skip');
       expect(prevented).toEqual([false]);
       expect(replaceState).not.toHaveBeenCalled();
+      expect(scrollIntoView).not.toHaveBeenCalled();
+      await wait(100);
+      expect(focusedIds()).toEqual(['main']);
     });
   });
 
