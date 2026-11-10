@@ -23,7 +23,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Scroll & Interaction Motion** - Reveals, text splits, cursor/magnetic buttons, card hover effects, reduced-motion support, and a motion toggle (completed 2026-11-02)
 - [x] **Phase 7: Page Transitions & Smooth Scroll** - Animated navigation with focus management, inertial scroll and parallax, no lifecycle leaks (completed 2026-11-05)
 - [x] **Phase 8: Quality Verification** - Measured performance budget, full axe/keyboard pass in both languages, and Spanish copy ready for review (completed 2026-11-10)
-- [ ] **Phase 9: Portfolio Features** - Hero full width on mobile, photography service, and filtering projects by service category
+- [x] **Phase 9: Portfolio Features** - Hero full width on mobile, photography service, and filtering projects by service category (completed 2026-11-10)
 
 ## Phase Details
 
@@ -471,7 +471,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
   2. Photography (EN "Photography" / ES "Fotografía", 4 approved items) appears in Home services, in the contact service chips, and through `?service=photography`, and the contact action accepts it.
   3. /projects/ and /es/projects/ show single-select category chips with All (empty categories hidden). `?category=` deep-links and updates in place, and the count is announced politely. Keyboard, reduced motion and axe all pass in both languages.
   4. The taste-skill lint and inspect runs and screenshots are reviewed for every visual change. Lint, unit tests and e2e are green, and the eager JS budget (22,000 B) holds.
-**Plans:** 10/11 plans executed
+**Plans:** 11/11 plans complete
 
 Plans:
 **Wave 1**
@@ -504,4 +504,4 @@ Plans:
 
 **Wave 7** *(blocked on 09-10)*
 
-- [ ] 09-11-PLAN.md — Re-gate: pnpm verify, bundle, Home LCP re-measure (08-17 protocol), final taste gate on 5 URLs (HOME-09)
+- [x] 09-11-PLAN.md — Re-gate: pnpm verify, bundle, Home LCP re-measure (08-17 protocol), final taste gate on 5 URLs (HOME-09)
