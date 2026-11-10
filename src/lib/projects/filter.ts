@@ -1,6 +1,6 @@
 /**
  * Build-time and client-safe helpers for the Projects category filter (PROJ-04). Node-safe: no
- * astro:* modules and no dictionaries; labels come from the cards' already localized category.
+ * Astro virtual modules and no dictionaries; labels come from the cards' already localized category.
  */
 import { categoryIds, type CategoryId } from './model';
 import { tileSize, type TileSize } from './layout';
