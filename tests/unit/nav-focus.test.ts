@@ -168,7 +168,14 @@ describe('bindNavFocus', () => {
 
 // 07-07: same-page anchors (MOTN-06, 07 D-08, UI-SPEC "Anchors and the skip link"; T-07-17..20).
 describe('anchor hook (bindNavFocus)', () => {
-  const RADIOS = ['graphic-design', 'web-design', 'branding', 'social-media', 'other']
+  const RADIOS = [
+    'graphic-design',
+    'web-design',
+    'branding',
+    'social-media',
+    'photography',
+    'other',
+  ]
     .map(
       (id) =>
         `<input type="radio" name="service" id="contact-service-${id}" value="${id}"${id === 'other' ? ' checked' : ''}>`,
@@ -181,6 +188,7 @@ describe('anchor hook (bindNavFocus)', () => {
       <a id="to-projects" href="/projects/#contact">Projects</a>
       <a id="ask" href="/?service=branding#contact">Ask</a>
       <a id="ask-bad" href='/?service=x"],body#contact'>Ask bad</a>
+      <a id="hash-contact" href="#contact">Contact here</a>
       <a id="to-missing" href="/#nope">Missing</a>
       <a id="to-selector" href="/#a,body">Selector</a>
       <a id="to-field" href="#contact-name">Field</a>
@@ -585,6 +593,97 @@ describe('anchor hook (bindNavFocus)', () => {
       expect(replaceState).toHaveBeenCalledTimes(1);
       expect(window.location.search).toBe('?service=web-design');
       expect(window.location.hash).toBe('#contact');
+    });
+  });
+
+  // 09-04: the project filter rewrites ?category= with replaceState, so the router's private
+  // originalLocation is stale and a same-search hash click would swap /projects/ onto itself
+  // (09 RESEARCH Pitfall 2, 07-11 CR-01).
+  describe('filtered page (same pathname and search, [data-project-filter])', () => {
+    let replaceState: ReturnType<typeof vi.spyOn>;
+    let pushState: ReturnType<typeof vi.spyOn>;
+
+    function addFilter(): void {
+      const fieldset = document.createElement('fieldset');
+      fieldset.setAttribute('data-project-filter', '');
+      document.getElementById('main')?.prepend(fieldset);
+    }
+
+    beforeEach(() => {
+      window.history.replaceState(
+        { index: 2, scrollX: 0, scrollY: 0 },
+        '',
+        '/?category=web-design',
+      );
+      replaceState = vi.spyOn(window.history, 'replaceState');
+      pushState = vi.spyOn(window.history, 'pushState');
+    });
+
+    afterEach(() => {
+      replaceState.mockRestore();
+      pushState.mockRestore();
+    });
+
+    it('skip link: jumps locally, keeps ?category=, replaces only the hash, focuses #main', async () => {
+      addFilter();
+      const state: unknown = window.history.state;
+      const length = window.history.length;
+      click('skip');
+      expect(prevented).toEqual([true]);
+      expect(replaceState).toHaveBeenCalledTimes(1);
+      expect(replaceState.mock.calls[0]?.[0]).toBe(state);
+      expect(window.location.search).toBe('?category=web-design');
+      expect(window.location.hash).toBe('#main');
+      expect(window.history.length).toBe(length);
+      expect(window.history.state).toBe(state);
+      expect(pushState).not.toHaveBeenCalled();
+      expect(html().style.scrollBehavior).toBe('');
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'instant', block: 'start' });
+      expect(scrollIntoView.mock.contexts[0]).toBe(document.getElementById('main'));
+      await wait(100);
+      expect(focusedIds()).toEqual(['main']);
+    });
+
+    it('on: a plain same-page hash link glides locally and focuses at scrollend', async () => {
+      addFilter();
+      click('hash-contact');
+      expect(prevented).toEqual([true]);
+      expect(window.location.search).toBe('?category=web-design');
+      expect(window.location.hash).toBe('#contact');
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+      expect(html().style.scrollBehavior).toBe('');
+      expect(focus).not.toHaveBeenCalled();
+      window.dispatchEvent(new Event('scrollend'));
+      await flush();
+      expect(focusedIds()).toEqual(['contact']);
+    });
+
+    it('reduced: a plain same-page hash link jumps instantly', async () => {
+      setMotion('reduced');
+      addFilter();
+      click('hash-contact');
+      expect(prevented).toEqual([true]);
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'instant', block: 'start' });
+      await wait(100);
+      expect(focusedIds()).toEqual(['contact']);
+    });
+
+    it('without the filter marker the native fragment path stays', async () => {
+      click('skip');
+      expect(prevented).toEqual([false]);
+      expect(replaceState).not.toHaveBeenCalled();
+      expect(scrollIntoView).not.toHaveBeenCalled();
+      await wait(100);
+      expect(focusedIds()).toEqual(['main']);
+    });
+
+    it('with the filter marker but an empty search the native fragment path stays', () => {
+      addFilter();
+      window.history.replaceState(window.history.state, '', '/');
+      replaceState.mockClear();
+      click('skip');
+      expect(prevented).toEqual([false]);
+      expect(replaceState).not.toHaveBeenCalled();
     });
   });
 
