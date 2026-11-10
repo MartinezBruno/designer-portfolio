@@ -1,6 +1,9 @@
 // The only module in src/ that references the 'gsap' specifier. GSAP core and SplitText load lazily
 // through dynamic import(), so they land in a separate chunk that is fetched only when an effect asks
 // for it (scripts/measure-bundle.ts fails the build check if GSAP ever turns up in an eager chunk).
+// Even then the request waits for load, one painted frame and idle (afterLoadIdle, 08-14 lever L2b),
+// so it never starts before the LCP paint. Lines headings keep the 1.5 s CSS failsafe meanwhile.
+import { afterLoadIdle } from './idle';
 import type { gsap } from 'gsap';
 import type { SplitText } from 'gsap/SplitText';
 
@@ -35,4 +38,4 @@ async function importGsap(): Promise<GsapModules> {
   return { gsap: core.gsap, SplitText: split.SplitText };
 }
 
-export const loadGsap = createGsapLoader(importGsap);
+export const loadGsap = createGsapLoader(() => afterLoadIdle(window).then(importGsap));
