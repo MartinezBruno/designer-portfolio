@@ -6,7 +6,8 @@ import { useTranslations, type Locale } from '../../i18n/t';
 
 interface Props {
   locale: Locale;
-  // The root 404.html answers every miss (including /es/*), so it carries a Spanish way home.
+  // The root 404.html answers every miss outside /es/, so it carries a Spanish way home. /es/* misses
+  // are rendered on demand by the Worker from src/pages/es/404.astro.
   showAltLocale: boolean;
 }
 
