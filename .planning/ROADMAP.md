@@ -471,7 +471,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
   2. Photography (EN "Photography" / ES "Fotografía", 4 approved items) appears in Home services, in the contact service chips, and through `?service=photography`, and the contact action accepts it.
   3. /projects/ and /es/projects/ show single-select category chips with All (empty categories hidden). `?category=` deep-links and updates in place, and the count is announced politely. Keyboard, reduced motion and axe all pass in both languages.
   4. The taste-skill lint and inspect runs and screenshots are reviewed for every visual change. Lint, unit tests and e2e are green, and the eager JS budget (22,000 B) holds.
-**Plans:** 6/8 plans executed
+**Plans:** 7/8 plans executed
 
 Plans:
 **Wave 1**
@@ -488,7 +488,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 09-07-PLAN.md — Filter e2e (EN/ES, URL, Back, keyboard, reduced motion, no-JS, axe, leaks), spec updates, Projects taste gate
+- [x] 09-07-PLAN.md — Filter e2e (EN/ES, URL, Back, keyboard, reduced motion, no-JS, axe, leaks), spec updates, Projects taste gate
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
