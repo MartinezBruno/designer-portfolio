@@ -76,7 +76,7 @@ v1 "done" = working local build (deploy is post-v1).
 
 ### Quality (QUAL)
 
-- [ ] **QUAL-01**: Performance budget measured on mobile Lighthouse for Home and a heavy detail page (proposed: LCP < 2.5 s, CLS < 0.1, homepage JS ≈ 100 KB gz) — numbers to be confirmed by measurement
+- [x] **QUAL-01**: Performance budget measured on mobile Lighthouse for Home and a heavy detail page (proposed: LCP < 2.5 s, CLS < 0.1, homepage JS ≈ 100 KB gz) — numbers to be confirmed by measurement
 - [ ] **QUAL-02**: Every page passes axe checks in both languages and is fully usable by keyboard
 - [ ] **QUAL-03**: Spanish translations are drafted for all site copy and marked for Martina's review
 
@@ -161,7 +161,7 @@ Updated during roadmap creation.
 | MOTN-07 | Phase 6 | Complete |
 | MOTN-08 | Phase 6 | Complete |
 | MOTN-09 | Phase 7 | Complete |
-| QUAL-01 | Phase 8 | Pending |
+| QUAL-01 | Phase 8 | Complete |
 | QUAL-02 | Phase 8 | Pending |
 | QUAL-03 | Phase 8 | Pending |
 

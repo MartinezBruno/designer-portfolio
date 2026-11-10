@@ -434,7 +434,7 @@ Plans:
 
 **Gap Wave 4** *(blocked on Gap Wave 3)*
 
-- [ ] 08-17-PLAN.md — Lighthouse re-measure (pinned 13.6.0, median of 5) and user sign-off (D-06)
+- [x] 08-17-PLAN.md — Lighthouse re-measure (pinned 13.6.0, median of 5) and user sign-off (D-06)
 
 **Gap Wave 5** *(blocked on Gap Wave 4)*
 
@@ -456,4 +456,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
 | 7. Page Transitions & Smooth Scroll | 21/21 | Complete   | 2026-11-05 |
-| 8. Quality Verification | 16/18 | In Progress|  |
+| 8. Quality Verification | 17/18 | In Progress|  |

@@ -421,7 +421,20 @@ The user reviewed the Results and Misses at the 08-08 Task 3 checkpoint (D-06):
 - **Miss 2, detail LCP 3,637 ms (all 7 EN detail pages 3.4–4.0 s):** "Fix (Recommended)". Fix → `/gsd:plan-phase 8 --gaps`. Defer GSAP/SplitText until after load or idle on detail pages, and/or fetch fewer below-fold images at load, to gain headroom. Re-measured afterwards.
 - **All other rows** (CLS, TBT, homepage JS gz, eager ceiling) pass. No sign-off is needed for them.
 
-**Re-measure rule:** both fixes change src/, so this report becomes stale once they land. Re-run it with the same D-01..D-06 protocol on the fix commit: mobile simulated, `pnpm dlx lighthouse@13.6.0`, 7 selection runs, then 5 runs each on Home and the heaviest EN detail page. Its Context must record the new commit, matching `git log -1 --format=%h -- src`. Then re-run the 08-09 full gate, all before Phase 8 is marked complete. Until then, QUAL-01 is measured but **not yet met**.
+**Re-measure rule:** the evidence is current as of the 08-17 re-measure on src `e96db32` ("Re-measure (08-17)" above). It becomes stale again if src/ changes. In that case, re-run it with the same D-01..D-06 protocol on the new commit: mobile simulated, `pnpm dlx lighthouse@13.6.0`, 7 selection runs, then 5 runs each on Home and the heaviest EN detail page. Its Context must record the new commit, matching `git log -1 --format=%h -- src`. The full gate (08-18) must still pass before Phase 8 is marked complete.
+
+### Re-measure sign-off (08-17)
+
+Date: 2026-11-10. The user reviewed "Re-measure (08-17)" and "Re-measure misses (08-17)" at the 08-17 Task 2 checkpoint (D-06). Asked "accept" or "fix" for the residual detail LCP miss, the user replied verbatim:
+
+> accept (Recommended)
+
+- **Home LCP:** 1,207 ms median. It passes, so 08-08 Miss 1 is resolved and needs no sign-off.
+- **Heaviest detail LCP (`/projects/website-reciclick/`) 2,633 ms median, +133 ms over budget: accepted, documented with its measured cause (D-06).** About 75 ms comes from Chrome boosting the in-viewport, lazy second image (`1321800269-…avif`, 22.7 KB) to High priority in 4 of 5 runs. Blocking it reproduces the 2,558 ms lower level. The remaining ~58 ms comes from the uncompressed critical path on local `astro preview` (HTML, render-blocking CSS, eager scripts; 08-14 measured a floor of about 2,480 ms). The Brotli q5 approximation of edge compression measures 2,260 ms median (under budget). Observed LCP is under 70 ms.
+- **All other rows** (CLS 0, TBT 0, homepage JS 58.9 KiB gz, max eager 17,958 B) pass.
+
+QUAL-01 is **met with one documented, accepted miss** (detail LCP on the uncompressed local preview).
+
 
 ## Gap-closure diagnosis (08-14)
 

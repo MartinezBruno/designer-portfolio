@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 08-09-PLAN.md (gaps open)
-last_updated: "2026-11-10T00:27:38.408Z"
+stopped_at: Completed 08-17-PLAN.md
+last_updated: "2026-11-10T14:04:36.827Z"
 last_activity: 2026-11-10
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 92
-  completed_plans: 88
+  completed_plans: 91
   percent: 88
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-10-15)
 ## Current Position
 
 Phase: 08 (quality-verification) — EXECUTING
-Plan: 2 of 18
+Plan: 17 of 18 (next: 08-18)
 Status: Ready to execute
 Last activity: 2026-11-10
 
-Progress: [██████████] 96%
+Progress: [██████████] 99%
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ Progress: [██████████] 96%
 | Phase 03 P10 | gate + review | 2 tasks | 0 files |
 | Phase 07 P17 | 8.2h (incl. machine sleep) | 2 tasks | 3 files |
 | Phase 08 P14 | 45min | 2 tasks | 1 files |
+| Phase 08 P17 | 35 min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,7 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-09: @network keyboard-journeys.spec.ts:275 (EN) failed once, 3/3 in isolation; not on 07-17 list, so recorded as a gap. QUAL-01 and QUAL-02 stay open pending gap plans
 - [Phase 08]: 08-09: Phase 8 /security-review scoped to base cf15eaf (git diff cf15eaf..HEAD)
 - [Phase 08]: 08-14: chosen LCP levers C2 = L1 (08-15) + L2b + L4 (08-16); Home 1209 ms, detail 2559 ms; detail residual over 2400 ms goes to 08-17
+- [Phase 08]: 08-17: QUAL-01 met with one accepted miss (detail LCP 2,633 ms, +133 ms, uncompressed local preview; second-image priority boost ~75 ms + uncompressed critical path ~58 ms; Brotli approx 2,260 ms)
 
 ### Pending Todos
 
@@ -124,6 +126,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-11-10T00:27:35.270Z
-Stopped at: Completed 08-09-PLAN.md (gaps open)
+Last session: 2026-11-10T14:04:32.638Z
+Stopped at: Completed 08-17-PLAN.md
 Resume file: None
