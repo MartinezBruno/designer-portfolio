@@ -117,3 +117,100 @@ Candidate directions, ordered by expected effect. All are [Proposed] and unmeasu
 4. Re-decide D-04 with the user (for example accept the miss as in 08-17, or measure with compression).
 
 Re-measure with this same protocol after any fix. The Re-measure rule from 08-LIGHTHOUSE.md applies: the Context must record the new `git log -1 --format=%h -- src`.
+
+## Gap-closure diagnosis (09-09)
+
+Diagnosis only. No src change was made or committed (`git status --porcelain -- src astro.config.ts` was empty before and after). Raw JSON is in the gitignored `tmp/lighthouse/` (`p9g-base-1..3.json`, `p9g-b1-1..3.json`, `p9g-b2-1..3.json`, `p9g-b3-1..3.json`). The throwaway helpers (`p9g-run.sh`, `p9g-sum.mjs`) are not committed. Leftover `p9g-*` files from an earlier, interrupted attempt were moved to `tmp/lighthouse/p9g-stale/` and not used.
+
+**Result: STOP GATE hit.** With the three Latest-work covers **and** `gsap` + `SplitText` blocked (b3), the Home median simulated LCP is **2,933 ms**, the same as the unblocked baseline (2,934 ms) and above the 2,500 ms budget. The D-18 directions cannot reach the budget even if they work perfectly. Task 2 (lever experiments) was not run. The plan stops for a user decision.
+
+### Context
+
+| Item | Value |
+|---|---|
+| Date | 2026-11-10, runs 21:52–21:57 UTC |
+| Commit measured | `bda5a84` (`git log -1 --format=%h -- src`), HEAD `43984e3` (docs only after `bda5a84`). `git status --porcelain -- src` was empty |
+| Lighthouse | 13.6.0 (`pnpm dlx lighthouse@13.6.0`), mobile, simulated throttling (defaults), `--headless=new`, fresh profile per run |
+| Chrome | lhr userAgent `HeadlessChrome/157.0.0.0` (all 12 runs) |
+| benchmarkIndex | 4,630–4,723.5 (back in the 08-17 range; 09-08 measured 3,357–3,408.5) |
+| Quiet machine | `pgrep -fl "playwright\|astro (dev\|preview)\|lighthouse"` showed only this plan's preview on 4485 before each batch. All runs strictly sequential. The machine did not sleep during the runs |
+| Preview | `pnpm build && node scripts/e2e-preview-env.ts && pnpm astro preview --port 4485 --ignore-lock`, under `tmp/build-e2e.lock` for the whole build-and-measure span |
+
+Built names used (`dist/client/index.html`, `section[aria-labelledby="work-title"]`, and `dist/client/_astro/`):
+
+- Covers (each file appears only in that section): `238078789-a6d30173b2b6.Cd-p3tn1_{Z1LAFEt,aU4UA,ZXckpx}.avif` and `_{29x0Xi,1l8EIm,Z1LwHuv}.webp`; `227934855-72b3d1e09e7c.c7mUXybz_{Z3mR8t,1T8SrA,K1t6s}.avif` and `_{Z1cqjjD,Z20OEyz,Z3iSXv}.webp`; `226450035-4a481fd9ebe7.USSdEV9g_{OkwL5,Z2ikPrM,1CIS11}.avif` and `_{ZjHTp5,Z187fE1,OouV3}.webp`. Lighthouse requests the `ZXckpx`, `K1t6s` and `1CIS11` AVIFs (65.0 + 24.3 + 16.5 KB).
+- Lazy chunks: `gsap.DLHyXJrb.js` (68.7 KB), `SplitText.CNCJHyhB.js` (7.2 KB). Eager: `load-gsap.C4xI3dII.js` (1.0 KB) and `preload-helper.DHhhL8Zf.js` (2.0 KB), statically imported by `BaseLayout.astro_astro_type_script_index_0_lang.BQOSl1wm.js`.
+
+Blocked URL patterns, verbatim (one `--blocked-url-patterns=<pattern>` flag each; `lhr.configSettings.blockedUrlPatterns` confirms the list per run):
+
+| Set | Patterns |
+|---|---|
+| b1 (covers) | `*238078789-a6d30173b2b6*`, `*227934855-72b3d1e09e7c*`, `*226450035-4a481fd9ebe7*` |
+| b2 (GSAP) | `*/_astro/gsap.*`, `*/_astro/SplitText.*` |
+| b3 (both) | all five above |
+
+The plan suggested `*gsap*`. That pattern would also block the eager `load-gsap.C4xI3dII.js` chunk, which `BaseLayout`'s script imports statically, so the whole effects module would fail and the bound would measure something else. The narrower `*/_astro/gsap.*` blocks only the lazy GSAP core. Blocked requests show in `network-requests` with transferSize 0.
+
+### Per run
+
+Times are request start (`networkRequestTime`) in ms. "<" / ">" = before / after `observedLargestContentfulPaint`.
+
+| Run | Sim. LCP | FCP | CLS | TBT | observedLoad | observedFCP | observedLCP | Portrait (High, 32.2 KB) | Covers (Low) | gsap / SplitText (High) | Requested before obs. LCP |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| base-1 | 2,862 | 1,212 | 0 | 0 | 88 | 93 | 93 | 29.6 < | 91.1–91.5 < (105.8 KB) | 106.9 / 107.0 > | 22/24, 398.2 KB |
+| base-2 | 2,934 | 1,209 | 0 | 0 | 42 | 50 | 64 | 13.6 < | 33.4–33.9 < | 63.7 / 63.8 < | 24/24, 474.1 KB |
+| base-3 | 2,934 | 1,209 | 0 | 0 | 49 | 47 | 59 | 18.1 < | 35.4–35.7 < | 75.7 / 75.8 > | 22/24, 398.2 KB |
+| b1-1 | 2,932 | 1,207 | 0 | 0 | 36 | 40 | 55 | 10.3 < | blocked | 54.4 / 54.5 < | 368.2 KB |
+| b1-2 | 2,933 | 1,208 | 0 | 0 | 51 | 58 | 72 | 24.8 < | blocked | 71.9 / 72.0 < | 368.2 KB |
+| b1-3 | 2,932 | 1,207 | 0 | 0 | 37 | 49 | 49 | 10.1 < | blocked | 62.5 / 62.6 > | 292.3 KB |
+| b2-1 | 2,858 | 1,583 | 0 | 0 | 50 | 70 | 70 | 26.0 < | not requested | blocked | 292.3 KB |
+| b2-2 | 2,858 | 1,208 | 0 | 0 | 47 | 60 | 60 | 17.4 < | 56.2–56.6 < | blocked | 398.2 KB |
+| b2-3 | 2,933 | 1,208 | 0 | 0 | 41 | 46 | 59 | 13.4 < | 32.1–32.5 < | blocked | 398.2 KB |
+| b3-1 | 2,933 | 1,208 | 0 | 0 | 46 | 57 | 68 | 17.9 < | blocked | blocked | 292.3 KB |
+| b3-2 | 2,934 | 1,584 | 0 | 0 | 39 | 59 | 59 | 13.2 < | blocked | blocked | 292.3 KB |
+| b3-3 | 2,933 | 1,208 | 0 | 0 | 46 | 60 | 60 | 17.8 < | blocked | blocked | 292.3 KB |
+
+The LCP element in all 12 runs is the hero portrait, `div.grid > div.order-first > picture.block > img.block`, `portrait.BrseJGMn_2dXNKl.avif` (768w, 32.2 KB, High). lcp-breakdown (base-2): TTFB 3 ms, load delay 9 ms, load duration 14 ms, render delay 38 ms. `render-blocking-insight` still estimates 304 ms for `BaseLayout.URBydJss.css`.
+
+### Medians
+
+| Set | Runs (sim. LCP, ms) | Median | vs base | Budget 2,500 |
+|---|---|---|---|---|
+| base (nothing blocked) | 2,862 / 2,934 / 2,934 | **2,934** | — | miss (+434) |
+| b1 (covers blocked) | 2,932 / 2,933 / 2,932 | **2,932** | −2 | miss (+432) |
+| b2 (gsap + SplitText blocked) | 2,858 / 2,858 / 2,933 | **2,858** | −76 | miss (+358) |
+| b3 (both blocked) | 2,933 / 2,934 / 2,933 | **2,933** | −1 | **miss (+433): gate fails** |
+
+CLS 0.000 and TBT 0 in all 12 runs. The base median (2,934) matches 09-08 (2,933) on a faster machine (benchmarkIndex about 4,700 vs about 3,390), so the miss does not depend on machine speed.
+
+### Early-GSAP finding
+
+**GSAP core does not start at 27–38 ms.** The 27–38 ms that 09-08 reported is the eager `load-gsap.C4xI3dII.js` chunk (1.0 KB, High), which `BaseLayout`'s module script imports statically together with `preload-helper`. Re-reading the 09-08 raw files (`p9-home-1..5.json`) confirms this: `load-gsap` starts at 27.3–38.0 ms, but `gsap.DLHyXJrb.js` starts at 55.2–70.5 ms, after `observedLoad` (34–48 ms) in all 5 runs. 09-08 paired the early start time with the gsap + SplitText byte count.
+
+In this plan's base runs:
+
+| Run | observedLoad | gsap start | observedLCP | gsap vs load | gsap vs observed LCP |
+|---|---|---|---|---|---|
+| base-1 | 88 | 106.9 | 93 | after (+19) | after (+14) |
+| base-2 | 42 | 63.7 | 64 | after (+22) | **before (−0.3)** |
+| base-3 | 49 | 75.7 | 59 | after (+27) | after (+17) |
+
+So `afterLoadIdle` works as designed: GSAP is always requested after window `load`, one frame and idle. No path bypasses it, and no initiator search was needed. It can still precede observed LCP (base-2, and b1-1/b1-2) because window `load` fires 11–22 ms **before** the hero image paints: the portrait has loaded, but its paint (render delay about 38 ms) comes later. A gate on `img[fetchpriority="high"]` decode (G1) would close that race. b2 shows what it can at most be worth: **−76 ms** (2,858 vs 2,934).
+
+### Early-cover finding
+
+The three Latest-work AVIFs start before `observedLoad` in base-2 (33.4 vs 42) and base-3 (35.4 vs 49), and just after it in base-1 (91.1 vs 88). They start before observed LCP in all 3 runs, with Low priority. **But blocking them changes nothing (b1 median 2,932, −2 ms).** [Inference, from the request data above] Lantern's simulated image LCP here is set by the High/VeryHigh critical set, not by the Low-priority covers: Document 65.0 KB + CSS 57.5 KB (render-blocking) + two preloaded woff2 fonts 88.2 KB + the portrait 32.2 KB + about 47 KB of eager module scripts, which is 292.3 KB, all requested at 13–20 ms (base-2). The b3 runs request exactly those 292.3 KB before observed LCP and still simulate 2,933 ms. So the 09-08 "Diagnosis" explanation (the covers and GSAP bytes in flight cause the miss) is **not confirmed**: those bytes are worth at most about 76 ms.
+
+### Gate decision
+
+**b3 median 2,933 ms > 2,500 ms. Gate failed.** Per the plan, Task 2 (G1, I1, I2 and the combos) was not run, and no lever was chosen for 09-10. Fonts, CSS inlining and Hero changes are outside D-18 and were not tried (L5 inlining was measured harmful in 08-14). The budget was not loosened.
+
+### Chosen levers (09-09)
+
+**Needs user decision. No lever pair chosen.** Measured numbers for the decision: base 2,934 ms, b1 (covers blocked) 2,932 ms, b2 (GSAP blocked) 2,858 ms, b3 (both blocked) 2,933 ms, budget 2,500 ms. The D-18 levers (I1/I2 for the covers, G1 for GSAP) are bounded at about −76 ms, so they cannot close the +433 ms gap.
+
+Options for the user, all [Proposed] and unmeasured in this plan:
+
+1. Accept the Home miss as D-04 was accepted for the detail page in 08-17. The remaining cost is the uncompressed local critical path. Under the 09-08 Brotli proxy, Home measured 2,109–2,259 ms.
+2. Allow a direction outside D-18 and measure it as a bound first: for example the two preloaded fonts (88.2 KB, High, in the critical set), or a Hero change that keeps the portrait out of the LCP race on phones (which conflicts with D-01/D-02).
+3. Re-define the D-04 measurement (for example measure with compression, as Cloudflare serves it).
