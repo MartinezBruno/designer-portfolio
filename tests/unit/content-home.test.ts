@@ -45,19 +45,37 @@ describe('content files', () => {
     ]);
   });
 
-  it('services has exactly 4 entries in order', () => {
-    expect(services).toHaveLength(4);
+  it('services has exactly 5 entries in order', () => {
+    expect(services).toHaveLength(5);
     expect(sortedServices.map((service) => service.id)).toEqual([
       'graphic-design',
       'web-design',
       'branding',
       'social-media',
+      'photography',
+    ]);
+  });
+
+  it('photography has the approved title and items (D-06, D-07)', () => {
+    const photography = sortedServices.find((service) => service.id === 'photography');
+    expect(photography?.title).toEqual({ en: 'Photography', es: 'Fotografía' });
+    expect(photography?.items.en).toEqual([
+      'Product photography',
+      'Portraits',
+      'Photos for social media',
+      'Editing and retouching',
+    ]);
+    expect(photography?.items.es).toEqual([
+      'Fotografía de producto',
+      'Retratos',
+      'Fotos para redes sociales',
+      'Edición y retoque',
     ]);
   });
 
   it('services have matching en and es item counts', () => {
-    expect(sortedServices.map((service) => service.items.es.length)).toEqual([4, 5, 6, 3]);
-    expect(sortedServices.map((service) => service.items.en.length)).toEqual([4, 5, 6, 3]);
+    expect(sortedServices.map((service) => service.items.es.length)).toEqual([4, 5, 6, 3, 4]);
+    expect(sortedServices.map((service) => service.items.en.length)).toEqual([4, 5, 6, 3, 4]);
   });
 
   it('branding starts with visual identity', () => {
@@ -164,6 +182,14 @@ describe('home query layer', () => {
         items: { en: ['Prototyping'], es: ['Prototipado'] },
       },
     },
+    {
+      id: 'photography',
+      data: {
+        order: 5,
+        title: { en: 'Photography', es: 'Fotografía' },
+        items: { en: ['Portraits'], es: ['Retratos'] },
+      },
+    },
   ];
 
   const toolFixture: ToolEntry[] = [
@@ -199,7 +225,7 @@ describe('home query layer', () => {
     });
 
     it('returns the entries on the expected count', () => {
-      expect(assertCount(serviceFixture, 4, 'services')).toBe(serviceFixture);
+      expect(assertCount(serviceFixture, 5, 'services')).toBe(serviceFixture);
     });
   });
 
@@ -237,13 +263,14 @@ describe('home query layer', () => {
   });
 
   describe('buildServices', () => {
-    it('returns 4 ordered localized view models', () => {
+    it('returns 5 ordered localized view models', () => {
       const views = buildServices(serviceFixture, 'en');
       expect(views).toEqual([
         { id: 'graphic-design', title: 'Graphic design', items: ['Watermarks'] },
         { id: 'web-design', title: 'Web design', items: ['Prototyping'] },
         { id: 'branding', title: 'Branding', items: ['Visual identity', 'Logo'] },
         { id: 'social-media', title: 'Social media', items: ['Feed design'] },
+        { id: 'photography', title: 'Photography', items: ['Portraits'] },
       ]);
       for (const view of views) {
         expect(Object.keys(view)).not.toContain('description');
@@ -256,9 +283,9 @@ describe('home query layer', () => {
       expect(serviceFixture[1]?.data.items.en).toEqual(['Watermarks']);
     });
 
-    it('throws when there are not exactly 4 services', () => {
-      expect(() => buildServices(serviceFixture.slice(0, 3), 'en')).toThrow(
-        'services: expected exactly 4 entries, got 3. Fix src/data/services.json',
+    it('throws when there are not exactly 5 services', () => {
+      expect(() => buildServices(serviceFixture.slice(0, 4), 'en')).toThrow(
+        'services: expected exactly 5 entries, got 4. Fix src/data/services.json',
       );
     });
   });

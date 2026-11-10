@@ -16,6 +16,7 @@ const titles = {
   'web-design': 'Diseño web',
   branding: 'Branding',
   'social-media': 'Social media',
+  photography: 'Fotografía',
 } as const;
 
 const input: ContactInput = {

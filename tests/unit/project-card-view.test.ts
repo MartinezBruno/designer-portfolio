@@ -35,6 +35,7 @@ const categoryTitles: Record<CategoryId, string> = {
   'web-design': 'Web design',
   branding: 'Branding',
   'social-media': 'Social media',
+  photography: 'Photography',
 };
 
 function service(id: string, en: string, es: string): ServiceEntry {
@@ -109,6 +110,7 @@ describe('buildCategoryTitles', () => {
     service('web-design', 'Web design', 'Diseño web'),
     service('branding', 'Branding', 'Branding'),
     service('social-media', 'Social media', 'Social media'),
+    service('photography', 'Photography', 'Fotografía'),
   ];
 
   it('maps every category id to its localized service title', () => {
@@ -117,13 +119,14 @@ describe('buildCategoryTitles', () => {
       'web-design': 'Diseño web',
       branding: 'Branding',
       'social-media': 'Social media',
+      photography: 'Fotografía',
     });
     expect(Object.keys(buildCategoryTitles(entries, 'en'))).toEqual([...categoryIds]);
   });
 
   it('throws when a category has no service entry', () => {
     expect(() => buildCategoryTitles(entries.slice(0, 2), 'en')).toThrow(
-      'projects: services.json is missing category ids branding, social-media. Fix src/data/services.json',
+      'projects: services.json is missing category ids branding, social-media, photography. Fix src/data/services.json',
     );
   });
 });

@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createLifecycle } from '../../src/lib/motion/lifecycle';
 import { applyServicePreselect, initServicePreselect } from '../../src/lib/ui/service-preselect';
 
-const CHOICES = ['graphic-design', 'web-design', 'branding', 'social-media', 'other'];
+const CHOICES = ['graphic-design', 'web-design', 'branding', 'social-media', 'photography', 'other'];
 
 function fixture(): string {
   const radios = CHOICES.map(
@@ -47,6 +47,16 @@ describe('initServicePreselect', () => {
     expect(initServicePreselect(document)).toBeUndefined();
     expect(checkedId()).toBe('social-media');
     expect(document.querySelectorAll('input[name="service"]:checked')).toHaveLength(1);
+  });
+
+  it('checks photography from ?service=photography (D-08)', () => {
+    document.body.innerHTML = fixture();
+    setSearch('?service=photography');
+    initServicePreselect(document);
+    expect(checkedId()).toBe('photography');
+    const photography = byId('contact-service-photography');
+    if (!(photography instanceof HTMLInputElement)) throw new Error('not an input');
+    expect(photography.checked).toBe(true);
   });
 
   it('falls back to other for an unknown value', () => {

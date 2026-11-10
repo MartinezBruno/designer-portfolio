@@ -126,6 +126,11 @@ const services: ServiceView[] = [
     title: 'Social media',
     items: ['Social media management', 'Story and post design', 'Feed design'],
   },
+  {
+    id: 'photography',
+    title: 'Photography',
+    items: ['Product photography', 'Portraits', 'Photos for social media', 'Editing and retouching'],
+  },
 ];
 
 async function renderSection(locale: 'en' | 'es'): Promise<string> {
@@ -140,9 +145,9 @@ describe('featured services section', () => {
     expect(html).toMatch(/<h2[^>]*id="services-title"[^>]*>\s*What I can do for you\s*<\/h2>/);
   });
 
-  it('renders the 4 cards in the order received inside a responsive grid', async () => {
+  it('renders the 5 cards in the order received inside a responsive grid', async () => {
     const html = await renderSection('en');
-    expect(html.match(/<h3[\s>]/g)).toHaveLength(4);
+    expect(html.match(/<h3[\s>]/g)).toHaveLength(5);
     const positions = services.map((service) => html.indexOf(`>${service.title}</h3>`));
     expect(positions.every((position) => position >= 0)).toBe(true);
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
@@ -150,7 +155,7 @@ describe('featured services section', () => {
     expect(classTokens(grid)).toEqual(
       expect.arrayContaining(['flex', 'flex-col', 'lg:col-span-8']),
     );
-    expect(html.match(/<li[\s>]/g)).toHaveLength(22);
+    expect(html.match(/<li[\s>]/g)).toHaveLength(27);
     const hrefs = [...html.matchAll(/<a[^>]*href="([^"]*)"/g)].map((m) => m[1]);
     expect(hrefs).toEqual(services.map((service) => `/?service=${service.id}#contact`));
   });
@@ -160,6 +165,6 @@ describe('featured services section', () => {
     expect(html).toMatch(/<h2[^>]*>\s*Qué puedo hacer por ti\s*<\/h2>/);
     const hrefs = [...html.matchAll(/<a[^>]*href="([^"]*)"/g)].map((m) => m[1]);
     expect(hrefs).toEqual(services.map((service) => `/es/?service=${service.id}#contact`));
-    expect(html.match(/<span class="sr-only">Consultar: /g)).toHaveLength(4);
+    expect(html.match(/<span class="sr-only">Consultar: /g)).toHaveLength(5);
   });
 });

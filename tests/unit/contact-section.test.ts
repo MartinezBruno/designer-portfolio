@@ -110,8 +110,12 @@ describe.each([
     expect(legend).toContain(escapeHtml(dict['contact.optional']));
 
     const radios = [...html.matchAll(/<input[^>]*type="radio"[^>]*>/g)].map((m) => m[0]);
-    expect(radios).toHaveLength(5);
+    expect(radios).toHaveLength(6);
     expect(radios.map((tag) => /value="([^"]*)"/.exec(tag)?.[1])).toEqual([...SERVICE_CHOICES]);
+    expect(radios.map((tag) => /value="([^"]*)"/.exec(tag)?.[1]).slice(-2)).toEqual([
+      'photography',
+      'other',
+    ]);
     for (const tag of radios) expect(tag).toContain('name="service"');
     const checked = radios.filter((tag) => /\schecked[\s>/]/.test(tag));
     expect(checked).toHaveLength(1);

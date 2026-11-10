@@ -1,6 +1,7 @@
 import { z } from 'astro/zod';
 import { describe, expect, it } from 'vitest';
 import services from '../../src/data/services.json';
+import { categoryIds } from '../../src/lib/projects/model';
 import {
   EMAIL_PATTERN,
   FIELD_NAMES,
@@ -18,6 +19,13 @@ describe('SERVICE_IDS', () => {
     expect([...SERVICE_IDS]).toEqual(ids);
   });
 
+  it('services.json ids === categoryIds === SERVICE_IDS, photography last (D-09)', () => {
+    const ids = [...services].sort((a, b) => a.order - b.order).map((service) => service.id);
+    expect(ids).toEqual([...categoryIds]);
+    expect([...categoryIds]).toEqual([...SERVICE_IDS]);
+    expect(ids.at(-1)).toBe('photography');
+  });
+
   it('SERVICE_CHOICES is SERVICE_IDS plus other, last', () => {
     expect([...SERVICE_CHOICES]).toEqual([...SERVICE_IDS, 'other']);
   });
@@ -31,7 +39,7 @@ describe('EMAIL_PATTERN', () => {
 });
 
 describe('isServiceChoice', () => {
-  it.each(['branding', 'other', 'graphic-design', 'web-design', 'social-media'])(
+  it.each(['branding', 'other', 'graphic-design', 'web-design', 'social-media', 'photography'])(
     'accepts %s',
     (value) => {
       expect(isServiceChoice(value)).toBe(true);
