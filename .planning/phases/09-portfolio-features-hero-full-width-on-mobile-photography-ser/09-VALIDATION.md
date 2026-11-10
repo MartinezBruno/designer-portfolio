@@ -91,4 +91,4 @@ Filled in by the planner/executor per task. The requirement → test map:
 - [x] Feedback latency < 10s
 - [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** approved 2026-11-10 (09-08 phase gate: `E2E_OFFLINE=1 pnpm verify` 1,407 unit + 833 e2e passed, `@network` 60 passed, `measure:bundle` ok (max eager 18,024 B on `/`, ceiling 22,000 B), Spanish review fresh)
+**Approval:** approved 2026-11-10 (09-08 phase gate: `E2E_OFFLINE=1 pnpm verify` 1,407 unit + 833 e2e passed, `@network` 60 passed, `measure:bundle` ok (max eager 18,024 B on `/`, ceiling 22,000 B), Spanish review fresh). Re-confirmed in 09-11 on 2026-11-10: the final src commit is `bda5a84` (`git log -1 --format=%h -- src`, `git status --porcelain -- src` empty), unchanged since 09-08, so the 09-08 automated results above stand for the final commit (D-20 orchestrator amendment; no re-run)
