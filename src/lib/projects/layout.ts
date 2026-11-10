@@ -6,6 +6,17 @@
 export const tileSizes = ['large', 'small', 'large-end', 'third'] as const;
 export type TileSize = (typeof tileSizes)[number];
 
+/**
+ * Responsive `sizes` per tile. Shared by ProjectCard (build time) and the client category filter,
+ * which rewrites `sizes` when filtering changes a card's tile.
+ */
+export const sizesFor: Readonly<Record<TileSize, string>> = {
+  large: '(min-width: 1408px) 790px, (min-width: 768px) 57vw, 100vw',
+  small: '(min-width: 1408px) 560px, (min-width: 768px) 40vw, 100vw',
+  'large-end': '(min-width: 1408px) 888px, (min-width: 768px) 66vw, 100vw',
+  third: '(min-width: 1408px) 440px, (min-width: 768px) 31vw, 100vw',
+};
+
 const cycle: readonly TileSize[] = ['large', 'small', 'small', 'large'];
 
 /**
