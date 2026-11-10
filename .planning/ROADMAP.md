@@ -418,10 +418,10 @@ Plans:
 
 **Gap Wave 1**
 
-- [ ] 08-10-PLAN.md — Marquee WR-01 (first activation always pauses; user decides vs D-10) and stable @network contact journey (WR-03)
-- [ ] 08-11-PLAN.md — A11Y-01: work-card cover opens on any intersection, regression tests at 390 and 1440
-- [ ] 08-12-PLAN.md — WR-02: pin the 404 pathname in BaseLayout, comments and reflection guard
-- [ ] 08-13-PLAN.md — Hero portrait as the sketch 001 arch on accent blue, defringed cutout, taste gate, user approval
+- [x] 08-10-PLAN.md — Marquee WR-01 (first activation always pauses; user decides vs D-10) and stable @network contact journey (WR-03)
+- [x] 08-11-PLAN.md — A11Y-01: work-card cover opens on any intersection, regression tests at 390 and 1440
+- [x] 08-12-PLAN.md — WR-02: pin the 404 pathname in BaseLayout, comments and reflection guard
+- [x] 08-13-PLAN.md — Hero portrait as the sketch 001 arch on accent blue, defringed cutout, taste gate, user approval
 
 **Gap Wave 2** *(blocked on Gap Wave 1)*
 
@@ -456,4 +456,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 5. Contact | 8/8 | Complete   | 2026-10-29 |
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
 | 7. Page Transitions & Smooth Scroll | 21/21 | Complete   | 2026-11-05 |
-| 8. Quality Verification | 9/9 | Gaps open (LCP, A11Y-01, @network flake) |  |
+| 8. Quality Verification | 13/18 | In Progress|  |
