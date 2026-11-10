@@ -108,6 +108,11 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-18: full gate green on src e96db32 (hermetic 802/117/0, @network 60/0); 08-VALIDATION status gaps_closed
 - [Phase 08]: closed 2026-11-10: re-verification passed 3/3 (811dcee), gap-closure code review 0 crit/0 warn/5 info (e9c0246), scoped security review no findings, commit list approved by user
 
+### Roadmap Evolution
+
+- Phase 9 added: Portfolio Features: hero full-width on mobile, photography service, filter projects by service category (filter source changed from raw Behance tags to service categories by user, 2026-11-10)
+
+
 ### Pending Todos
 
 None yet.

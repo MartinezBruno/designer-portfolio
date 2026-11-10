@@ -23,6 +23,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Scroll & Interaction Motion** - Reveals, text splits, cursor/magnetic buttons, card hover effects, reduced-motion support, and a motion toggle (completed 2026-11-02)
 - [x] **Phase 7: Page Transitions & Smooth Scroll** - Animated navigation with focus management, inertial scroll and parallax, no lifecycle leaks (completed 2026-11-05)
 - [x] **Phase 8: Quality Verification** - Measured performance budget, full axe/keyboard pass in both languages, and Spanish copy ready for review (completed 2026-11-10)
+- [ ] **Phase 9: Portfolio Features** - Hero full width on mobile, photography service, and filtering projects by service category
 
 ## Phase Details
 
@@ -457,3 +458,13 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
 | 6. Scroll & Interaction Motion | 10/10 | Complete   | 2026-11-02 |
 | 7. Page Transitions & Smooth Scroll | 21/21 | Complete   | 2026-11-05 |
 | 8. Quality Verification | 18/18 | Complete   | 2026-11-10 |
+
+### Phase 9: Portfolio Features: hero full-width on mobile, photography service, filter projects by service category
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 8
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 9 to break down)
