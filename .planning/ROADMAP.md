@@ -471,7 +471,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8. Ph
   2. Photography (EN "Photography" / ES "Fotografía", 4 approved items) appears in Home services, in the contact service chips, and through `?service=photography`, and the contact action accepts it.
   3. /projects/ and /es/projects/ show single-select category chips with All (empty categories hidden). `?category=` deep-links and updates in place, and the count is announced politely. Keyboard, reduced motion and axe all pass in both languages.
   4. The taste-skill lint and inspect runs and screenshots are reviewed for every visual change. Lint, unit tests and e2e are green, and the eager JS budget (22,000 B) holds.
-**Plans:** 7/11 plans executed (09-08 gate failed; 09-09..09-11 gap closure)
+**Plans:** 10/11 plans executed
 
 Plans:
 **Wave 1**
@@ -492,15 +492,15 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 09-08-PLAN.md — Phase gate: pnpm verify, bundle budget, Spanish review fresh, Home LCP re-measure (08-17 protocol), final taste gate
+- [x] 09-08-PLAN.md — Phase gate: pnpm verify, bundle budget, Spanish review fresh, Home LCP re-measure (08-17 protocol), final taste gate
 
 **Wave 5** *(gap closure: HOME-09 / D-04 Home mobile LCP 2,933 ms; D-18)*
 
-- [ ] 09-09-PLAN.md — LCP gap diagnosis: blocked-URL bound, early-GSAP cause, lever experiments (critical-paint gate, phone cover deferral), chosen levers (HOME-09)
+- [x] 09-09-PLAN.md — LCP gap diagnosis: blocked-URL bound, early-GSAP cause, lever experiments (critical-paint gate, phone cover deferral), chosen levers (HOME-09)
 
 **Wave 6** *(blocked on 09-09)*
 
-- [ ] 09-10-PLAN.md — Fix: GSAP/SplitText after the LCP paint (afterCriticalPaint), Latest-work covers out of the phone critical window, regression specs, spot check (HOME-09)
+- [x] 09-10-PLAN.md — Fix: GSAP/SplitText after the LCP paint (afterCriticalPaint), Latest-work covers out of the phone critical window, regression specs, spot check (HOME-09)
 
 **Wave 7** *(blocked on 09-10)*
 
