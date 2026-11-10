@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 9 planned (8 plans, 4 waves)
-last_updated: "2026-11-10T16:15:40.905Z"
-last_activity: 2026-11-10 -- Phase 9 execution started
+stopped_at: 09-08 gate failed at Task 2 (Home LCP 2,933 ms > 2,500); gap closure needed
+last_updated: "2026-11-10T17:05:13.107Z"
+last_activity: 2026-11-10 -- 09-08 phase gate failed (D-04 Home LCP)
 progress:
   total_phases: 9
   completed_phases: 8
   total_plans: 100
-  completed_plans: 92
-  percent: 89
+  completed_plans: 99
+  percent: 99
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-10-15)
 ## Current Position
 
 Phase: 9 (Portfolio Features) — EXECUTING
-Plan: 1 of 8
-Status: Executing Phase 9
-Last activity: 2026-11-10 -- Phase 9 execution started
+Plan: 8 of 8 (09-08 gate failed; gap closure needed)
+Status: Phase 9 gate failed (Home mobile LCP 2,933 ms > 2,500 ms, D-04)
+Last activity: 2026-11-10 -- 09-08 phase gate: verify, @network, bundle ceiling, Spanish review green; Home LCP re-measure failed
 
-Progress: [██████████] 100%
+Progress: [██████████] 99%
 
 ## Performance Metrics
 
@@ -107,6 +107,7 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-17: QUAL-01 met with one accepted miss (detail LCP 2,633 ms, +133 ms, uncompressed local preview; second-image priority boost ~75 ms + uncompressed critical path ~58 ms; Brotli approx 2,260 ms)
 - [Phase 08]: 08-18: full gate green on src e96db32 (hermetic 802/117/0, @network 60/0); 08-VALIDATION status gaps_closed
 - [Phase 08]: closed 2026-11-10: re-verification passed 3/3 (811dcee), gap-closure code review 0 crit/0 warn/5 info (e9c0246), scoped security review no findings, commit list approved by user
+- [Phase 09]: 09-08 gate: phone LCP element is now the 768w hero portrait; Lantern charges it with ~474 KB in flight (lazy Latest-work AVIFs, gsap). No Hero-only fallback recovers 433 ms; gap closure needed
 
 ### Roadmap Evolution
 
@@ -122,6 +123,7 @@ None yet.
 - Phase 7: Page-transition approach open (`<ClientRouter />` vs native cross-document view transitions).
 - Phases 3, 5, 7 flagged for deeper research before planning.
 - Open questions for Martina: availability badge, brand fonts, custom domain, testimonials (v2).
+- 09-08 gate failed: Home mobile LCP median 2,933 ms > 2,500 (D-04) on src bda5a84; see 09-LIGHTHOUSE.md. 09-08 Task 3 taste gate not run. / eager 18,024 B over plan target 17,958 needs acceptance
 
 ## Deferred Items
 
@@ -133,6 +135,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-11-10T16:09:01.188Z
-Stopped at: Phase 9 planned (8 plans, 4 waves)
-Resume file: .planning/phases/09-portfolio-features-hero-full-width-on-mobile-photography-ser/09-01-PLAN.md
+Last session: 2026-11-10T17:05:08.697Z
+Stopped at: 09-08 failed at Task 2 (Home LCP 2,933 ms > 2,500); Task 3 taste gate not run
+Resume file: .planning/phases/09-portfolio-features-hero-full-width-on-mobile-photography-ser/09-LIGHTHOUSE.md
