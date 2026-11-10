@@ -250,8 +250,11 @@ let booted = false;
 
 /**
  * App-scoped hook, bound once per session: filters the router's arriving document from its URL
- * before the swap, and the current document at once on a hard load, so the first painted frame is
- * already filtered. Returns a remover (used by tests); a second call is a no-op.
+ * before the swap, and re-applies the URL state to the current document on a hard load. This
+ * module is deferred, so it runs after the first paint: the hard-load first frame is filtered by
+ * the blocking inline pre-filter after the grid (`category-prefilter.ts`, 09-REVIEW WR-02), and
+ * this call is the idempotent backstop. Returns a remover (used by tests); a second call is a
+ * no-op.
  */
 export function bootCategoryFilter(doc: Document): () => void {
   if (booted) return () => undefined;

@@ -4,6 +4,7 @@ import CategoryFilter from '../ui/CategoryFilter.astro';
 import ProjectGrid from '../ui/ProjectGrid.astro';
 import { getAllProjects } from '../../lib/content/queries';
 import { buildCategoryChips } from '../../lib/projects/filter';
+import { categoryPrefilterInline } from '../../lib/projects/category-prefilter';
 import { useTranslations, type Locale } from '../../i18n/t';
 
 interface Props {
@@ -17,6 +18,8 @@ const contactHref = `${getRelativeLocaleUrl(locale, '/')}#contact`;
 const all = await getAllProjects(locale);
 // All plus each non-empty category in services.json order; [] (no chip row) below two categories.
 const chips = buildCategoryChips(all);
+// Blocking pre-filter right after the grid: a shared ?category= link paints filtered (WR-02).
+const prefilter = categoryPrefilterInline(all.length);
 ---
 
 <section
@@ -44,6 +47,7 @@ const chips = buildCategoryChips(all);
     <div class="flex flex-col gap-8">
       {chips.length > 0 && <CategoryFilter locale={locale} chips={chips} />}
       <ProjectGrid projects={all} variant="full" headingLevel={2} locale={locale} eagerFirst />
+      {chips.length > 0 && <script is:inline set:html={prefilter} />}
     </div>
   ) : (
     <div data-reveal="settle" class="flex flex-col gap-4">

@@ -359,6 +359,67 @@ for (const { locale, path, dict, home } of cases) {
     });
   });
 
+  // 09-REVIEW WR-02: the client module is deferred, so a shared ?category= link used to paint all
+  // seven cards and then collapse the grid (measured CLS 0.25 desktop, 0.42 mobile). The blocking
+  // inline pre-filter after the grid must make the first frame already filtered: no layout shift.
+  for (const [viewportName, viewport] of [
+    ['mobile', { width: 390, height: 844 }],
+    ['desktop', { width: 1440, height: 900 }],
+  ] as const) {
+    test.describe(`projects filter, hard-load layout stability (${locale}, ${viewportName})`, () => {
+      test.use({ viewport });
+      const [category, expected] = locale === 'en' ? ['branding', 1] : ['web-design', 3];
+
+      test(`${path}?category=${category} paints filtered with zero CLS`, async ({ page }) => {
+        await page.addInitScript(() => {
+          const w = window as Window & {
+            __cls?: number;
+            __firstFrame?: { total: number; visible: number };
+          };
+          w.__cls = 0;
+          new PerformanceObserver((list) => {
+            for (const entry of list.getEntries() as (PerformanceEntry & {
+              value: number;
+              hadRecentInput: boolean;
+            })[]) {
+              if (!entry.hadRecentInput) w.__cls = (w.__cls ?? 0) + entry.value;
+            }
+          }).observe({ type: 'layout-shift', buffered: true });
+          const tick = (): void => {
+            const items = document.querySelectorAll<HTMLElement>(
+              '[data-project-grid] > li[data-tile]',
+            );
+            if (items.length > 0) {
+              w.__firstFrame = {
+                total: items.length,
+                visible: [...items].filter((li) => !li.hidden).length,
+              };
+              return;
+            }
+            requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        });
+        await page.goto(`${path}?category=${category}`);
+        await expect(page.locator(VISIBLE)).toHaveCount(expected);
+        await page.evaluate(
+          () =>
+            new Promise((resolve) => {
+              setTimeout(resolve, 1000);
+            }),
+        );
+        const result = await page.evaluate(() => {
+          const w = window as Window & {
+            __cls?: number;
+            __firstFrame?: { total: number; visible: number };
+          };
+          return { cls: w.__cls, firstFrame: w.__firstFrame };
+        });
+        expect(result).toEqual({ cls: 0, firstFrame: { total: 7, visible: expected } });
+      });
+    });
+  }
+
   test.describe(`projects filter, no JS (${locale})`, () => {
     test.use({ javaScriptEnabled: false, viewport: { width: 1280, height: 900 } });
 

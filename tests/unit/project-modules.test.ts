@@ -354,14 +354,21 @@ describe('set:html guard (T-04-01)', () => {
     });
   }
 
-  it('appears only in BaseLayout (motion gate) and TextModule (sanitized HTML)', () => {
+  it('appears only in BaseLayout (motion gate), ProjectsView (category pre-filter) and TextModule (sanitized HTML)', () => {
     const users = astroFiles('src')
       .filter((file) => readFileSync(file, 'utf8').includes('set:html'))
       .map((file) => relative('.', file).split('\\').join('/'))
       .sort();
     expect(users).toEqual([
       'src/components/project/TextModule.astro',
+      'src/components/views/ProjectsView.astro',
       'src/layouts/BaseLayout.astro',
     ]);
+  });
+
+  it('ProjectsView injects only the build-time category pre-filter constant (09-REVIEW WR-02)', () => {
+    const view = readFileSync('src/components/views/ProjectsView.astro', 'utf8');
+    expect(view.match(/set:html=\{[^}]*\}/g)).toEqual(['set:html={prefilter}']);
+    expect(view).toMatch(/const prefilter = categoryPrefilterInline\(all\.length\);/);
   });
 });
