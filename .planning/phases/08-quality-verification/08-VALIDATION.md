@@ -60,6 +60,26 @@ security_review_base: cf15eaf
 - `git log -1 --format=%h -- src` at gate time: `3424e61`. They **match**, so the Lighthouse evidence is current for today's src.
 - The gap fixes for Home LCP, detail LCP and A11Y-01 will change src/. When they land, 08-LIGHTHOUSE.md **must be re-measured** with the same D-01..D-06 protocol on the fix commit, and this whole gate (steps 1-7) **must be re-run**, before Phase 8 is marked complete.
 
+## Staleness check (08-18)
+
+- 08-LIGHTHOUSE.md "Re-measure (08-17)" Context records the measured commit `e96db32`.
+- `git log -1 --format=%h -- src` at 08-18 gate time: `e96db32` (HEAD `8119292`, docs only after `e96db32`). They **match**, so the Lighthouse evidence is current for the final src. The gate ran.
+- `git diff --quiet -- src` was true before and after the gate. 08-18 changed no product code.
+
+## Gate re-run (08-18)
+
+Combined gap-closure result (08-10..08-17) on main, HEAD `8119292`, src `e96db32`, 2026-11-10, run sequentially on the main working tree. The `tmp/build-e2e.lock` lock was held from the step 3 build through step 6 and then released. No stale lock was found. Machine load average before the run: 2.5.
+
+| Plan | Step | Requirement / decision | Command | Result |
+|------|------|------------------------|---------|--------|
+| 08-18 | 1 | QUAL-01..03 | `pnpm lint` | pass, exit 0. astro check 265 files: 0 errors, 0 warnings, 3 hints (deprecation hints only, all in the gitignored throwaway `tmp/lighthouse/css-split.mjs`). ESLint clean. Prettier: "All matched files use Prettier code style!" |
+| 08-18 | 2 | QUAL-01..03 | `pnpm test` | pass: 72 files, 1323 tests |
+| 08-18 | 3 | QUAL-02 | `E2E_OFFLINE=1 pnpm test:e2e` (full build plus the full hermetic suite: a11y-sweep, a11y, keyboard-journeys, motion-reveal with the A11Y-01 cases, home arch-portrait tests, motion-hero frame-0 lead tests, the not-found WR-02 guard, every scroll/contact/marquee spec) | pass: 919 run, **802 passed, 117 skipped (conditional), 0 failed, 0 flaky**, 2.3 min. Keyboard journey 9 ("empty submit focuses the first invalid field", the intermittent case 08-10 reported) passed in this run. The failure rule did not apply |
+| 08-18 | 4 | QUAL-02 (WR-03) | `pnpm exec playwright test -g "@network"` (network reachable: `challenges.cloudflare.com/turnstile/v0/api.js` answered HTTP 302) | pass: **60 passed, 0 failed, 0 flaky** (1.4 min). The @network keyboard contact journey (keyboard-journeys 10) passed in EN and ES |
+| 08-18 | 5 | T-08-17 | `pnpm check:secrets` | pass: "secrets check ok (1311 dist files scanned)" |
+| 08-18 | 6 | QUAL-01 | `pnpm measure:bundle` | pass: "bundle check ok (no GreenSock or lenisVersion in eager chunks, eager gzip within 22000 B on every built page)". **Max eager gzip 17,958 B on `/`** (and `/es/`), ceiling 22,000 B, 19 pages. Detail pages 15,884 B (portfolio-web 16,558 B) |
+| 08-18 | 7 | QUAL-03 | `pnpm review:spanish && git diff --exit-code .planning/phases/08-quality-verification/08-SPANISH-REVIEW.md` | pass: regenerated with no diff (fresh) |
+
 ## Security review
 
 Run `/security-review` once at phase end, scoped to the Phase 8 diff from its base commit **cf15eaf** (`git diff cf15eaf..HEAD`), not origin/main (memory rule: scope the review to the phase). This plan only records the instruction. The orchestrator runs the review.
