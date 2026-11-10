@@ -125,6 +125,12 @@ function waitForLanding(win: Window, smooth: boolean, signal: AbortSignal): Prom
  *   state object (no new history entry): the router decides "same page" against its private
  *   `originalLocation`, so a search rewritten behind it would make the next in-page click or the
  *   skip link swap Home onto itself (07-11 CR-01). The target is then scrolled into view.
+ * - Same pathname and search on a page with the project filter (`[data-project-filter]`) and a
+ *   non-empty search: handled locally the same way, minus the preselect. The filter rewrites
+ *   `?category=` with replaceState, so the router's `originalLocation` is stale and the skip link
+ *   or any in-page hash link would swap /projects/ onto itself (09 Research Pitfall 2). The URL
+ *   keeps its search, only the fragment is replaced in place, and the target is scrolled into
+ *   view. Pages without the filter keep the native fragment path.
  * - A pending landing is cancelled by `popstate` and `astro:before-preparation`, so history
  *   traversal or a new router navigation never glides or focuses the abandoned target (WR-02).
  *
@@ -247,6 +253,21 @@ function bindAnchorFocus(doc: Document, signal: AbortSignal): void {
       applyServicePreselect(doc, url.search);
       // Only the fragment changes: the search stays in step with the router (CR-01). The router's
       // own state object (index, scroll) stays, so back/forward keep working.
+      const next = new URL(here.href);
+      next.hash = url.hash;
+      view.history.replaceState(view.history.state, '', next.href);
+      target.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant', block: 'start' });
+      void land(view, target, smooth, null);
+      return;
+    }
+
+    if (here.search !== '' && doc.querySelector('[data-project-filter]') !== null) {
+      // The project filter rewrites the search with replaceState, so the router's private
+      // `originalLocation` is stale and would treat this hash click as a new page, swapping
+      // /projects/ onto itself (09 Research Pitfall 2, 07-11 CR-01). Jump locally instead and
+      // change only the fragment, keeping the router's own state object.
+      event.preventDefault();
+      cancelPending();
       const next = new URL(here.href);
       next.hash = url.hash;
       view.history.replaceState(view.history.state, '', next.href);
