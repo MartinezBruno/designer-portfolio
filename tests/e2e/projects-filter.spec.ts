@@ -231,6 +231,53 @@ for (const { locale, path, dict, home } of cases) {
       expect(page.url()).toMatch(/#main$/);
     });
 
+    // 09-REVIEW WR-01: choosing All (or loading an invalid value that gets cleaned) empties the
+    // live search while the router still remembers the load-time one; the skip link must stay a
+    // local jump, never a swap of /projects/ onto itself.
+    for (const { name, search, choose } of [
+      { name: 'after choosing All', search: '?category=web-design', choose: true },
+      { name: 'after an invalid value is cleaned', search: '?category=bogus', choose: false },
+    ]) {
+      test(`WR-01: the skip link on an emptied URL ${name} stays local`, async ({ page }) => {
+        await page.goto(`${path}${search}`);
+        await settleMotion(page);
+        if (choose) {
+          await chip(page, '').click();
+          await expect(page.locator(VISIBLE)).toHaveCount(7);
+        }
+        await expect.poll(() => new URL(page.url()).search).toBe('');
+
+        await tabUntil(page, 'a[href="#main"]', { reverse: true });
+        const length = await page.evaluate(() => {
+          const w = window as Window & { __swapped?: boolean };
+          w.__swapped = false;
+          document.addEventListener('astro:before-swap', () => {
+            w.__swapped = true;
+          });
+          // An expando on the live <main>: a swap replaces the body, so it would not survive.
+          (document.getElementById('main') as HTMLElement & { __marker?: string }).__marker =
+            'kept';
+          return history.length;
+        });
+        await page.keyboard.press('Enter');
+        await page.evaluate(
+          () =>
+            new Promise((resolve) => {
+              setTimeout(resolve, 500);
+            }),
+        );
+        const after = await page.evaluate(() => ({
+          swapped: (window as Window & { __swapped?: boolean }).__swapped === true,
+          marker: (document.getElementById('main') as HTMLElement & { __marker?: string }).__marker,
+          length: history.length,
+        }));
+        expect(after).toEqual({ swapped: false, marker: 'kept', length });
+        await expect(page.locator('#main')).toBeFocused();
+        expect(new URL(page.url()).search).toBe('');
+        expect(page.url()).toMatch(/#main$/);
+      });
+    }
+
     test('one announcement per change after three round trips (no lifecycle leak)', async ({
       page,
     }) => {

@@ -261,11 +261,13 @@ function bindAnchorFocus(doc: Document, signal: AbortSignal): void {
       return;
     }
 
-    if (here.search !== '' && doc.querySelector('[data-project-filter]') !== null) {
+    if (doc.querySelector('[data-project-filter]') !== null) {
       // The project filter rewrites the search with replaceState, so the router's private
       // `originalLocation` is stale and would treat this hash click as a new page, swapping
-      // /projects/ onto itself (09 Research Pitfall 2, 07-11 CR-01). Jump locally instead and
-      // change only the fragment, keeping the router's own state object.
+      // /projects/ onto itself (09 Research Pitfall 2, 07-11 CR-01). That includes an emptied
+      // search (All chosen, or an invalid ?category= cleaned away; 09-REVIEW WR-01), so any hash
+      // click on a filter page jumps locally and changes only the fragment, keeping the router's
+      // own state object.
       event.preventDefault();
       cancelPending();
       const next = new URL(here.href);
