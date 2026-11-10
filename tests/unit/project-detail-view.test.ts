@@ -116,9 +116,18 @@ describe('collectionRows', () => {
 
 describe('moduleWidths', () => {
   it('caps the widths at the stored width, never upscaling', () => {
-    expect(moduleWidths(1400)).toEqual([640, 960, 1400]);
-    expect(moduleWidths(900)).toEqual([640]);
+    expect(moduleWidths(1400)).toEqual([640, 768, 960, 1400]);
+    expect(moduleWidths(900)).toEqual([640, 768]);
+    expect(moduleWidths(700)).toEqual([640]);
     expect(moduleWidths(500)).toEqual([500]);
+  });
+});
+
+describe('moduleWidths phone candidate', () => {
+  it('offers 768w so a 412 px viewport at DPR 1.75 (721 px) does not pick 960w', () => {
+    const widths = moduleWidths(1400);
+    const pick = widths.find((w) => w >= 412 * 1.75);
+    expect(pick).toBe(768);
   });
 });
 
