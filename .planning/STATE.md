@@ -4,14 +4,14 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 08-17-PLAN.md
-last_updated: "2026-11-10T14:04:36.827Z"
+last_updated: "2026-11-10T14:11:16.711Z"
 last_activity: 2026-11-10
 progress:
   total_phases: 8
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 92
-  completed_plans: 91
-  percent: 88
+  completed_plans: 92
+  percent: 100
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-10-15)
 ## Current Position
 
 Phase: 08 (quality-verification) — EXECUTING
-Plan: 17 of 18 (next: 08-18)
+Plan: 18 of 18 (next: 08-18)
 Status: Ready to execute
 Last activity: 2026-11-10
 
-Progress: [██████████] 99%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -68,6 +68,7 @@ Progress: [██████████] 99%
 | Phase 07 P17 | 8.2h (incl. machine sleep) | 2 tasks | 3 files |
 | Phase 08 P14 | 45min | 2 tasks | 1 files |
 | Phase 08 P17 | 35 min | 3 tasks | 2 files |
+| Phase 08 P18 | 25 min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,7 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-09: Phase 8 /security-review scoped to base cf15eaf (git diff cf15eaf..HEAD)
 - [Phase 08]: 08-14: chosen LCP levers C2 = L1 (08-15) + L2b + L4 (08-16); Home 1209 ms, detail 2559 ms; detail residual over 2400 ms goes to 08-17
 - [Phase 08]: 08-17: QUAL-01 met with one accepted miss (detail LCP 2,633 ms, +133 ms, uncompressed local preview; second-image priority boost ~75 ms + uncompressed critical path ~58 ms; Brotli approx 2,260 ms)
+- [Phase 08]: 08-18: full gate green on src e96db32 (hermetic 802/117/0, @network 60/0); 08-VALIDATION status gaps_closed
 
 ### Pending Todos
 
@@ -126,6 +128,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-11-10T14:04:32.638Z
+Last session: 2026-11-10T14:11:13.665Z
 Stopped at: Completed 08-17-PLAN.md
 Resume file: None
