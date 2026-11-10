@@ -49,7 +49,8 @@ for (const { locale, prefix, dict } of cases) {
       await page.goto(prefix);
       const region = page.getByRole('region', { name: dict['services.heading'] });
       const links = region.getByRole('link');
-      await expect(links).toHaveCount(4);
+      await expect(links).toHaveCount(ordered.length);
+      expect(ordered.map((service) => service.id)).toContain('photography');
       const expected = cardLinks(dict, locale, prefix);
       for (const [index, link] of expected.entries()) {
         await expect(links.nth(index)).toHaveAccessibleName(link.name);
@@ -98,6 +99,14 @@ for (const { locale, prefix, dict } of cases) {
         }
       });
     }
+
+    test(`pre-select: ?service=photography on ${prefix} checks Photography (D-08)`, async ({
+      page,
+    }) => {
+      await page.goto(`${prefix}?service=photography#contact`);
+      await expect(page.locator('#contact-service-photography')).toBeChecked();
+      await expect(page.locator('#contact-service-other')).not.toBeChecked();
+    });
 
     test(`pre-select works without visiting Home first (${locale})`, async ({ page }) => {
       await page.goto(`${prefix}projects/`);

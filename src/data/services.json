@@ -70,5 +70,19 @@
       "en": ["Social media management", "Story and post design", "Feed design"],
       "es": ["Gestión de redes sociales", "Diseño de historias y publicaciones", "Diseño del feed"]
     }
+  },
+  {
+    "id": "photography",
+    "order": 5,
+    "title": { "en": "Photography", "es": "Fotografía" },
+    "items": {
+      "en": [
+        "Product photography",
+        "Portraits",
+        "Photos for social media",
+        "Editing and retouching"
+      ],
+      "es": ["Fotografía de producto", "Retratos", "Fotos para redes sociales", "Edición y retoque"]
+    }
   }
 ]

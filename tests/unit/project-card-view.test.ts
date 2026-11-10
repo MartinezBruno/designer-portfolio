@@ -35,6 +35,7 @@ const categoryTitles: Record<CategoryId, string> = {
   'web-design': 'Web design',
   branding: 'Branding',
   'social-media': 'Social media',
+  photography: 'Photography',
 };
 
 function service(id: string, en: string, es: string): ServiceEntry {
@@ -53,6 +54,7 @@ describe('toCardView', () => {
       title: 'Cabrera´s motos, Posts',
       titleLang: 'es',
       category: null,
+      categoryId: null,
       tools: ['Figma', 'Adobe Photoshop'],
       summary: null,
       cover: portrait,
@@ -98,6 +100,22 @@ describe('toCardView', () => {
     expect(view.category).toBe('Web design');
   });
 
+  it('carries the stable category id next to the label (D-10)', () => {
+    const enView = toCardView(project({ category: 'web-design' }), 'en', categoryTitles);
+    expect(enView.categoryId).toBe('web-design');
+    expect(enView.category).toBe('Web design');
+    const esTitles = { ...categoryTitles, 'web-design': 'Diseño web' };
+    const esView = toCardView(project({ category: 'web-design' }), 'es', esTitles);
+    expect(esView.categoryId).toBe('web-design');
+    expect(esView.category).toBe('Diseño web');
+  });
+
+  it('gives a null categoryId for an uncurated project', () => {
+    const view = toCardView(project({ category: null }), 'en', categoryTitles);
+    expect(view.categoryId).toBeNull();
+    expect(view.category).toBeNull();
+  });
+
   it('carries no project date (removed by the user 2026-10-17)', () => {
     expect(toCardView(project(), 'en', categoryTitles)).not.toHaveProperty('year');
   });
@@ -109,6 +127,7 @@ describe('buildCategoryTitles', () => {
     service('web-design', 'Web design', 'Diseño web'),
     service('branding', 'Branding', 'Branding'),
     service('social-media', 'Social media', 'Social media'),
+    service('photography', 'Photography', 'Fotografía'),
   ];
 
   it('maps every category id to its localized service title', () => {
@@ -117,13 +136,14 @@ describe('buildCategoryTitles', () => {
       'web-design': 'Diseño web',
       branding: 'Branding',
       'social-media': 'Social media',
+      photography: 'Fotografía',
     });
     expect(Object.keys(buildCategoryTitles(entries, 'en'))).toEqual([...categoryIds]);
   });
 
   it('throws when a category has no service entry', () => {
     expect(() => buildCategoryTitles(entries.slice(0, 2), 'en')).toThrow(
-      'projects: services.json is missing category ids branding, social-media. Fix src/data/services.json',
+      'projects: services.json is missing category ids branding, social-media, photography. Fix src/data/services.json',
     );
   });
 });

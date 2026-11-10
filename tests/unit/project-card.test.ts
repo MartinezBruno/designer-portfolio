@@ -11,6 +11,7 @@ const baseProject: ProjectCardView = {
   title: 'Brand Refresh',
   titleLang: null,
   category: 'Branding',
+  categoryId: 'branding',
   tools: ['Figma', 'Adobe Illustrator'],
   summary: 'A full identity refresh for a local bakery.',
   cover: portrait,

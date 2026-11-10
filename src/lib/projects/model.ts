@@ -6,7 +6,13 @@ import type { ToolIconKey } from '../content/icons.ts';
 import type { EmbedProviderId } from './embeds.ts';
 
 /** Curated categories. Same ids, same order as src/data/services.json. */
-export const categoryIds = ['graphic-design', 'web-design', 'branding', 'social-media'] as const;
+export const categoryIds = [
+  'graphic-design',
+  'web-design',
+  'branding',
+  'social-media',
+  'photography',
+] as const;
 
 export type CategoryId = (typeof categoryIds)[number];
 
@@ -73,6 +79,8 @@ export interface ProjectCardView {
   title: string;
   titleLang: Locale | null;
   category: string | null;
+  /** Stable category id for the /projects/ filter (Phase 9, D-10); null when uncurated. */
+  categoryId: CategoryId | null;
   tools: readonly string[];
   summary: string | null;
   cover: ImageMetadata;

@@ -69,6 +69,12 @@ describe('buildContactEmail', () => {
     );
   });
 
+  it('labels photography as Fotografía (D-08)', () => {
+    const email = build({ service: 'photography' });
+    expect(email.subject).toBe('Nuevo mensaje web — Fotografía — Ana López');
+    expect(email.text.split('\n')).toContain('Servicio: Fotografía');
+  });
+
   it('writes the Spanish labels and the site language', () => {
     const lines = build().text.split('\n');
     expect(lines).toContain('Nombre: Ana López');

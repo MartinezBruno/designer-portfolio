@@ -116,9 +116,16 @@ describe('contactSchema service and locale', () => {
     expect(parse(valid).service).toBe('branding');
   });
 
-  it.each([undefined, null, '', 'Branding'])('falls back to other for %j', (service) => {
-    expect(parse({ ...valid, service }).service).toBe('other');
+  it('keeps photography (D-08)', () => {
+    expect(parse({ ...valid, service: 'photography' }).service).toBe('photography');
   });
+
+  it.each([undefined, null, '', 'Branding', 'Photography'])(
+    'falls back to other for %j',
+    (service) => {
+      expect(parse({ ...valid, service }).service).toBe('other');
+    },
+  );
 
   it('accepts en and es only', () => {
     expect(parse({ ...valid, locale: 'en' }).locale).toBe('en');

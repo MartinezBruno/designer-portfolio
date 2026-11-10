@@ -35,6 +35,7 @@ const categoryTitles: Record<CategoryId, string> = {
   'web-design': 'Web design',
   branding: 'Branding',
   'social-media': 'Social media',
+  photography: 'Photography',
 };
 
 function tool(id: string, name: string, icon: ToolEntry['data']['icon']): ToolEntry {

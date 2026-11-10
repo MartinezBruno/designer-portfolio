@@ -201,7 +201,7 @@ for (const [path, dict, locale] of cases) {
       await expectBand(page, false);
     });
 
-    test('services: four cards in order with their bullets', async ({ page }) => {
+    test('services: five cards in order with their bullets', async ({ page }) => {
       const section = servicesSection(page);
       await expect(section.getByRole('heading', { level: 2 })).toHaveText(dict['services.heading']);
       await expect(section.getByRole('heading', { level: 3 })).toHaveText(
@@ -209,7 +209,8 @@ for (const [path, dict, locale] of cases) {
       );
 
       const cards = section.locator(':scope > ul > li');
-      await expect(cards).toHaveCount(4);
+      await expect(cards).toHaveCount(sortedServices.length);
+      expect(sortedServices).toHaveLength(5);
       for (const [index, service] of sortedServices.entries()) {
         await expect(cards.nth(index).locator('ul > li')).toHaveText(service.items[locale]);
       }
@@ -219,7 +220,7 @@ for (const [path, dict, locale] of cases) {
         locale === 'en' ? 'Visual identity' : 'Identidad visual',
       );
       // HOME-08 (05-07): one "Ask about this" link per card, the only interactive element.
-      await expect(section.getByRole('link')).toHaveCount(4);
+      await expect(section.getByRole('link')).toHaveCount(sortedServices.length);
     });
 
     test('tools: five tools with visible names and no tab stops', async ({ page }) => {
@@ -338,7 +339,9 @@ test.describe('static marquee without JavaScript', () => {
       test('static: no-JS shows roles, services and tool names', async ({ page }) => {
         await page.goto(path);
         await expectStaticMarquee(page, locale, 'off');
-        await expect(servicesSection(page).getByRole('heading', { level: 3 })).toHaveCount(4);
+        await expect(servicesSection(page).getByRole('heading', { level: 3 })).toHaveCount(
+          sortedServices.length,
+        );
         const items = toolsSection(page).locator('[data-tool]');
         await expect(items).toHaveCount(5);
         for (const [index, name] of toolNames.entries()) {

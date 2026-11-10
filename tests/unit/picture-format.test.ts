@@ -105,6 +105,7 @@ describe('rendered picture markup', () => {
           title: 'Brand Refresh',
           titleLang: null,
           category: 'Branding',
+          categoryId: 'branding',
           tools: ['Figma'],
           summary: 'A full identity refresh for a local bakery.',
           cover: portrait,
