@@ -2,6 +2,197 @@
 
 Mobile Lighthouse with default simulated throttling, run against `astro preview` of the production build (D-01). Tool: one-off pinned `pnpm dlx lighthouse@13.6.0` (D-02). The user approved the package on 2026-11-09. It was not added to package.json, the lockfile or the scripts. Raw JSON is in the gitignored `tmp/lighthouse/`.
 
+The sections from "Context" to "Misses" below are the original 08-08 measurement on src `3424e61`. They are superseded by "Re-measure (08-17)", which follows directly, and are kept for comparison.
+
+## Re-measure (08-17)
+
+The same D-01..D-06 protocol, re-run on the final gap-closure src commit (after 08-10..08-16). Nothing else was changed for the measurement (`git diff --quiet -- src` was true). Raw JSON is in the gitignored `tmp/lighthouse/` (`select-*.json`, `home-1..5.json`, `detail-1..5.json`, plus the informational `r17diag-*` and `r17br-*` runs). The throwaway summarizers (`summarize.mjs`, `r17-sum.mjs`) are not committed (D-02).
+
+### Context (08-17)
+
+| Item | Value |
+|---|---|
+| Date | 2026-11-10 (protocol runs 13:50–13:53 UTC) |
+| Commit measured | `e96db32` (`git log -1 --format=%h -- src`; the merge that brought in 08-15's `082c1a5`, after 08-16's `24a112e` and `32f4566`). HEAD was `61d3a43` (docs only after `e96db32`). `git status --porcelain -- src` was empty |
+| Lighthouse | 13.6.0 (`pnpm dlx lighthouse@13.6.0`) |
+| Chrome | Google Chrome 157.0.8103.51 (`/Applications/Google Chrome.app`), `--headless=new`. lhr userAgent `HeadlessChrome/157.0.0.0`. 08-08 ran on Chrome 156 |
+| Node | v24.15.0 |
+| Machine | Apple M5, macOS 27.0.1 |
+| benchmarkIndex | selection 4,664.5–4,701.5; Home 4,677.5–4,699.5; detail 4,692.5–4,712 |
+| Settings | formFactor `mobile`, throttlingMethod `simulate` (rtt 150 ms, 1,638.4 kbps, CPU slowdown 4x). No preset. Fresh temporary profile per run, so motion stays at the default `on` (D-05) |
+| Preview | `pnpm install --frozen-lockfile && pnpm build && node scripts/e2e-preview-env.ts && pnpm astro preview --port 4485 --ignore-lock`, under the `tmp/build-e2e.lock` lock for the whole build-and-measure span |
+| Quiet machine | `pgrep -fl "playwright\|astro (dev\|preview)\|lighthouse"` showed only this plan's preview on 4485 (0.0% CPU). No other Playwright, Lighthouse, build or dev process. Runs strictly sequential |
+| Compression | `curl -sI -H 'Accept-Encoding: br, gzip'` on `/_astro/gsap.DLHyXJrb.js`, `/` and `/_astro/BaseLayout.Nhm1AjyW.css`: **no `content-encoding`** on any of them. As in 08-08, the local preview serves text uncompressed, so the simulated metrics are pessimistic compared with a compressing host |
+
+### Heaviest-page selection (08-17, D-04)
+
+One run per EN detail href from `expectedDetails('en')`, ranked by `audits['total-byte-weight'].numericValue`. Image KB is the sum of `network-requests` transferSize for resourceType `Image`.
+
+| Rank | EN detail page | total-byte-weight (KB) | Image (KB) | Requests | LCP (ms, single run) | Score |
+|---|---|---|---|---|---|---|
+| 1 | **/projects/website-reciclick/** | **498.4** | 198.5 | 26 | 2,633 | 97 |
+| 2 | /projects/cabreras-motos-posts/ | 493.3 | 203.0 | 23 | 3,160 | 93 |
+| 3 | /projects/purov/ | 493.0 | 187.1 | 28 | 2,559 | 97 |
+| 4 | /projects/website-instablogs/ | 476.8 | 113.0 | 25 | 2,859 | 95 |
+| 5 | /projects/sistema-visual/ | 438.3 | 151.9 | 18 | 3,232 | 93 |
+| 6 | /projects/portfolio-web/ | 430.1 | 133.2 | 24 | 2,560 | 97 |
+| 7 | /projects/mart/ | 427.0 | 129.9 | 29 | 2,557 | 97 |
+
+Selected page: `/projects/website-reciclick/`, chosen by measured total-byte-weight (the same page as in 08-08, now by a 5.1 KB margin over cabreras-motos-posts). The 08-16 768w candidate lowered every page's image bytes. The single selection runs range from 2,557 to 3,232 ms, so the detail result below is not specific to the heaviest page: 3 of 7 pages measured 2,557–2,560 in their single run and 2 measured 3,160–3,232. Those single runs are not medians.
+
+### Results (08-17, D-03: 5 runs per page)
+
+#### Home `/`
+
+| Metric | Median | Min | Max | Budget | Result |
+|---|---|---|---|---|---|
+| LCP (ms) | 1,207 | 1,207 | 1,208 | < 2,500 | **pass** |
+| CLS | 0.000 | 0.000 | 0.000 | < 0.1 | pass |
+| TBT (ms) | 0 | 0 | 0 | < 200 | pass |
+| FCP (ms) | 1,207 | 1,207 | 1,208 | — | (info) |
+| SI (ms) | 1,207 | 1,207 | 1,208 | — | (info) |
+| Performance score | 100 | 100 | 100 | — | (info) |
+
+Runs (LCP ms): 1207, 1207, 1207, 1208, 1207.
+
+#### Heaviest detail `/projects/website-reciclick/`
+
+| Metric | Median | Min | Max | Budget | Result |
+|---|---|---|---|---|---|
+| LCP (ms) | 2,633 | 2,558 | 2,634 | < 2,500 | **miss (+133 ms)** |
+| CLS | 0.000 | 0.000 | 0.000 | < 0.1 | pass |
+| TBT (ms) | 0 | 0 | 0 | < 200 | pass |
+| FCP (ms) | 1,058 | 1,058 | 1,059 | — | (info) |
+| SI (ms) | 1,058 | 1,058 | 1,059 | — | (info) |
+| Performance score | 97 | 97 | 97 | — | (info) |
+
+Runs (LCP ms): 2633, 2634, 2558, 2634, 2633.
+
+#### JS budgets
+
+| Budget | Measured | Result |
+|---|---|---|
+| Homepage JS about 100 KB gzip | eager 17,958 B + lazy 42,361 B = **60,319 B gzip -9 (58.9 KiB)** from measure:bundle | pass |
+| Eager ≤ 22,000 B per page | max 17,958 B on `/` and `/es/`; detail pages 15,884–16,558 B | pass |
+
+The eager total grew by 297 B on `/` since 08-08, mainly from the 08-16 deferral in `load-gsap` (+170 B gz) and BaseLayout's script (+133 B gz). GSAP stays out of every eager chunk.
+
+### LCP element and breakdown (08-17, median-LCP run)
+
+| Page | Run | LCP element | Observed LCP | Breakdown (observed) | Simulated LCP |
+|---|---|---|---|---|---|
+| Home | home-5 | `main#main > section.mx-auto > div.grid > p.text-ink`: `<p data-hero-lead class="text-ink text-lead max-w-[46ch] text-pretty lg:col-span-6 lg:pt-2">` | 50 ms | TTFB 3 ms; element render delay 47 ms | 1,207 ms (= simulated FCP) |
+| Detail | detail-1 | `div.mx-auto > div.w-full > picture.block > img.bg-surface-alt`: `/_astro/1325566467-e3adcb99f55f.lYtbH9Dw_kVYXy.avif`, `loading="eager" fetchpriority="high"`, 1400×788, 10.1 KB, alt "Reciclick website — image 1 of 17" | 57 ms | TTFB 3 ms; resource load delay 9 ms; resource load duration 11 ms; element render delay 34 ms | 2,633 ms |
+
+The Home LCP is still the hero lead, but it is now reported at first paint (observed 42–63 ms in all 5 runs, compared with about 1,010 ms in 08-08), so simulated LCP equals simulated FCP. On the detail page `lcp-discovery-insight` passes (score 1) and `image-delivery-insight` now passes too (score 1, it scored 0.5 in 08-14). `render-blocking-insight` still estimates 304 ms for `BaseLayout.Nhm1AjyW.css` on both pages.
+
+### Transfer (08-17, median-LCP run, uncompressed local preview)
+
+| Page | Total (KB) | JS (KB) | Image (KB) | Font (KB) | CSS (KB) | HTML (KB) | Requests |
+|---|---|---|---|---|---|---|---|
+| Home (home-5) | 443.2 | 124.1 | 113.1 | 88.2 | 55.2 | 61.7 | 24 |
+| Detail (detail-1) | 498.4 | 119.0 | 198.5 | 88.2 | 55.2 | 36.6 | 26 |
+
+Home's total is higher than 08-08's median run (337.3 KB) because the three Latest-work AVIFs (about 105 KB) loaded in this run. 08-14 showed that Home's image count varies by run. It no longer affects Home LCP, because LCP now happens at first paint. On the detail page the image total fell from 270.8 to 198.5 KB (the 08-16 768w candidate). `gsap.DLHyXJrb.js` (68.7 KB) and `SplitText` now start at 57–64 ms on the detail page and 57–77 ms on Home, after the first painted frame that follows `load` (observed `load` 36–53 ms; 08-16). On Home they start after observed LCP in all 5 runs. On the detail page they start after observed LCP in 4 of 5 runs (detail-3: 64 ms vs observed LCP 66 ms).
+
+### pnpm measure:bundle (08-17, verbatim)
+
+```text
+$ node scripts/measure-bundle.ts
+/ (8 module entry scripts)
+  eager: 13 files, 44765 B raw, 17958 B gzip -9
+    /_astro/ClientRouter.astro_astro_type_script_index_0_lang.uY2hE7yU.js       16401 B     5590 B gz
+    /_astro/client.ChiJXsfH.js                                                     24 B       44 B gz
+    /_astro/MotionToggle.astro_astro_type_script_index_0_lang.CQdvkYz3.js        1123 B      548 B gz
+    /_astro/tokens.--l_3Od3.js                                                    460 B      309 B gz
+    /_astro/motion.DdhpH_oj.js                                                   9887 B     3611 B gz
+    /_astro/Hero.astro_astro_type_script_index_0_lang.DIXncoe4.js                 882 B      505 B gz
+    /_astro/RolesMarquee.astro_astro_type_script_index_0_lang.CPHtMsOr.js         877 B      483 B gz
+    /_astro/ServiceChips.astro_astro_type_script_index_0_lang.of5m-_lC.js          57 B       77 B gz
+    /_astro/ContactForm.astro_astro_type_script_index_0_lang.D5UZs5pj.js         1966 B     1009 B gz
+    /_astro/preload-helper.DHhhL8Zf.js                                           1665 B      852 B gz
+    /_astro/CursorFollower.astro_astro_type_script_index_0_lang.Db_2AtGz.js      2369 B     1097 B gz
+    /_astro/load-gsap.C4xI3dII.js                                                 716 B      457 B gz
+    /_astro/BaseLayout.astro_astro_type_script_index_0_lang.BYz8N5VD.js          8338 B     3376 B gz
+  lazy: 4 files, 112713 B raw, 42361 B gzip -9
+    /_astro/contact-form-boot.BHC2S-qq.js                                       17039 B     6648 B gz
+    /_astro/gsap.DLHyXJrb.js                                                    69964 B    27107 B gz
+    /_astro/SplitText.CNCJHyhB.js                                                7064 B     3256 B gz
+    /_astro/lenis.CZma2zI-.js                                                   18646 B     5350 B gz
+  eager ceiling: 17958 / 22000 B gzip -9
+/404.html: eager 9 files, 15884 B gzip -9 (lazy 3 files)
+/es/ (8 module entry scripts)
+  eager: 13 files, 44765 B raw, 17958 B gzip -9
+    (identical file list to /)
+  lazy: 4 files, 112713 B raw, 42361 B gzip -9
+    (identical file list to /)
+  eager ceiling: 17958 / 22000 B gzip -9
+/es/projects/: eager 9 files, 15884 B gzip -9 (lazy 3 files)
+/es/projects/cabreras-motos-posts/: eager 9 files, 15884 B gzip -9 (lazy 3 files)
+/es/projects/mart/: eager 9 files, 15884 B gzip -9 (lazy 3 files)
+/es/projects/portfolio-web/: eager 10 files, 16558 B gzip -9 (lazy 3 files)
+/es/projects/purov/: eager 9 files, 15884 B gzip -9 (lazy 3 files)
+/es/projects/sistema-visual/: eager 9 files, 15884 B gzip -9 (lazy 3 files)
+/es/projects/website-instablogs/: eager 9 files, 15884 B gzip -9 (lazy 3 files)
+/es/projects/website-reciclick/: eager 9 files, 15884 B gzip -9 (lazy 3 files)
+/projects/: eager 9 files, 15884 B gzip -9 (lazy 3 files)
+/projects/cabreras-motos-posts/: eager 9 files, 15884 B gzip -9 (lazy 3 files)
+/projects/mart/: eager 9 files, 15884 B gzip -9 (lazy 3 files)
+/projects/portfolio-web/: eager 10 files, 16558 B gzip -9 (lazy 3 files)
+/projects/purov/: eager 9 files, 15884 B gzip -9 (lazy 3 files)
+/projects/sistema-visual/: eager 9 files, 15884 B gzip -9 (lazy 3 files)
+/projects/website-instablogs/: eager 9 files, 15884 B gzip -9 (lazy 3 files)
+/projects/website-reciclick/: eager 9 files, 15884 B gzip -9 (lazy 3 files)
+
+eager JS per page (gzip -9, ceiling 22000 B), largest first:
+  /                                     17958 B
+  /es/                                  17958 B
+  /es/projects/portfolio-web/           16558 B
+  /projects/portfolio-web/              16558 B
+  /404.html                             15884 B
+  /es/projects/                         15884 B
+  /es/projects/cabreras-motos-posts/    15884 B
+  /es/projects/mart/                    15884 B
+  /es/projects/purov/                   15884 B
+  /es/projects/sistema-visual/          15884 B
+  /es/projects/website-instablogs/      15884 B
+  /es/projects/website-reciclick/       15884 B
+  /projects/                            15884 B
+  /projects/cabreras-motos-posts/       15884 B
+  /projects/mart/                       15884 B
+  /projects/purov/                      15884 B
+  /projects/sistema-visual/             15884 B
+  /projects/website-instablogs/         15884 B
+  /projects/website-reciclick/          15884 B
+  max: 17958 B on / (19 pages)
+bundle check ok (no GreenSock or lenisVersion in eager chunks, eager gzip within 22000 B on every built page)
+```
+
+Note: the `/es/` per-file list repeats the `/` list byte for byte, so it is shortened here, as in 08-08. The full raw output is in `tmp/lighthouse/measure-bundle.txt`.
+
+### Comparison with 08-08 (medians)
+
+| Page | Metric | 08-08 median | 08-17 median | Delta |
+|---|---|---|---|---|
+| Home | LCP (ms) | 3,189 | 1,207 | **−1,982** |
+| Home | CLS | 0.000 | 0.000 | 0 |
+| Home | TBT (ms) | 0 | 0 | 0 |
+| Home | FCP (ms) | 1,208 | 1,207 | −1 |
+| Home | SI (ms) | 1,288 | 1,207 | −81 |
+| Home | Score | 93 | 100 | +7 |
+| Detail (website-reciclick) | LCP (ms) | 3,637 | 2,633 | **−1,004** |
+| Detail (website-reciclick) | CLS | 0.000 | 0.000 | 0 |
+| Detail (website-reciclick) | TBT (ms) | 0 | 0 | 0 |
+| Detail (website-reciclick) | FCP (ms) | 1,059 | 1,058 | −1 |
+| Detail (website-reciclick) | SI (ms) | 1,059 | 1,058 | −1 |
+| Detail (website-reciclick) | Score | 90 | 97 | +7 |
+| JS | Homepage JS gz (B) | 60,022 | 60,319 | +297 |
+| JS | Max eager gz (B) | 17,661 | 17,958 | +297 |
+
+What changed since 08-08 (src): 08-13 arch portrait, 08-15 slide-only hero lead (no opacity animation on `[data-hero-lead]`), 08-16 GSAP/SplitText deferred to load → one painted frame → idle, and the 768w detail image candidate. The 08-14 C2 prediction (Home 1,209, detail 2,559, medians of 3) holds for Home. For the detail page, 4 of 5 runs landed on the 2,633–2,634 mode that C2 had in 1 of 3 runs. The cause is described under "Re-measure misses (08-17)".
+
+Informational, not part of the D-01 measurement: through the same throwaway Brotli q5 proxy as 08-08 and 08-14 (`tmp/lighthouse/br-proxy.mjs`, port 4486, in front of this build), Home measured **761 / 757 / 762** and the detail page **2,260 / 1,889 / 2,262** (median 2,260), CLS 0, TBT 0. This approximates Cloudflare's edge compression. It is not a deployed measurement.
+
 ## Context
 
 | Item | Value |
@@ -206,6 +397,21 @@ With compression both pages are **under 2.5 s**, but the detail page has only 70
 - **Proposed classification:** **unfixable as measured locally → needs sign-off**, with an optional fix plan to gain headroom. The main lever is host compression, which Cloudflare applies in production and which `astro preview` lacks. Optional code levers: start the lazy GSAP/SplitText fetch after `load`/idle on detail pages, and reduce how many below-fold images are pulled at load time. The images are Martina's Behance work and are already AVIF at build time.
 
 No other budget row missed: CLS 0, TBT 0, homepage JS 58.6 KiB gz and eager ≤ 17,661 B all pass.
+
+### Re-measure misses (08-17)
+
+08-08 Miss 1 (Home LCP) is **resolved**: 1,207 ms median (range 1,207–1,208), 1,293 ms under budget. CLS, TBT, homepage JS (58.9 KiB gz) and the eager ceiling (max 17,958 B) all pass on both pages. One row still misses.
+
+#### Residual miss: heaviest detail LCP 2,633 ms median (budget < 2,500 ms, +133 ms)
+
+- **Runs:** 2,633 / 2,634 / 2,558 / 2,634 / 2,633. Every run misses; the best is 58 ms over. 08-08 measured 3,637, so the gap closure gained 1,004 ms.
+- **LCP element:** unchanged. It is the first project image `1325566467-…lYtbH9Dw_kVYXy.avif` (10.1 KB, `loading="eager" fetchpriority="high"`, 1400×788). lcp-discovery and image-delivery both pass.
+- **Observed breakdown (detail-1):** TTFB 3 ms, resource load delay 9 ms, resource load duration 11 ms, element render delay 34 ms (observed LCP 57 ms). The page's own LCP path is fast. The miss is entirely in the simulated (Lantern) estimate.
+- **Offending resources, by measurement:**
+  1. **Second project image `1321800269-…BcHrslAv_2u7Q0j.avif` (22.7 KB, `loading="lazy"`, inside the 412 px mobile viewport): explains the two modes.** In the four 2,633–2,634 runs, Chrome requested it at **High** priority at 23–27 ms (in-viewport boost). In detail-3 (2,558) it was requested at **Low** priority at 48 ms. Blocking only this image (`--blocked-url-patterns='*1321800269*'`, 3 runs, diagnostic only) gave **2,558 / 2,557 / 2,561**. That reproduces the low mode exactly, with GSAP still loading. [Inference, from Lantern's LCP graph rules in Lighthouse 13] The optimistic LCP graph keeps High-priority non-LCP images and drops Low-priority ones, so the boosted second image adds about 75 ms to the estimate. Note that the 08-16 GSAP deferral is not the cause: GSAP and SplitText start at 57–64 ms, after observed LCP in 4 of 5 runs, and the one run where they start before LCP (detail-3) is the fastest.
+  2. **The uncompressed critical path is the remaining ~58 ms.** Even in the low mode (2,558), the page is over budget. 08-14 measured a floor of about 2,480 ms on this preview with every font, lazy image and GSAP request blocked. That floor is HTML 36.6 KB, render-blocking CSS 55.2 KB (`render-blocking-insight` estimates 304 ms) and the High-priority eager module scripts (about 50 KB), all uncompressed by `astro preview` under 150 ms RTT and 1.6 Mbps.
+- **Measured effect of compression (informational):** with the Brotli q5 proxy in front of this build, the detail page measures **2,260 / 1,889 / 2,262** (median 2,260, 240 ms under budget). Home measures 757–762.
+- **Proposed classification:** **needs sign-off (accept), with its measured cause**, as the recommended option. The budget is met on Home, and the detail page passes with the compression that Cloudflare applies in production. The residual is about 133 ms of simulated LCP on an uncompressed local preview, while the observed LCP is under 70 ms. An optional **fix** exists for the ~75 ms mode: keep the second image out of the High-priority boost, for example with `fetchpriority="low"` on non-first detail images or by keeping it lazy below a taller first image. This lever was not tested in src. The diagnostic block shows it would bring the median to about 2,558, which is **still 58 ms over budget**. On this local preview, no measured lever brings the detail page under 2,500 ms without compression. If "fix" is chosen, it is another `/gsd:plan-phase 8 --gaps` round, and it would also have to tackle the critical path (for example CSS size).
 
 ## Sign-off (2026-11-09)
 
