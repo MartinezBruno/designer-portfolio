@@ -385,7 +385,8 @@ describe('downloadModuleImage', () => {
 });
 
 describe('sharp import boundary', () => {
-  it('only scripts/behance/module-images.ts imports sharp under scripts/ and src/', () => {
+  // quick-261110-wv4: scripts/build-favicons.ts is the other dev-only importer (icon rasters).
+  it('only the build-time scripts import sharp under scripts/ and src/', () => {
     const root = join(new URL('../..', import.meta.url).pathname);
     const importers: string[] = [];
     const walk = (dir: string): void => {
@@ -401,6 +402,9 @@ describe('sharp import boundary', () => {
     };
     walk(join(root, 'scripts'));
     walk(join(root, 'src'));
-    expect(importers).toEqual(['scripts/behance/module-images.ts']);
+    expect(importers.sort()).toEqual([
+      'scripts/behance/module-images.ts',
+      'scripts/build-favicons.ts',
+    ]);
   });
 });

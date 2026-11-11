@@ -22,7 +22,8 @@
     "sync:behance": "node scripts/sync-behance.ts",
     "deploy": "node scripts/check-deploy-env.ts && astro build && node scripts/check-deploy-env.ts --built && wrangler deploy",
     "deploy:dry": "node scripts/check-deploy-env.ts && astro build && node scripts/check-deploy-env.ts --built && wrangler deploy --dry-run --outdir tmp/deploy-dry-run",
-    "verify": "pnpm lint && pnpm test && pnpm test:e2e && pnpm check:secrets"
+    "verify": "pnpm lint && pnpm test && pnpm test:e2e && pnpm check:secrets",
+    "build:favicons": "node scripts/build-favicons.ts"
   },
   "dependencies": {
     "@astrojs/cloudflare": "14.4.1",
