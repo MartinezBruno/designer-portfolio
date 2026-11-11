@@ -47,7 +47,12 @@ const pathname =
       description={description}
       {...ogImageProp}
     />
+    <!-- Sketch 002 variant E icon set (quick 261110-wv4); rasters come from scripts/build-favicons.ts.
+         ico with sizes first so SVG-capable browsers still prefer the vector (Evil Martians 2024+). -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <Font cssVariable="--font-inter" preload />
     <Font cssVariable="--font-bricolage" preload />
   </head>

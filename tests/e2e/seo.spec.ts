@@ -183,3 +183,48 @@ test.describe('sitemap', () => {
     }
   });
 });
+
+// quick-261110-wv4: sketch 002 variant E icon set. Every link appears once (also after a
+// ClientRouter soft navigation) and every href resolves in preview.
+test.describe('favicon set', () => {
+  const icons = [
+    ['link[rel="icon"][sizes="32x32"]', '/favicon.ico', 'image/'],
+    ['link[rel="icon"][type="image/svg+xml"]', '/favicon.svg', 'image/svg+xml'],
+    ['link[rel="apple-touch-icon"]', '/apple-touch-icon.png', 'image/png'],
+    ['link[rel="manifest"]', '/site.webmanifest', ''],
+  ] as const;
+
+  for (const path of ['/', '/es/projects/']) {
+    test(`head links every icon once on ${path}`, async ({ page }) => {
+      await page.goto(path);
+      for (const [selector, href] of icons) {
+        await expect(page.locator(selector)).toHaveCount(1);
+        await expect(page.locator(selector)).toHaveAttribute('href', href);
+      }
+      await expect(page.locator('link[rel="icon"]')).toHaveCount(2);
+    });
+  }
+
+  test('icon links are not duplicated by a soft navigation', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('header a[href="/projects/"]').first().click();
+    await expect(page).toHaveURL(/\/projects\/$/);
+    await expect(page.locator('link[rel="icon"]')).toHaveCount(2);
+    await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(1);
+    await expect(page.locator('link[rel="manifest"]')).toHaveCount(1);
+  });
+
+  test('every icon href resolves 200', async ({ request }) => {
+    for (const [, href, type] of icons) {
+      const response = await request.get(href);
+      expect(response.status(), href).toBe(200);
+      expect(response.headers()['content-type'] ?? '', href).toContain(type);
+    }
+    const manifest = (await (await request.get('/site.webmanifest')).json()) as {
+      icons: { src: string }[];
+    };
+    for (const { src } of manifest.icons) {
+      expect((await request.get(src)).status(), src).toBe(200);
+    }
+  });
+});
