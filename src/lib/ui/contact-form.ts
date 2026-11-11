@@ -192,6 +192,8 @@ export function createContactForm(deps: ContactFormDeps): PageInit {
     let disposed = false;
     let loadStarted = false;
     let widgetFailed = false;
+    // Set while Cloudflare shows its challenge (interaction-only widgets stay invisible otherwise).
+    let interactive = false;
     let pending = false;
     let api: TurnstileApi | null = null;
     let widgetId: string | null = null;
@@ -238,8 +240,18 @@ export function createContactForm(deps: ContactFormDeps): PageInit {
       showNote(text('contact.turnstile.error'), 'error');
     };
 
+    // The marker opens the gap above the Send row only while the widget is on screen; a solved
+    // challenge stays visible, so it clears on reset (a fresh run hides the widget again).
+    const setInteractive = (on: boolean): void => {
+      interactive = on;
+      slot.toggleAttribute('data-turnstile-interactive', on);
+    };
+
     const resetWidget = (): void => {
-      if (api && widgetId !== null) api.reset(widgetId);
+      if (api && widgetId !== null) {
+        setInteractive(false);
+        api.reset(widgetId);
+      }
     };
 
     const ensureWidget = (): void => {
@@ -255,10 +267,16 @@ export function createContactForm(deps: ContactFormDeps): PageInit {
           slot.replaceChildren();
           widgetId = turnstile.render(slot, {
             sitekey: deps.siteKey,
-            size: 'compact',
+            // Invisible unless Cloudflare needs the visitor (most never see it); when it does, a
+            // full-width 65 px bar above Send. Supersedes the compact 150x140 widget of D-13.
+            size: 'flexible',
+            appearance: 'interaction-only',
             theme: 'light',
             language: locale,
             action: TURNSTILE_ACTION,
+            'before-interactive-callback': () => {
+              setInteractive(true);
+            },
             callback: () => {
               // A token arrived: the widget recovered from any earlier transient error (WR-02),
               // and neither the "still running" nor the error note applies any more.
@@ -449,7 +467,11 @@ export function createContactForm(deps: ContactFormDeps): PageInit {
             return;
           }
           ensureWidget();
-          showNote(text('contact.turnstile.wait'), 'wait');
+          // A visible challenge waits on the visitor, not on Cloudflare: say so.
+          showNote(
+            text(interactive ? 'contact.turnstile.interact' : 'contact.turnstile.wait'),
+            'wait',
+          );
           return;
         }
         widgetFailed = false;

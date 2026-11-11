@@ -3,13 +3,16 @@
 
 export interface TurnstileRenderOptions {
   sitekey: string;
-  size: 'compact';
+  size: 'flexible';
+  appearance: 'interaction-only';
   theme: 'light';
   language: string;
   action: string;
   callback?: (token: string) => void;
   'error-callback'?: (code?: string) => boolean | undefined;
   'expired-callback'?: () => void;
+  /** Fires before the widget shows an interactive challenge (interaction-only appearance). */
+  'before-interactive-callback'?: () => void;
 }
 
 export interface TurnstileApi {

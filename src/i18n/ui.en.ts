@@ -96,7 +96,7 @@ export const en = {
   'contact.error.messageRequired': 'Write your message.',
   'contact.error.messageShort': 'Write at least {min} characters so I know what you need.',
   'contact.error.messageTooLong': 'Keep your message to {max} characters or fewer.',
-  'contact.turnstile.loading': 'Loading the spam check…',
+  'contact.turnstile.interact': 'Complete the spam check above, then send again.',
   'contact.turnstile.wait': 'The spam check is still running. Wait a moment, then send again.',
   'contact.turnstile.error':
     "The spam check couldn't load. Reload the page, or email me at {email}.",

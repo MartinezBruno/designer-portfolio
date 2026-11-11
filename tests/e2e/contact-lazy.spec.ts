@@ -279,11 +279,12 @@ test.describe('no layout shift when the lazy form mounts (07-18)', () => {
   });
 });
 
-// 07-21: the 07-18 tests use a fake widget with no height, so they missed the real one. Cloudflare's
-// compact widget is a 150x140 iframe, inline, inside a closed shadow root. An inline iframe sits on
-// the text baseline, so the slot inherited a 6 px line-box descent (146 px vs the 140 px reserve)
-// and the page grew 6 px after the widget rendered (smooth-scroll End test, 07-20 deferred item).
-// This fake has the real anatomy and size.
+// 07-21: the 07-18 tests use a fake widget with no height, so they missed the real one. The
+// compact widget was a 150x140 inline iframe in a closed shadow root that grew the slot 6 px past
+// its reserve. Since quick-261110-w8q the widget is interaction-only + flexible: measured against
+// Cloudflare's real script, its host stays 0 px tall while no interaction is needed (the token
+// still arrives) and becomes a 65 px full-width iframe only for a challenge. This fake has that
+// resting anatomy: a full-width inline iframe, not displayed, inside a closed shadow root.
 const REAL_SIZE_TURNSTILE = `window.turnstile = {
   render(el) {
     const host = typeof el === 'string' ? document.querySelector(el) : el;
@@ -291,9 +292,7 @@ const REAL_SIZE_TURNSTILE = `window.turnstile = {
     widget.setAttribute('data-fake-widget', '');
     const root = widget.attachShadow({ mode: 'closed' });
     const frame = document.createElement('iframe');
-    frame.setAttribute('width', '150');
-    frame.setAttribute('height', '140');
-    frame.style.border = 'none';
+    frame.style.cssText = 'border:none;width:100%;height:65px;display:none';
     root.appendChild(frame);
     host.appendChild(widget);
     return 'w1';
@@ -303,7 +302,7 @@ const REAL_SIZE_TURNSTILE = `window.turnstile = {
   getResponse() { return undefined; },
 };`;
 
-test.describe('a real-size Turnstile widget fits the reserve (07-21)', () => {
+test.describe('a resting interaction-only widget adds no height (07-21, w8q)', () => {
   const cases = [
     { viewport: { width: 1280, height: 720 }, path: '/' },
     { viewport: { width: 1440, height: 900 }, path: '/' },
@@ -340,6 +339,8 @@ test.describe('a real-size Turnstile widget fits the reserve (07-21)', () => {
       await expect.poll(() => held, { timeout: 10000 }).toBe(true);
       const slot = page.locator('[data-turnstile]');
       const reserved = await slot.evaluate((el) => el.getBoundingClientRect().height);
+      // No dead space next to Send: the slot reserves nothing (w8q replaced the 140 px reserve).
+      expect(reserved, `${label}: slot reserve`).toBeLessThanOrEqual(1);
       const before = await footerMetrics(page);
 
       release();

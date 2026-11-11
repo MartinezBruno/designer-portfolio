@@ -177,7 +177,7 @@ Source: `src/i18n/ui.en.ts` (EN) and `src/i18n/ui.es.ts` (ES). Tokens in braces 
 | `ui:contact.error.messageRequired` | Write your message. | Escribe tu mensaje. | draft, for Martina's review |
 | `ui:contact.error.messageShort` | Write at least {min} characters so I know what you need. | Escribe al menos {min} caracteres para que sepa qué necesitas. | draft, for Martina's review |
 | `ui:contact.error.messageTooLong` | Keep your message to {max} characters or fewer. | Tu mensaje puede tener {max} caracteres como máximo. | draft, for Martina's review |
-| `ui:contact.turnstile.loading` | Loading the spam check… | Cargando la verificación antispam… | draft, for Martina's review |
+| `ui:contact.turnstile.interact` | Complete the spam check above, then send again. | Completa la verificación antispam de arriba y vuelve a enviar. | draft, for Martina's review |
 | `ui:contact.turnstile.wait` | The spam check is still running. Wait a moment, then send again. | La verificación antispam sigue en curso. Espera un momento y vuelve a enviar. | draft, for Martina's review |
 | `ui:contact.turnstile.error` | The spam check couldn't load. Reload the page, or email me at {email}. | No se pudo cargar la verificación antispam. Recarga la página o escríbeme a {email}. | draft, for Martina's review |
 | `ui:contact.status.sending` | Sending your message… | Enviando tu mensaje… | draft, for Martina's review |

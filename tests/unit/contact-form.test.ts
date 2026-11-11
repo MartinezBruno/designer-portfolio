@@ -55,7 +55,7 @@ function fixture(): string {
         <label for="contact-message">Message</label><p id="contact-message-hint">hint</p><textarea id="contact-message" name="message" aria-describedby="contact-message-hint"></textarea>${errorSlot('message')}
         <input id="contact-extra" name="extra_info" type="text" tabindex="-1">
         <input type="hidden" name="locale" value="es">
-        <div data-turnstile><p>loading</p></div>
+        <div data-turnstile></div>
         <button type="submit" data-contact-submit><span data-contact-submit-label>${strings['contact.submit']}</span><svg data-icon-ready class="size-5"></svg><svg data-icon-sending class="hidden size-5"></svg></button>
         <p data-turnstile-note hidden class="text-ink-muted"><svg data-turnstile-note-icon class="hidden"></svg><span data-turnstile-note-text></span></p>
         <div data-contact-failure hidden><p>${strings['contact.failure.title']}</p><p>${strings['contact.failure.body']}</p><p><a data-contact-failure-mailto href="mailto:x@y.z">${strings['contact.failure.mailto']}</a></p></div>
@@ -189,13 +189,14 @@ describe('createContactForm', () => {
     expect(first?.el).toBe(el('[data-turnstile]'));
     expect(first?.options).toMatchObject({
       sitekey: 'site-key',
-      size: 'compact',
+      size: 'flexible',
+      appearance: 'interaction-only',
       theme: 'light',
       language: 'es',
       action: 'contact',
     });
-    // The loading note was replaced by the widget.
-    expect(el('[data-turnstile]').querySelector('p')).toBeNull();
+    // Nothing is shown or reserved until Cloudflare asks for interaction.
+    expect(el('[data-turnstile]').hasAttribute('data-turnstile-interactive')).toBe(false);
 
     el('#contact-name').dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
     await flush();
@@ -238,6 +239,34 @@ describe('createContactForm', () => {
     expect(note().classList.contains('text-danger')).toBe(false);
     await nextFrame();
     expect(status().textContent).toBe(strings['contact.turnstile.wait']);
+    cleanup?.();
+  });
+
+  it('marks the slot while a challenge is shown and asks the visitor to complete it', async () => {
+    const { deps, send, turnstile } = setup('');
+    const cleanup = createContactForm(deps)(document);
+    await flush();
+    turnstile.rendered[0]?.options['before-interactive-callback']?.();
+    expect(el('[data-turnstile]').hasAttribute('data-turnstile-interactive')).toBe(true);
+
+    fill();
+    submit();
+    expect(send).not.toHaveBeenCalled();
+    expect(noteText()).toBe(strings['contact.turnstile.interact']);
+    expect(note().classList.contains('text-danger')).toBe(false);
+
+    // Solved: the token hides the note; the solved widget stays visible, so the marker stays.
+    turnstile.setToken('tok');
+    turnstile.rendered[0]?.options.callback?.('tok');
+    expect(note().hidden).toBe(true);
+    expect(el('[data-turnstile]').hasAttribute('data-turnstile-interactive')).toBe(true);
+
+    submit();
+    expect(send).toHaveBeenCalledTimes(1);
+    await flush();
+    // Every attempt resets the widget; a fresh run is invisible again until it asks.
+    expect(turnstile.reset).toEqual(['widget-1']);
+    expect(el('[data-turnstile]').hasAttribute('data-turnstile-interactive')).toBe(false);
     cleanup?.();
   });
 

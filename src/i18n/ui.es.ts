@@ -102,7 +102,7 @@ export const es = {
   'contact.error.messageRequired': 'Escribe tu mensaje.',
   'contact.error.messageShort': 'Escribe al menos {min} caracteres para que sepa qué necesitas.',
   'contact.error.messageTooLong': 'Tu mensaje puede tener {max} caracteres como máximo.',
-  'contact.turnstile.loading': 'Cargando la verificación antispam…',
+  'contact.turnstile.interact': 'Completa la verificación antispam de arriba y vuelve a enviar.',
   'contact.turnstile.wait':
     'La verificación antispam sigue en curso. Espera un momento y vuelve a enviar.',
   'contact.turnstile.error':

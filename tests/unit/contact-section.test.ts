@@ -170,16 +170,22 @@ describe.each([
     expect(input).toContain('autocomplete="off"');
   });
 
-  it('posts the locale, reserves the Turnstile slot and has a submit button', async () => {
+  it('posts the locale, has an empty full-width Turnstile slot and a submit button', async () => {
     const html = await render(locale);
     const localeInput = openTag(html, /<input[^>]*name="locale"[^>]*>/);
     expect(localeInput).toContain('type="hidden"');
     expect(localeInput).toContain(`value="${locale}"`);
 
     const slot = openTag(html, /<div[^>]*data-turnstile[^>]*>/);
-    expect(classTokens(slot)).toEqual(expect.arrayContaining(['min-h-[140px]', 'w-[150px]']));
+    // w8q: interaction-only + flexible widget. No reserve and no placeholder (most visitors never
+    // see it); full width for the 65 px challenge bar, and the gap above Send opens only with it.
+    expect(classTokens(slot)).toEqual(
+      expect.arrayContaining(['w-full', 'data-[turnstile-interactive]:mb-4']),
+    );
+    expect(classTokens(slot).some((token) => token.startsWith('min-h-'))).toBe(false);
+    expect(html).toMatch(/<div[^>]*data-turnstile[^>]*>\s*<\/div>/);
     expect(html).not.toContain('cf-turnstile"');
-    // 07-21: no inherited leading under the inline widget iframe, so it stays at the 140 px reserve.
+    // 07-21: no inherited leading under the inline widget iframe (it would add a descent).
     expect(classTokens(slot)).toContain('leading-[0]');
 
     const submit = openTag(html, /<button[^>]*data-contact-submit[^>]*>/);

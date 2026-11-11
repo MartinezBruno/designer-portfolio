@@ -131,12 +131,15 @@ const dangerTitle = 'text-base font-semibold text-danger inline-flex items-cente
 
   <input type="hidden" name="locale" value={locale} />
 
-  <div class="flex flex-row flex-wrap items-end justify-between gap-4 sm:gap-6">
-    <!-- leading-[0]: the compact widget is an inline 150x140 iframe; inherited leading added a 6 px
-         descent below it, so the slot outgrew its 140 px reserve (07-21). The note sets its own. -->
-    <div data-turnstile class="bg-surface-alt min-h-[140px] w-[150px] text-[0px] leading-[0]">
-      <p class="text-ink-muted p-3 text-sm">{t('contact.turnstile.loading')}</p>
-    </div>
+  <div class="flex flex-col items-start">
+    <!-- Turnstile, interaction-only + flexible: empty and 0 px tall for most visitors (the token
+         arrives silently); when Cloudflare needs the visitor it is a full-width 65 px bar and the
+         script sets data-turnstile-interactive to open the gap above Send. leading-[0]: the widget
+         is an inline iframe, and inherited leading adds a descent below it (07-21). -->
+    <div
+      data-turnstile
+      class="w-full text-[0px] leading-[0] data-[turnstile-interactive]:mb-4"
+    ></div>
     <button
       type="submit"
       data-contact-submit
