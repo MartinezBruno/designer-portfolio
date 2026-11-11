@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: phase_complete
-stopped_at: "Phase 9 complete (src cc64ecd); Spanish review approved; quick 261110-tfd done; human UAT pending: production LCP with compression, visual check"
+stopped_at: "Phase 9 complete (src cc64ecd); Spanish review approved; quick 261110-tfd, 261110-v6r done; first deploy pending (workers.dev subdomain, Turnstile, Resend); human UAT pending: production LCP with compression, visual check"
 last_updated: "2026-11-11T00:01:58.482Z"
 last_activity: 2026-11-10
 progress:
@@ -121,6 +121,7 @@ Recent decisions affecting current work:
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 261110-tfd | Real contact email (martinafernandez170404@gmail.com) + Instagram link @martif_ph; email wraps at 320px | 2026-11-10 | a9834b8, a5867a2 | [261110-tfd-update-contact-email-to-martinafernandez](./quick/261110-tfd-update-contact-email-to-martinafernandez/) |
+| 261110-v6r | Cloudflare deploy prep: pre-deploy env check, `pnpm run deploy`/`deploy:dry`, Worker logs, docs/DEPLOY.md runbook (Resend + Turnstile) | 2026-11-10 | f40a703, 2fb589f, 7e74a46 | [261110-v6r-prepare-cloudflare-deploy-and-contact-em](./quick/261110-v6r-prepare-cloudflare-deploy-and-contact-em/) |
 
 ### Pending Todos
 
@@ -145,5 +146,5 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-11-11T00:01:58.477Z
-Stopped at: Phase 9 complete (src cc64ecd); Spanish review approved; quick 261110-tfd done; human UAT pending: production LCP with compression, visual check
+Stopped at: Phase 9 complete (src cc64ecd); Spanish review approved; quick 261110-tfd, 261110-v6r done; first deploy pending (workers.dev subdomain, Turnstile, Resend); human UAT pending: production LCP with compression, visual check
 Resume file: .planning/phases/09-portfolio-features-hero-full-width-on-mobile-photography-ser/09-VERIFICATION.md
