@@ -62,9 +62,10 @@ for (const path of ['/', '/es/']) {
 
 // UI-SPEC keyboard order on Home: skip link, wordmark, Projects, Contact, EN, ES, motion toggle, hero CTA,
 // invisible marquee pause toggle (button over the band), 4 service card links, 3 project links, See all,
-// Contact section email, Behance, service radio, name, email, message (then Send message from the
-// footer with Shift+Tab), footer email, Behance. On the Projects pages: skip
-// link, wordmark, Projects, Contact, EN, ES, motion toggle, 7 project links (newest first), footer email, Behance.
+// Contact section email, Behance, Instagram, service radio, name, email, message (then Send message
+// from the footer with Shift+Tab), footer email, Behance, Instagram. On the Projects pages: skip
+// link, wordmark, Projects, Contact, EN, ES, motion toggle, 7 project links (newest first), footer
+// email, Behance, Instagram.
 const PROJECT_HREF = /^\/(es\/)?projects\/[a-z0-9-]+\/$/;
 
 // Project links are asserted by href and followed (expect 200): detail pages exist since Phase 4.
@@ -88,10 +89,18 @@ function serviceSteps(dict: Dictionary, homeHref: string): Step[] {
     }));
 }
 
+// SiteConfig makes Instagram optional; it is configured, so fail loudly if that ever changes.
+const INSTAGRAM_HREF: string = (() => {
+  const href: string | undefined = site.socials.instagram;
+  if (href === undefined) throw new Error('site.socials.instagram is not configured');
+  return href;
+})();
+
 function footerSteps(dict: Dictionary): Step[] {
   return [
     { name: site.email, href: `mailto:${site.email}` },
     { name: dict['footer.behance'], href: site.socials.behance },
+    { name: dict['footer.instagram'], href: INSTAGRAM_HREF },
   ];
 }
 
@@ -102,6 +111,7 @@ function contactSteps(dict: Dictionary): Step[] {
   return [
     { name: site.email, href: `mailto:${site.email}` },
     { name: dict['footer.behance'], href: site.socials.behance },
+    { name: dict['footer.instagram'], href: INSTAGRAM_HREF },
     { name: dict['contact.service.other'], tag: 'INPUT', ringOnLabel: true },
     { name: dict['contact.name.label'], tag: 'INPUT' },
     { name: dict['contact.email.label'], tag: 'INPUT' },
@@ -124,7 +134,7 @@ function expectedOrderFor(dict: Dictionary, homeHref: string): Step[] {
 }
 
 // Tail of the Home order: Shift+Tab from the footer email reaches "Send message"; Tab, Tab then
-// returns to the footer email and Behance.
+// returns to the footer email, Behance and Instagram.
 async function expectContactTail(page: Page, dict: Dictionary): Promise<void> {
   await page.getByRole('contentinfo').getByRole('link', { name: site.email, exact: true }).focus();
   await page.keyboard.press('Shift+Tab');

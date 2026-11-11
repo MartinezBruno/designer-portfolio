@@ -4,6 +4,13 @@ import { interpolate } from '../../src/i18n/t';
 import { en } from '../../src/i18n/ui.en';
 import { es } from '../../src/i18n/ui.es';
 
+// SiteConfig makes Instagram optional; it is configured, so fail loudly if that ever changes.
+const INSTAGRAM_HREF: string = (() => {
+  const href: string | undefined = site.socials.instagram;
+  if (href === undefined) throw new Error('site.socials.instagram is not configured');
+  return href;
+})();
+
 const cases = [
   ['/', en],
   ['/es/', es],
@@ -14,7 +21,9 @@ const MAX_H1_HEIGHT = 2 * 52.8 + 4;
 
 for (const [path, dict] of cases) {
   test.describe(`footer on ${path}`, () => {
-    test('has the contact heading, email, Behance link and copyright', async ({ page }) => {
+    test('has the contact heading, email, Behance and Instagram links and copyright', async ({
+      page,
+    }) => {
       await page.goto(path);
 
       const footer = page.getByRole('contentinfo');
@@ -32,6 +41,14 @@ for (const [path, dict] of cases) {
       await expect(behance).toHaveAttribute('rel', /\bnoopener\b/);
       await expect(behance).toHaveAttribute('rel', /\bnoreferrer\b/);
       await expect(behance.locator('.sr-only')).toHaveText(dict['a11y.newTab']);
+
+      const instagram = footer.getByRole('link', { name: dict['footer.instagram'] });
+      await expect(instagram).toHaveAttribute('href', INSTAGRAM_HREF);
+      await expect(instagram).toHaveAttribute('href', 'https://www.instagram.com/martif_ph/');
+      await expect(instagram).toHaveAttribute('target', '_blank');
+      await expect(instagram).toHaveAttribute('rel', /\bnoopener\b/);
+      await expect(instagram).toHaveAttribute('rel', /\bnoreferrer\b/);
+      await expect(instagram.locator('.sr-only')).toHaveText(dict['a11y.newTab']);
 
       const copyright = interpolate(dict['footer.copyright'], { year: new Date().getFullYear() });
       await expect(footer.getByText(copyright, { exact: true })).toBeVisible();
