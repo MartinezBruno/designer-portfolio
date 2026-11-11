@@ -166,7 +166,7 @@ const dangerTitle = 'text-base font-semibold text-danger inline-flex items-cente
       focusable="false"
       class="mt-0.5 hidden size-4 shrink-0"
     />
-    <span data-turnstile-note-text></span>
+    <span data-turnstile-note-text class="min-w-0 wrap-break-word"></span>
   </p>
 
   <!-- Failure block (CONT-03, D-14): one generic message for every non-input failure. The script
@@ -176,7 +176,7 @@ const dangerTitle = 'text-base font-semibold text-danger inline-flex items-cente
       <IconAlertCircle aria-hidden="true" focusable="false" class="size-5 shrink-0" />
       {t('contact.failure.title')}
     </p>
-    <p class="text-ink max-w-[60ch] text-base">{strings['contact.failure.body']}</p>
+    <p class="text-ink max-w-[60ch] text-base wrap-break-word">{strings['contact.failure.body']}</p>
     <p>
       <a
         data-contact-failure-mailto

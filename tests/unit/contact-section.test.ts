@@ -71,6 +71,7 @@ describe.each([
   it('offers the direct email link and the socials', async () => {
     const html = await render(locale);
     expect(html).toContain(`href="mailto:${site.email}"`);
+    expect(html).toMatch(/martinafernandez170404@<wbr\/?>gmail\.com/);
     expect(html).toContain(`href="${site.socials.behance}"`);
     expect(html).toContain(escapeHtml(dict['footer.behance']));
     const instagram: string | undefined = site.socials.instagram;

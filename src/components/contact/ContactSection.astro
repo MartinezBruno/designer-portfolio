@@ -11,6 +11,7 @@ import IconArrowRight from '@tabler/icons/outline/arrow-right.svg';
 import IconMail from '@tabler/icons/outline/mail.svg';
 import ContactForm from './ContactForm.astro';
 import ButtonLink from '../ui/ButtonLink.astro';
+import EmailText from '../ui/EmailText.astro';
 import SocialLinks from '../ui/SocialLinks.astro';
 import { site } from '../../data/site';
 import { interpolate, useTranslations, type Locale } from '../../i18n/t';
@@ -56,7 +57,7 @@ const nojsHref = `mailto:${site.email}?subject=${encodeURIComponent(t('contact.n
             class="decoration-accent focus-visible:outline-accent inline-flex min-h-11 items-center gap-1 text-base underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             <IconMail aria-hidden="true" focusable="false" class="size-5" />
-            {site.email}
+            <EmailText />
           </a>
         </p>
         <SocialLinks locale={locale} />
@@ -64,7 +65,7 @@ const nojsHref = `mailto:${site.email}?subject=${encodeURIComponent(t('contact.n
     </div>
     <div class="lg:col-span-7" data-contact-column data-reveal="settle" data-reveal-delay="280">
       <div data-contact-nojs class="flex flex-col items-start gap-6">
-        <p class="text-ink max-w-[60ch] text-base">
+        <p class="text-ink max-w-[60ch] text-base wrap-break-word">
           {interpolate(t('contact.nojs.body'), { email: site.email })}
         </p>
         <ButtonLink href={nojsHref}>

@@ -33,6 +33,13 @@ describe('SiteFooter', () => {
     expect(site.email).toBe('martinafernandez170404@gmail.com');
   });
 
+  it('lets the long email wrap after the @ on narrow screens', async () => {
+    const html = await render('en');
+    expect(html).toMatch(
+      /<span class="min-w-0 wrap-anywhere"[^>]*>martinafernandez170404@<wbr\/?>gmail\.com<\/span>/,
+    );
+  });
+
   it('renders Instagram (configured) and no LinkedIn (not configured)', async () => {
     const html = await render('en');
     expect(site.socials.instagram).toBe('https://www.instagram.com/martif_ph/');

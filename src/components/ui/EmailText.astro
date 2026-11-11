@@ -1,0 +1,19 @@
+---
+/**
+ * The contact email as text that can wrap on narrow screens. The preferred break is right after the
+ * "@" (a <wbr>, so the text content and accessible name stay the plain address); wrap-anywhere is
+ * the fallback when even "local@" does not fit. Lives in a span so the <wbr> is not its own flex
+ * item inside the inline-flex links that use it.
+ */
+import { site } from '../../data/site';
+
+const at = site.email.indexOf('@');
+const local = site.email.slice(0, at + 1);
+const domain = site.email.slice(at + 1);
+---
+
+<span class="min-w-0 wrap-anywhere">
+  {local}
+  <wbr />
+  {domain}
+</span>
