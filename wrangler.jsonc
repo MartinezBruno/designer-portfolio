@@ -3,4 +3,6 @@
 {
   "name": "designer-portfolio",
   "compatibility_date": "2026-10-12",
+  // Worker logs for contact send failures: read with `pnpm wrangler tail` or the dashboard.
+  "observability": { "enabled": true },
 }

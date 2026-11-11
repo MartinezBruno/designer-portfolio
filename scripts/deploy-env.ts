@@ -6,6 +6,10 @@
 const TEST_SITE_KEY = /^[123]x0{20}[A-F]{2}$/;
 // Unanchored variant for scanning built files.
 const TEST_SITE_KEY_IN_TEXT = /\b[123]x0{20}[A-F]{2}\b/;
+// Astro embeds the env schema in the server bundle, including the envField `default` of
+// PUBLIC_TURNSTILE_SITE_KEY (the test key in astro.config.ts). That JSON entry is inert when the
+// shell key is inlined, so the scan skips exactly that form and still flags every other occurrence.
+const SCHEMA_DEFAULT = /"default":\s*"[123]x0{20}[A-F]{2}"/g;
 // Reserved TLDs (RFC 2606/6761) that can never be the served host.
 const RESERVED_HOST = /(^|\.)(example|test|invalid|localhost)$/;
 const RUNBOOK = 'docs/DEPLOY.md step 2';
@@ -60,7 +64,7 @@ export function builtProblems(
   siteKey: string,
 ): string[] {
   const problems = files
-    .filter((file) => TEST_SITE_KEY_IN_TEXT.test(file.content))
+    .filter((file) => TEST_SITE_KEY_IN_TEXT.test(file.content.replace(SCHEMA_DEFAULT, '')))
     .map((file) => `Cloudflare test sitekey found in built file: ${file.path}`);
   if (siteKey === '' || !files.some((file) => file.content.includes(siteKey))) {
     problems.push(

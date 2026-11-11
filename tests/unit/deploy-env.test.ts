@@ -113,6 +113,28 @@ describe('builtProblems', () => {
     expect(problems[0]).not.toContain('1x00000000000000000000AA');
   });
 
+  it('ignores the env schema default Astro embeds in the server bundle', () => {
+    const files = [
+      ...clean,
+      {
+        path: 'dist/server/chunks/entrypoint.mjs',
+        content: '"PUBLIC_TURNSTILE_SITE_KEY": {\n\t"default": "1x00000000000000000000AA",\n}',
+      },
+    ];
+    expect(builtProblems(files, REAL_KEY)).toEqual([]);
+  });
+
+  it('still flags a test sitekey next to the schema default', () => {
+    const files = [
+      ...clean,
+      {
+        path: 'dist/server/chunks/entrypoint.mjs',
+        content: '"default": "1x00000000000000000000AA"; const k = "2x00000000000000000000AB";',
+      },
+    ];
+    expect(builtProblems(files, REAL_KEY)).toHaveLength(1);
+  });
+
   it('reports a build that does not contain the key', () => {
     const problems = builtProblems(clean.slice(1), REAL_KEY);
     expect(problems).toHaveLength(1);

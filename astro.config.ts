@@ -60,7 +60,7 @@ export default defineConfig({
         optional: true,
       }),
       // Defaults to Cloudflare's always-pass visible test sitekey.
-      // TODO(deploy): real sitekey via build env, never .dev.vars
+      // Real sitekey comes from the shell at deploy (docs/DEPLOY.md), never .env or .dev.vars.
       PUBLIC_TURNSTILE_SITE_KEY: envField.string({
         context: 'client',
         access: 'public',
