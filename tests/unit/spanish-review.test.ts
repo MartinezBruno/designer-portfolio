@@ -97,7 +97,7 @@ describe('buildSpanishReview coverage', () => {
     expect(review).toMatch(/brand names/);
     for (const tool of tools) expect(review).toContain(tool.name);
     expect(review.match(/## Non-copy TODO\(martina\)/g)).toHaveLength(1);
-    expect(NON_COPY_TODOS).toHaveLength(6);
+    expect(NON_COPY_TODOS).toHaveLength(5);
     for (const item of NON_COPY_TODOS) expect(review).toContain(item.location);
     expect(review).toContain('.example');
   });

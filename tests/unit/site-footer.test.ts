@@ -25,14 +25,20 @@ describe('SiteFooter', () => {
     const html = await render('es');
     expect(html).toContain('Hablemos');
     expect(html).toContain('Martina en Behance');
+    expect(html).toContain('Martina en Instagram');
     expect(html).toContain('(se abre en una pestaña nueva)');
   });
 
-  it('renders Instagram/LinkedIn only when configured', async () => {
+  it('pins the real contact email', () => {
+    expect(site.email).toBe('martinafernandez170404@gmail.com');
+  });
+
+  it('renders Instagram (configured) and no LinkedIn (not configured)', async () => {
     const html = await render('en');
-    expect('instagram' in site.socials).toBe(false);
+    expect(site.socials.instagram).toBe('https://www.instagram.com/martif_ph/');
+    expect(html).toContain('href="https://www.instagram.com/martif_ph/"');
+    expect(html).toContain('Martina on Instagram');
     expect('linkedin' in site.socials).toBe(false);
-    expect(html).not.toContain('Instagram');
     expect(html).not.toContain('LinkedIn');
   });
 

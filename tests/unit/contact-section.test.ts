@@ -73,6 +73,10 @@ describe.each([
     expect(html).toContain(`href="mailto:${site.email}"`);
     expect(html).toContain(`href="${site.socials.behance}"`);
     expect(html).toContain(escapeHtml(dict['footer.behance']));
+    const instagram: string | undefined = site.socials.instagram;
+    if (instagram === undefined) throw new Error('site.socials.instagram is not configured');
+    expect(html).toContain(`href="${instagram}"`);
+    expect(html).toContain(escapeHtml(dict['footer.instagram']));
   });
 
   it('ships the no-JS mailto block visible, without noscript', async () => {
