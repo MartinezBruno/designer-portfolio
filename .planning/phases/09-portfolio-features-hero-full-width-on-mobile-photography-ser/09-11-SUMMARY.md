@@ -147,6 +147,8 @@ Top three problems (most visible first), each with the screenshot it shows in an
 
 ## Post-review re-gate (cc64ecd)
 
+**Resolution (user, 2026-11-10): both failures accepted (D-21). Re-gate PASSED with accepted items; Phase 9 closed on src `cc64ecd`.**
+
 **Result: FAIL (stopped for a user decision). No src was changed and no budget was loosened.** The code-review fixes WR-01 (`da00585`) and WR-02 (`cc64ecd`) changed src after this plan passed on `bda5a84`. Under the Re-measure rule and W-5, the full gate was re-run on 2026-11-10 (23:20–23:50 UTC) on src **`cc64ecd`** (HEAD `8e6e650`, `git status --porcelain -- src` empty before and after). Two criteria failed under the strict "any other failure / any new finding = fail" rule. Every other gate passed. 09-VALIDATION.md's Approval line was **not** moved to `cc64ecd`.
 
 | Gate | Result | Evidence |
