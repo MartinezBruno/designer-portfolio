@@ -16,9 +16,9 @@ export const site = {
   firstName: 'Martina',
   // TODO(martina): real domain
   url: 'https://martinafernandez.example',
-  // TODO(martina): real address
-  email: 'hello@martinafernandez.example',
+  email: 'martinafernandez170404@gmail.com',
   socials: {
     behance: 'https://www.behance.net/martifernand7',
+    instagram: 'https://www.instagram.com/martif_ph/',
   },
 } as const satisfies SiteConfig;

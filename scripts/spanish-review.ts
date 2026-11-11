@@ -28,7 +28,6 @@ const HARDCODED_COPY: readonly { key: string; en: string; es: string }[] = [];
 /** Things Martina still has to supply that are not copy (file:line of each TODO(martina)). */
 export const NON_COPY_TODOS: readonly { location: string; item: string }[] = [
   { location: 'src/data/site.ts:17', item: 'Real domain (canonical and hreflang URLs).' },
-  { location: 'src/data/site.ts:19', item: 'Real contact email address (mailto links).' },
   {
     location: 'src/components/sections/Hero.astro:10',
     item: 'Hero photo original at 1600px or wider (sharper 3x phone render).',
@@ -39,8 +38,8 @@ export const NON_COPY_TODOS: readonly { location: string; item: string }[] = [
   },
   { location: 'astro.config.ts:76', item: 'Brand fonts.' },
   {
-    location: 'src/data/site.ts:18-20',
-    item: 'Phase 1 WR-04: the `.example` placeholder domain and email currently appear in the canonical URL, hreflang alternates and mailto links; they change once the two values above are real.',
+    location: 'src/data/site.ts:17-18',
+    item: 'Phase 1 WR-04: the `.example` placeholder domain currently appears in the canonical URL and hreflang alternates; it changes once the real domain above is set.',
   },
 ];
 
