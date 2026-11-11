@@ -1,5 +1,6 @@
 import { defineConfig, envField, fontProviders } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
+import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 import { site } from './src/data/site';
 import { defaultLocale, locales } from './src/i18n/config';
@@ -68,6 +69,17 @@ export default defineConfig({
       }),
     },
   },
+  // /sitemap-index.xml + /sitemap-0.xml with en/es hreflang alternates, from `site`. Only
+  // prerendered pages are listed (the /_actions Worker route never is); the 404 pages are dropped.
+  integrations: [
+    sitemap({
+      i18n: {
+        defaultLocale,
+        locales: Object.fromEntries(locales.map((locale) => [locale, locale])),
+      },
+      filter: (page) => !/\/404\/?$/.test(new URL(page).pathname),
+    }),
+  ],
   i18n: {
     locales: [...locales],
     defaultLocale,

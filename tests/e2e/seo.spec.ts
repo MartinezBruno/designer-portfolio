@@ -129,3 +129,57 @@ for (const path of ['/', '/projects/', '/es/', '/es/projects/', '/no-such-page/'
     await expect(page.locator('meta[property="og:image"]')).toHaveCount(0);
   });
 }
+
+// quick-261110-w8q: @astrojs/sitemap with en/es alternates. robots.txt is Cloudflare-managed, so
+// the sitemap is announced with a head link instead of a Sitemap: line.
+test.describe('sitemap', () => {
+  const pages = [
+    '/',
+    '/projects/',
+    ...expectedDetails('en').map(({ slug }) => `/projects/${slug}/`),
+  ] as const;
+  const twin = (path: string): string => (path === '/' ? '/es/' : `/es${path}`);
+
+  test('the head links the sitemap index', async ({ page }) => {
+    for (const path of ['/', '/es/projects/']) {
+      await page.goto(path);
+      await expect(page.locator('link[rel="sitemap"]')).toHaveAttribute(
+        'href',
+        '/sitemap-index.xml',
+      );
+    }
+  });
+
+  test('the index points at one absolute sitemap on the real domain', async ({ request }) => {
+    const response = await request.get('/sitemap-index.xml');
+    expect(response.status()).toBe(200);
+    const xml = await response.text();
+    const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
+    expect(locs).toEqual([`${site.url}/sitemap-0.xml`]);
+  });
+
+  test('lists every en and es page once, with hreflang alternates, and no 404', async ({
+    request,
+  }) => {
+    const response = await request.get('/sitemap-0.xml');
+    expect(response.status()).toBe(200);
+    const xml = await response.text();
+    const entries = [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)].map((match) => match[1] ?? '');
+    const locOf = (entry: string): string => /<loc>([^<]+)<\/loc>/.exec(entry)?.[1] ?? '';
+    const expected = pages.flatMap((path) => [`${site.url}${path}`, `${site.url}${twin(path)}`]);
+    expect(entries.map(locOf).sort()).toEqual([...expected].sort());
+    expect(xml).not.toMatch(/404|_actions/);
+
+    for (const path of pages) {
+      for (const own of [path, twin(path)]) {
+        const entry = entries.find((candidate) => locOf(candidate) === `${site.url}${own}`) ?? '';
+        expect(entry, own).toContain(
+          `<xhtml:link rel="alternate" hreflang="en" href="${site.url}${path}"/>`,
+        );
+        expect(entry, own).toContain(
+          `<xhtml:link rel="alternate" hreflang="es" href="${site.url}${twin(path)}"/>`,
+        );
+      }
+    }
+  });
+});

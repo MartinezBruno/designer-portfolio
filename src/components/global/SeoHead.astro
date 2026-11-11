@@ -16,6 +16,8 @@ const seo = buildSeo(Astro.props, absoluteFor);
 {seo.alternates.map(({ hreflang, href }) => (
   <link rel="alternate" hreflang={hreflang} href={href} />
 ))}
+<!-- robots.txt is Cloudflare-managed (content signals), so the sitemap is announced here. -->
+<link rel="sitemap" href="/sitemap-index.xml" />
 <meta property="og:title" content={seo.og.title} />
 <meta property="og:description" content={seo.og.description} />
 <meta property="og:locale" content={seo.og.locale} />

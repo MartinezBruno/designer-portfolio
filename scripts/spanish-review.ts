@@ -31,7 +31,7 @@ export const NON_COPY_TODOS: readonly { location: string; item: string }[] = [
     location: 'src/components/sections/Hero.astro:10',
     item: 'Hero photo original at 1600px or wider (sharper 3x phone render).',
   },
-  { location: 'astro.config.ts:76', item: 'Brand fonts.' },
+  { location: 'astro.config.ts:88', item: 'Brand fonts.' },
 ];
 
 interface Localized {

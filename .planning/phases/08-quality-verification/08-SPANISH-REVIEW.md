@@ -342,4 +342,4 @@ Source: `src/data/tools.json`. These are brand names and stay the same in both l
 Not copy, but still needed from Martina before launch:
 
 - `src/components/sections/Hero.astro:10`: Hero photo original at 1600px or wider (sharper 3x phone render).
-- `astro.config.ts:76`: Brand fonts.
+- `astro.config.ts:88`: Brand fonts.
