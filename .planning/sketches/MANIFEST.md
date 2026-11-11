@@ -13,3 +13,4 @@ The shipped site itself (`/`, `/es/`).
 | # | Name | Design Question | Winner | Tags |
 |---|------|----------------|--------|------|
 | 001 | hero-portrait-shape | Which shape should the hero portrait take now that the asset is a 3:4 cutout? | Synthesis: C arch + D blue bg | hero, portrait, imagery, phase-8-gap |
+| 002 | favicon-mark | Which mark should replace the Astro default favicon? | E: m. with blue dot on white disc | favicon, brand, identity |
