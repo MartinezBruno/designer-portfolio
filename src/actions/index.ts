@@ -4,7 +4,8 @@
 // The contact handler stays thin: submitContact does the work and never throws. Astro serializes
 // the message of any non-ActionError thrown here to the client (RESEARCH Pitfall 8), so the
 // handler only ever throws one generic ActionError and internal detail stays in server logs.
-// Secrets come only from astro:env/server.
+// Secrets come only from astro:env/server. The EMAIL send_email binding comes from
+// cloudflare:workers, imported lazily and only for MAILER=cloudflare (console/e2e never load it).
 import { ActionError, defineAction } from 'astro:actions';
 import { PUBLIC_TURNSTILE_SITE_KEY } from 'astro:env/client';
 import {
@@ -17,6 +18,7 @@ import {
 import services from '../data/services.json';
 import { contactConfigProblem } from '../lib/contact/deploy-guard';
 import { TURNSTILE_ACTION } from '../lib/contact/fields';
+import { isSendEmailBinding, type SendEmailBinding } from '../lib/contact/mailer/cloudflare';
 import { createMailer } from '../lib/contact/mailer/index';
 import { contactSchema } from '../lib/contact/schema';
 import { serviceTitlesEs, submitContact } from '../lib/contact/submit';
@@ -29,6 +31,13 @@ const TURNSTILE_BINDING: TurnstileBinding = {
   action: TURNSTILE_ACTION,
   hostnames: [new URL(site.url).hostname],
 };
+
+/** env.EMAIL when it is a usable send_email binding, else undefined (createMailer then throws). */
+async function loadEmailBinding(): Promise<SendEmailBinding | undefined> {
+  const { env } = await import('cloudflare:workers');
+  const binding = env['EMAIL'];
+  return isSendEmailBinding(binding) ? binding : undefined;
+}
 
 function sendFailed(): ActionError {
   return new ActionError({ code: 'BAD_REQUEST', message: 'send_failed' });
@@ -57,6 +66,15 @@ export const server = {
         console.error('[contact] rejected: config', problem);
         throw sendFailed();
       }
+      let emailBinding: SendEmailBinding | undefined;
+      if (MAILER === 'cloudflare') {
+        try {
+          emailBinding = await loadEmailBinding();
+        } catch {
+          console.error('[contact] rejected: mailer_config', 'cloudflare:workers unavailable');
+          throw sendFailed();
+        }
+      }
       const outcome = await submitContact(input, {
         verify: (token) =>
           verifyTurnstile(
@@ -66,7 +84,7 @@ export const server = {
             ctx.request.headers.get('CF-Connecting-IP'),
             TURNSTILE_BINDING,
           ),
-        mailer: () => createMailer({ MAILER, CONTACT_TO, RESEND_API_KEY }, fetch),
+        mailer: () => createMailer({ MAILER, CONTACT_TO, RESEND_API_KEY }, fetch, { emailBinding }),
         serviceTitlesEs: titles,
       });
       if (!outcome.ok) throw sendFailed();

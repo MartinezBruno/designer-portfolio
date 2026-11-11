@@ -40,6 +40,16 @@ describe('contactConfigProblem', () => {
     expect(contactConfigProblem({ ...local, allowTestConfig: false })).toMatch(/MAILER=console/);
   });
 
+  it('allows the cloudflare mailer with a real secret and sitekey', () => {
+    expect(contactConfigProblem({ ...production, mailer: 'cloudflare' })).toBeUndefined();
+  });
+
+  it('names MAILER=cloudflare as the deploy value when refusing console', () => {
+    expect(contactConfigProblem({ ...production, mailer: 'console' })).toMatch(
+      /set MAILER=cloudflare/,
+    );
+  });
+
   it('refuses a Cloudflare test secret outside local dev', () => {
     expect(
       contactConfigProblem({ ...production, turnstileSecret: TEST_SECRET, siteKey: TEST_SITE_KEY }),

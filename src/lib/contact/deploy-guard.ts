@@ -18,7 +18,7 @@ export function isTurnstileTestSiteKey(siteKey: string): boolean {
 
 export interface ContactConfig {
   allowTestConfig: boolean;
-  mailer: 'console' | 'resend';
+  mailer: 'console' | 'resend' | 'cloudflare';
   turnstileSecret: string | undefined;
   siteKey: string;
 }
@@ -30,7 +30,7 @@ export function contactConfigProblem(config: ContactConfig): string | undefined 
   const testSiteKey = isTurnstileTestSiteKey(config.siteKey);
   if (!config.allowTestConfig) {
     if (config.mailer === 'console') {
-      return 'MAILER=console outside local dev (set MAILER=resend for a deploy)';
+      return 'MAILER=console outside local dev (set MAILER=cloudflare, or resend, for a deploy)';
     }
     if (testSecret) return 'TURNSTILE_SECRET_KEY is a Cloudflare test secret outside local dev';
     if (testSiteKey)

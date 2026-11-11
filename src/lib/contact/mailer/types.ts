@@ -6,9 +6,9 @@ export interface ContactEmail {
   text: string;
 }
 
-/** Mailer port (CONT-04): console in v1 and local dev, Resend ready for deploy. */
+/** Mailer port (CONT-04): console for local dev and e2e, Cloudflare Email (primary) or Resend for deploy. */
 export interface Mailer {
-  readonly name: 'console' | 'resend';
+  readonly name: 'console' | 'resend' | 'cloudflare';
   readonly to: string;
   send(email: ContactEmail): Promise<void>;
 }

@@ -42,7 +42,7 @@ export default defineConfig({
       MAILER: envField.enum({
         context: 'server',
         access: 'secret',
-        values: ['console', 'resend'],
+        values: ['console', 'resend', 'cloudflare'], // cloudflare: EMAIL send_email binding
         default: 'console',
       }),
       // Local/e2e opt-in for the console mailer and Turnstile test keys. Unset in a deploy, so a
