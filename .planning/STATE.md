@@ -124,6 +124,7 @@ Recent decisions affecting current work:
 | 261110-v6r | Cloudflare deploy prep: pre-deploy env check, `pnpm run deploy`/`deploy:dry`, Worker logs, docs/DEPLOY.md runbook (Resend + Turnstile) | 2026-11-10 | f40a703, 2fb589f, 7e74a46 | [261110-v6r-prepare-cloudflare-deploy-and-contact-em](./quick/261110-v6r-prepare-cloudflare-deploy-and-contact-em/) |
 | 261110-voa | Real domain martifernandez.com (custom-domain route) + Cloudflare Email mailer (send_email binding, MAILER=cloudflare); Resend kept as alternative | 2026-11-10 | f7d231e, 9c783a7, 0c23dca | [261110-voa-switch-to-martifernandez-com-and-cloudfl](./quick/261110-voa-switch-to-martifernandez-com-and-cloudfl/) |
 | 261110-w8q | Turnstile interaction-only + flexible (no reserved box); @astrojs/sitemap 3.7.4 with EN/ES alternates | 2026-11-10 | 7f90a8f, 36faec6 | [261110-w8q-turnstile-widget-layout-and-sitemap](./quick/261110-w8q-turnstile-widget-layout-and-sitemap/) |
+| 261110-wv4 | Favicon set from sketch 002 E ("m." mark): svg paths, ico 16/32, apple-touch 180, 192/512 + maskable, webmanifest | 2026-11-10 | ffaa703, 68bd3af | [261110-wv4-favicon-m-dot-mark](./quick/261110-wv4-favicon-m-dot-mark/) |
 
 ### Pending Todos
 
