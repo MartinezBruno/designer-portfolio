@@ -14,18 +14,24 @@ pnpm exec playwright install chromium
 
 ## Scripts
 
-| Command              | What it does                                                  |
-| -------------------- | ------------------------------------------------------------- |
-| `pnpm dev`           | Start the dev server at `http://localhost:4321`               |
-| `pnpm build`         | Build the static site into `dist/`                            |
-| `pnpm preview`       | Serve the built `dist/` locally                               |
-| `pnpm check`         | Type-check `.astro` and `.ts` files (`astro check`)           |
-| `pnpm lint`          | `astro check` + ESLint + Prettier check                       |
-| `pnpm format`        | Format everything with Prettier                               |
-| `pnpm test`          | Unit tests (Vitest)                                           |
-| `pnpm test:e2e`      | Build, then run Playwright + axe against `astro preview`      |
-| `pnpm check:secrets` | Fail if secret files are tracked in git or present in `dist/` |
-| `pnpm verify`        | All gates: `lint`, `test`, `test:e2e`, `check:secrets`        |
+| Command               | What it does                                                                       |
+| --------------------- | ---------------------------------------------------------------------------------- |
+| `pnpm dev`            | Start the dev server at `http://localhost:4321`                                    |
+| `pnpm build`          | Build the static site into `dist/`                                                 |
+| `pnpm preview`        | Serve the built `dist/` locally                                                    |
+| `pnpm check`          | Type-check `.astro` and `.ts` files (`astro check`)                                |
+| `pnpm lint`           | `astro check` + ESLint + Prettier check                                            |
+| `pnpm format`         | Format everything with Prettier                                                    |
+| `pnpm test`           | Unit tests (Vitest)                                                                |
+| `pnpm test:e2e`       | Build, then run Playwright + axe against `astro preview`                           |
+| `pnpm check:secrets`  | Fail if secret files are tracked in git or present in `dist/`                      |
+| `pnpm verify`         | All gates: `lint`, `test`, `test:e2e`, `check:secrets`                             |
+| `pnpm run deploy`     | Check deploy env, build, check the build, `wrangler deploy` (see `docs/DEPLOY.md`) |
+| `pnpm run deploy:dry` | Same, with `wrangler deploy --dry-run` (no login, uploads nothing)                 |
+
+## Deploy
+
+Cloudflare Workers deploy and contact email setup: [docs/DEPLOY.md](docs/DEPLOY.md). Run `pnpm run deploy`, not `pnpm deploy` (pnpm's built-in command).
 
 ## Run the full stack locally
 
