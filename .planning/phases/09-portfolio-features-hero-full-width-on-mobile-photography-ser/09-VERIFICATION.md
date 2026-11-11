@@ -58,7 +58,7 @@ No orphaned requirements: REQUIREMENTS.md maps exactly these four IDs to Phase 9
 
 ## Human verification required
 
-1. Martina's Spanish copy review (Fotografia, chips, status text).
+1. Martina's Spanish copy review (Fotografia, chips, status text). **Done: approved by the user, 2026-11-10.**
 2. Post-deploy production Home mobile LCP with compression (D-20 follow-up).
 3. Visual check of hero at 390px and 640px+, and of the filter chips in EN and ES.
 
