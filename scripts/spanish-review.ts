@@ -27,20 +27,11 @@ const HARDCODED_COPY: readonly { key: string; en: string; es: string }[] = [];
 
 /** Things Martina still has to supply that are not copy (file:line of each TODO(martina)). */
 export const NON_COPY_TODOS: readonly { location: string; item: string }[] = [
-  { location: 'src/data/site.ts:17', item: 'Real domain (canonical and hreflang URLs).' },
   {
     location: 'src/components/sections/Hero.astro:10',
     item: 'Hero photo original at 1600px or wider (sharper 3x phone render).',
   },
-  {
-    location: 'src/lib/contact/mailer/resend.ts:12',
-    item: 'Verified sending domain for the contact email (DEPLOY-02).',
-  },
   { location: 'astro.config.ts:76', item: 'Brand fonts.' },
-  {
-    location: 'src/data/site.ts:17-18',
-    item: 'Phase 1 WR-04: the `.example` placeholder domain currently appears in the canonical URL and hreflang alternates; it changes once the real domain above is set.',
-  },
 ];
 
 interface Localized {

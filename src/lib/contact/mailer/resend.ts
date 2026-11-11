@@ -9,7 +9,8 @@
 //   sending domain is verified, CONTACT_TO must be that address.
 import type { ContactEmail, Mailer } from './types';
 
-// TODO(martina): verified sending domain (DEPLOY-02)
+// Alternative provider (MAILER=resend). To mail any CONTACT_TO, verify martifernandez.com in
+// Resend and change CONTACT_FROM (docs/DEPLOY.md, Alternative: Resend).
 export const CONTACT_FROM = 'Web Martina Fernandez <onboarding@resend.dev>';
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';

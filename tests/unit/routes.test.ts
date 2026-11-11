@@ -29,10 +29,10 @@ describe('alternatePath', () => {
 
 describe('absoluteFor', () => {
   it('builds the absolute en URL from an es path', () => {
-    expect(absoluteFor('/es/', 'en')).toBe('https://martinafernandez.example/');
+    expect(absoluteFor('/es/', 'en')).toBe('https://martifernandez.com/');
   });
 
   it('builds the absolute es URL from an en path', () => {
-    expect(absoluteFor('/', 'es')).toBe('https://martinafernandez.example/es/');
+    expect(absoluteFor('/', 'es')).toBe('https://martifernandez.com/es/');
   });
 });

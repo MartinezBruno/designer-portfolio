@@ -20,7 +20,7 @@ export function isTestSiteKey(siteKey: string): boolean {
 
 /** Why site.url cannot be deployed, or undefined. The URL is public, so it may be printed. */
 export function siteUrlProblem(url: string): string | undefined {
-  const fix = `set it to the workers.dev URL or the real domain, https and no trailing slash (${RUNBOOK})`;
+  const fix = `set it to the real domain, https and no trailing slash (${RUNBOOK})`;
   let parsed: URL;
   try {
     parsed = new URL(url);

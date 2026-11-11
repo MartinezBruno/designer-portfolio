@@ -5,4 +5,17 @@
   "compatibility_date": "2026-10-12",
   // Worker logs for contact send failures: read with `pnpm wrangler tail` or the dashboard.
   "observability": { "enabled": true },
+  // Real domain; the zone is in the same account, so deploy creates the DNS record and certificate.
+  "routes": [{ "pattern": "martifernandez.com", "custom_domain": true }],
+  // Fallback URL to check a deploy; its contact form fails closed (Turnstile is bound to site.url).
+  "workers_dev": true,
+  // Contact email via Cloudflare Email Routing (free to a verified destination). Restricted to one
+  // recipient and one sender so a compromised Action cannot mail anyone else.
+  "send_email": [
+    {
+      "name": "EMAIL",
+      "destination_address": "martinafernandez170404@gmail.com",
+      "allowed_sender_addresses": ["web@martifernandez.com"],
+    },
+  ],
 }

@@ -35,12 +35,13 @@ describe('isTestSiteKey', () => {
 });
 
 describe('siteUrlProblem', () => {
-  it.each(['https://designer-portfolio.someone.workers.dev', 'https://martinafernandez.com'])(
-    'accepts %s',
-    (url) => {
-      expect(siteUrlProblem(url)).toBeUndefined();
-    },
-  );
+  it.each([
+    'https://designer-portfolio.someone.workers.dev',
+    'https://martinafernandez.com',
+    'https://martifernandez.com',
+  ])('accepts %s', (url) => {
+    expect(siteUrlProblem(url)).toBeUndefined();
+  });
 
   it.each([
     'https://martinafernandez.example',
@@ -167,10 +168,9 @@ describe('check-deploy-env CLI', () => {
     expect(result.stdout + result.stderr).not.toContain(key);
   });
 
-  it('fails on the committed placeholder site.url with a real-format key', () => {
+  it('passes on the committed site.url with a real-format key', () => {
     const result = runCli({ PUBLIC_TURNSTILE_SITE_KEY: REAL_KEY });
-    expect(result.status).toBe(1);
-    expect(result.stderr).toContain('site.url');
+    expect(result.status).toBe(0);
     expect(result.stdout + result.stderr).not.toContain(REAL_KEY);
   });
 });

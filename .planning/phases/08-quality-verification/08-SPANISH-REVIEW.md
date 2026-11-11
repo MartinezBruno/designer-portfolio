@@ -341,8 +341,5 @@ Source: `src/data/tools.json`. These are brand names and stay the same in both l
 
 Not copy, but still needed from Martina before launch:
 
-- `src/data/site.ts:17`: Real domain (canonical and hreflang URLs).
 - `src/components/sections/Hero.astro:10`: Hero photo original at 1600px or wider (sharper 3x phone render).
-- `src/lib/contact/mailer/resend.ts:12`: Verified sending domain for the contact email (DEPLOY-02).
 - `astro.config.ts:76`: Brand fonts.
-- `src/data/site.ts:17-18`: Phase 1 WR-04: the `.example` placeholder domain currently appears in the canonical URL and hreflang alternates; it changes once the real domain above is set.

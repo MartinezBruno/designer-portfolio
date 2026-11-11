@@ -14,8 +14,8 @@ export interface SiteConfig {
 export const site = {
   name: 'Martina Fernandez',
   firstName: 'Martina',
-  // TODO(martina): real domain
-  url: 'https://martinafernandez.example',
+  // Real domain (Cloudflare Registrar). Also the contact Action's Turnstile hostname binding.
+  url: 'https://martifernandez.com',
   email: 'martinafernandez170404@gmail.com',
   socials: {
     behance: 'https://www.behance.net/martifernand7',

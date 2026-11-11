@@ -97,9 +97,9 @@ describe('buildSpanishReview coverage', () => {
     expect(review).toMatch(/brand names/);
     for (const tool of tools) expect(review).toContain(tool.name);
     expect(review.match(/## Non-copy TODO\(martina\)/g)).toHaveLength(1);
-    expect(NON_COPY_TODOS).toHaveLength(5);
+    expect(NON_COPY_TODOS).toHaveLength(2);
     for (const item of NON_COPY_TODOS) expect(review).toContain(item.location);
-    expect(review).toContain('.example');
+    expect(review).not.toContain('martinafernandez.example');
   });
 });
 
@@ -141,12 +141,7 @@ const COPY_TODO_FILES = [
   'src/lib/projects/overrides-schema.ts',
 ] as const;
 
-const NON_COPY_TODO_FILES = [
-  'src/data/site.ts',
-  'src/components/sections/Hero.astro',
-  'src/lib/contact/mailer/resend.ts',
-  'astro.config.ts',
-] as const;
+const NON_COPY_TODO_FILES = ['src/components/sections/Hero.astro', 'astro.config.ts'] as const;
 
 describe('TODO(martina) pointers (D-13)', () => {
   it('points every copy TODO(martina) comment at 08-SPANISH-REVIEW.md', () => {
